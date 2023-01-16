@@ -9,8 +9,8 @@ public class Vision extends DashboardedSubsystem {
 
     public static final String CAMERA_NAME = "photoncamera";
 
-    public static final int CAMERA_INDEX_CONE = 1;
-    public static final int CAMERA_INDEX_CUBE = 2;
+    public static final int PIPELINE_CONE_INDEX = 1;
+    public static final int PIPELINE_CUBE_INDEX = 2;
 
     public static Vision instance;
 
@@ -18,7 +18,7 @@ public class Vision extends DashboardedSubsystem {
     private final Limelight limelight;
 
     public static Vision getInstance() {
-        if (instance==null) {
+        if (instance == null) {
             instance = new Vision(new PhotonCamera(CAMERA_NAME), new Limelight());
         }
         return instance;
@@ -51,12 +51,10 @@ public class Vision extends DashboardedSubsystem {
     }
 
     public void changeCameraPipeline() {
-        if (photonCamera.getPipelineIndex()==CAMERA_INDEX_CONE) {
-            photonCamera.setPipelineIndex(CAMERA_INDEX_CUBE);
-        }
-
-        else {
-            photonCamera.setPipelineIndex(CAMERA_INDEX_CONE);
+        if (photonCamera.getPipelineIndex() == PIPELINE_CONE_INDEX) {
+            photonCamera.setPipelineIndex(PIPELINE_CUBE_INDEX);
+        } else {
+            photonCamera.setPipelineIndex(PIPELINE_CONE_INDEX);
         }
     }
 
