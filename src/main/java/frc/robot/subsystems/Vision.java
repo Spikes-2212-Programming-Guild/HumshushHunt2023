@@ -7,22 +7,22 @@ import org.photonvision.targeting.PhotonPipelineResult;
 
 public class Vision extends DashboardedSubsystem {
 
+    public static final String PHOTON_VISION_CAMERA_NAME = "photoncamera";
+
+    public static final int PIPELINE_CONE_INDEX = 0;
+    public static final int PIPELINE_CUBE_INDEX = 1;
+
+    public static final int PIPELINE_RETROREFLECTIVE_INDEX = 0;
+    public static final int PIPELINE_APRILTAG_INDEX = 1;
+
     private static Vision instance;
-
-    public static final String CAMERA_NAME = "photoncamera";
-
-    public static final int PIPELINE_CONE_INDEX = 1;
-    public static final int PIPELINE_CUBE_INDEX = 2;
-
-    public static final int PIPELINE_RETROREFLECTIVE_INDEX = 1;
-    public static final int PIPELINE_APRILTAG_INDEX = 2;
 
     private final Limelight limelight;
     private final PhotonCamera photonCamera;
 
     public static Vision getInstance(){
         if (instance==null){
-            instance = new Vision(new PhotonCamera(CAMERA_NAME), new Limelight());
+            instance = new Vision(new PhotonCamera(PHOTON_VISION_CAMERA_NAME), new Limelight());
         }
         return instance;
     }
@@ -49,13 +49,8 @@ public class Vision extends DashboardedSubsystem {
         return limelight.getHorizontalOffsetFromTargetInDegrees();
     }
 
-    public boolean limelightIsOnTarget(){
-        return limelight.isOnTarget();
-    }
-
-    public boolean photonvisionIsOnTarget(){
-        PhotonPipelineResult result = photonCamera.getLatestResult();
-        return result.hasTargets();
+    public boolean limelightHasTarget(){
+        return limelight.hasTarget();
     }
 
     public void changePhotonVisionPipeline(int pipelineIndex){
@@ -68,8 +63,7 @@ public class Vision extends DashboardedSubsystem {
 
     @Override
     public void configureDashboard() {
-        namespace.putBoolean("limelight has target", this::limelightIsOnTarget);
-        namespace.putBoolean("photonvision has target", this::photonvisionIsOnTarget);
+        namespace.putBoolean("limelight has target", this::limelightHasTarget);
         namespace.putNumber("photonvision yaw", this::getPhotonvisionYaw);
         namespace.putNumber("limelight yaw", this::getLimelightYaw);
     }
