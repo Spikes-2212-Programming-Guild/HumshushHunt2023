@@ -37,6 +37,14 @@ public class Drivetrain extends TankDrivetrain {
     private final Supplier<Double> toleranceDrive = drivePIDNamespace.addConstantDouble("tolerance", 0);
     private final PIDSettings drivePIDSettings;
 
+    private final Namespace anglePIDNamespace = namespace.addChild("angle pid");
+    private final Supplier<Double> kPAngle = drivePIDNamespace.addConstantDouble("kP", 0);
+    private final Supplier<Double> kIAngle = drivePIDNamespace.addConstantDouble("kI", 0);
+    private final Supplier<Double> kDAngle = drivePIDNamespace.addConstantDouble("kD", 0);
+    private final Supplier<Double> waitTimeAngle = drivePIDNamespace.addConstantDouble("wait time", 0);
+    private final Supplier<Double> toleranceAngle = drivePIDNamespace.addConstantDouble("tolerance", 0);
+    private final PIDSettings anglePIDSettings;
+
     //@todo add navx
 
     public static Drivetrain getInstance() {
@@ -74,6 +82,7 @@ public class Drivetrain extends TankDrivetrain {
         leftEncoder.setPositionConversionFactor(DISTANCE_PER_PULSE);
         rightEncoder.setPositionConversionFactor(DISTANCE_PER_PULSE);
         this.drivePIDSettings = new PIDSettings(kPDrive, kIDrive, kDDrive, waitTimeDrive, toleranceDrive);
+        this.anglePIDSettings = new PIDSettings(kPAngle, kIAngle, kDAngle, waitTimeAngle, toleranceAngle);
         configureDashboard();
     }
 
@@ -95,7 +104,7 @@ public class Drivetrain extends TankDrivetrain {
 
     @Override
     public void configureDashboard() {
-        namespace.putData("reset", new InstantCommand(this::resetEncoders) {
+        namespace.putData("reset encoders", new InstantCommand(this::resetEncoders) {
             @Override
             public boolean runsWhenDisabled() {
                 return true;
