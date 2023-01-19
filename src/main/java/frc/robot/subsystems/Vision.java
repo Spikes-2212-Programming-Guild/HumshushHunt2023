@@ -9,8 +9,11 @@ public class Vision extends DashboardedSubsystem {
 
     public static final String CAMERA_NAME = "photoncamera";
 
-    public static final int PIPELINE_CONE_INDEX = 1;
-    public static final int PIPELINE_CUBE_INDEX = 2;
+    private static final int PIPELINE_CONE_INDEX = 1;
+    private static final int PIPELINE_CUBE_INDEX = 2;
+
+    private static final int PIPELINE_RETROREFLECTIVE_INDEX = 1;
+    private static final int PIPELINE_APRILTAG_INDEX = 2;
 
     public static Vision instance;
 
@@ -25,7 +28,7 @@ public class Vision extends DashboardedSubsystem {
     }
 
     private Vision(PhotonCamera photonCamera, Limelight limelight) {
-        super("camera");
+        super("vision");
         this.photonCamera = photonCamera;
         this.limelight = limelight;
     }
@@ -35,10 +38,10 @@ public class Vision extends DashboardedSubsystem {
         if (result.hasTargets()) {
             return result.getBestTarget().getYaw();
         }
-        return 10; // if no target is detected
+        return 0    ; // if no target is detected
     }
 
-    public void changeMode(boolean mode) {
+    public void changePhotonVisionMode(boolean mode) {
         photonCamera.setDriverMode(mode);
     }
 
@@ -50,12 +53,12 @@ public class Vision extends DashboardedSubsystem {
         return limelight.isOnTarget();
     }
 
-    public void changeCameraPipeline() {
-        if (photonCamera.getPipelineIndex() == PIPELINE_CONE_INDEX) {
-            photonCamera.setPipelineIndex(PIPELINE_CUBE_INDEX);
-        } else {
-            photonCamera.setPipelineIndex(PIPELINE_CONE_INDEX);
-        }
+    public void changeCameraPipeline(int pipelineIndex) {
+        photonCamera.setPipelineIndex(pipelineIndex);
+    }
+
+    public void changeLimelightPipeline(int pipelineIndex) {
+        limelight.setPipeline(pipelineIndex);
     }
 
     @Override
