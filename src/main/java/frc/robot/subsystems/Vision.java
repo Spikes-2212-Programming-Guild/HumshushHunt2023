@@ -9,13 +9,13 @@ public class Vision extends DashboardedSubsystem {
 
     public static final String CAMERA_NAME = "photoncamera";
 
-    private static final int PIPELINE_CONE_INDEX = 1;
-    private static final int PIPELINE_CUBE_INDEX = 2;
+    public static final int PIPELINE_CONE_INDEX = 1;
+    public static final int PIPELINE_CUBE_INDEX = 2;
 
-    private static final int PIPELINE_RETROREFLECTIVE_INDEX = 1;
-    private static final int PIPELINE_APRILTAG_INDEX = 2;
+    public static final int PIPELINE_RETROREFLECTIVE_INDEX = 1;
+    public static final int PIPELINE_APRILTAG_INDEX = 2;
 
-    public static Vision instance;
+    private static Vision instance;
 
     private final PhotonCamera photonCamera;
     private final Limelight limelight;
@@ -38,7 +38,7 @@ public class Vision extends DashboardedSubsystem {
         if (result.hasTargets()) {
             return result.getBestTarget().getYaw();
         }
-        return 0    ; // if no target is detected
+        return 0; // if no target is detected
     }
 
     public void changePhotonVisionMode(boolean mode) {
