@@ -7,7 +7,7 @@ import org.photonvision.targeting.PhotonPipelineResult;
 
 public class Vision extends DashboardedSubsystem {
 
-    public static final String CAMERA_NAME = "photoncamera";
+    public static final String PHOTON_VISION_CAMERA_NAME = "photoncamera";
 
     public static final int PIPELINE_CONE_INDEX = 1;
     public static final int PIPELINE_CUBE_INDEX = 2;
@@ -22,7 +22,7 @@ public class Vision extends DashboardedSubsystem {
 
     public static Vision getInstance() {
         if (instance == null) {
-            instance = new Vision(new PhotonCamera(CAMERA_NAME), new Limelight());
+            instance = new Vision(new PhotonCamera(PHOTON_VISION_CAMERA_NAME), new Limelight());
         }
         return instance;
     }
@@ -53,7 +53,7 @@ public class Vision extends DashboardedSubsystem {
         return limelight.isOnTarget();
     }
 
-    public void changeCameraPipeline(int pipelineIndex) {
+    public void changePhotonVisionPipeline(int pipelineIndex) {
         photonCamera.setPipelineIndex(pipelineIndex);
     }
 
