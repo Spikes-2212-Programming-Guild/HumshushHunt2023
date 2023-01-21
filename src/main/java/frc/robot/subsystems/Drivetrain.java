@@ -85,12 +85,16 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
         return drivePIDSettings;
     }
 
+    public PIDSettings getAnglePIDSettings() {
+        return anglePIDSettings;
+    }
+
     public double getLeftEncoderPosition() {
         return leftEncoder.getPosition();
     }
 
     public double getRightEncoderPosition() {
-        return -rightEncoder.getPosition();
+        return rightEncoder.getPosition();
     }
 
     @Override
