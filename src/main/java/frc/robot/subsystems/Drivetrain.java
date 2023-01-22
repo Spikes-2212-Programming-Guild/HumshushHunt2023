@@ -99,22 +99,15 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
     @Override
     public void periodic() {
         super.periodic();
-        odometry.update(new Rotation2d(Math.toRadians(gyro.getYaw())), getLeftEncoderPosition(), getRightEncoderPosition());
+        odometry.update(new Rotation2d(Math.toRadians(gyro.getYaw())),
+                getLeftEncoderPosition(), getRightEncoderPosition());
         field2d.setRobotPose(getPose2d());
     }
 
     private Drivetrain(String namespaceName, CANSparkMax leftMaster, CANSparkMax leftSlave,
                        CANSparkMax rightMaster, CANSparkMax rightSlave) {
         super(
-                namespaceName,
-                new CANSparkMax(RobotMap.CAN.DRIVETRAIN_LEFT_SPARKMAX_1,
-                        CANSparkMaxLowLevel.MotorType.kBrushless),
-                new CANSparkMax(RobotMap.CAN.DRIVETRAIN_LEFT_SPARKMAX_2,
-                        CANSparkMaxLowLevel.MotorType.kBrushless),
-                new CANSparkMax(RobotMap.CAN.DRIVETRAIN_RIGHT_SPARKMAX_1,
-                        CANSparkMaxLowLevel.MotorType.kBrushless),
-                new CANSparkMax(RobotMap.CAN.DRIVETRAIN_RIGHT_SPARKMAX_2,
-                        CANSparkMaxLowLevel.MotorType.kBrushless));
+                namespaceName, leftMaster, leftSlave, rightMaster, rightSlave);
         this.gyro = new AHRS();
         this.leftEncoder = leftMaster.getEncoder();
         this.rightEncoder = rightMaster.getEncoder();
@@ -128,27 +121,6 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
         this.kinematics = new DifferentialDriveKinematics(TRACK_WIDTH);
         this.ramseteController = new RamseteController();
         this.field2d = new Field2d();
-        configureDashboard();
-    }
-
-    public void resetEncoders() {
-        leftEncoder.setPosition(0);
-        rightEncoder.setPosition(0);
-    }
-
-    public void resetGyro() {
-        gyro.reset();
-    }
-
-    @Override
-    public void configureLoop(PIDSettings leftPIDSettings, PIDSettings rightPIDSettings,
-                              FeedForwardSettings feedForwardSettings,
-                              TrapezoidProfileSettings trapezoidProfileSettings) {
-        super.configureLoop(leftPIDSettings, rightPIDSettings, feedForwardSettings, trapezoidProfileSettings);
-        leftEncoder.setPositionConversionFactor(DISTANCE_PER_PULSE);
-        leftEncoder.setVelocityConversionFactor(DISTANCE_PER_PULSE / SECONDS_IN_MINUTE);
-        rightEncoder.setPositionConversionFactor(DISTANCE_PER_PULSE);
-        rightEncoder.setVelocityConversionFactor(DISTANCE_PER_PULSE / SECONDS_IN_MINUTE);
         configureDashboard();
     }
 
@@ -172,6 +144,16 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
         return rightEncoder.getPosition();
     }
 
+    public void resetEncoders() {
+        leftEncoder.setPosition(0);
+        rightEncoder.setPosition(0);
+    }
+
+    public void resetGyro() {
+        gyro.reset();
+    }
+
+
     public double getLeftSpeed() {
         return leftEncoder.getVelocity();
     }
@@ -184,6 +166,14 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
         return this.odometry.getPoseMeters();
     }
 
+    public FeedForwardSettings getFeedForwardSettings() {
+        return this.feedForwardSettings;
+    }
+
+    public TrapezoidProfileSettings getTrapezoidProfileSettings() {
+        return this.trapezoidProfileSettings;
+    }
+
     public DifferentialDriveOdometry getOdometry() {
         return this.odometry;
     }
@@ -194,6 +184,18 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
 
     public RamseteController getRamseteController() {
         return this.ramseteController;
+    }
+
+    @Override
+    public void configureLoop(PIDSettings leftPIDSettings, PIDSettings rightPIDSettings,
+                              FeedForwardSettings feedForwardSettings,
+                              TrapezoidProfileSettings trapezoidProfileSettings) {
+        super.configureLoop(leftPIDSettings, rightPIDSettings, feedForwardSettings, trapezoidProfileSettings);
+        leftEncoder.setPositionConversionFactor(DISTANCE_PER_PULSE);
+        leftEncoder.setVelocityConversionFactor(DISTANCE_PER_PULSE / SECONDS_IN_MINUTE);
+        rightEncoder.setPositionConversionFactor(DISTANCE_PER_PULSE);
+        rightEncoder.setVelocityConversionFactor(DISTANCE_PER_PULSE / SECONDS_IN_MINUTE);
+        configureDashboard();
     }
 
     @Override
