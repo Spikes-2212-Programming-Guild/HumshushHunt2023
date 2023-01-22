@@ -29,6 +29,8 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
 
     public static final double TRACK_WIDTH = -1;
 
+    public static final int SECONDS_IN_MINUTE = 60;
+
     private static Drivetrain instance;
 
     private final AHRS gyro;
@@ -47,7 +49,7 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
             ("acceleration", 0);
     private final TrapezoidProfileSettings trapezoidProfileSettings;
 
-    private final Namespace leftPIDNamespace = namespace.addChild("drive pid");
+    private final Namespace leftPIDNamespace = namespace.addChild("left pid");
     private final Supplier<Double> kPLeft = leftPIDNamespace.addConstantDouble("kP", 0);
     private final Supplier<Double> kILeft = leftPIDNamespace.addConstantDouble("kI", 0);
     private final Supplier<Double> kDLeft = leftPIDNamespace.addConstantDouble("kD", 0);
@@ -55,7 +57,7 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
     private final Supplier<Double> toleranceLeft = leftPIDNamespace.addConstantDouble("tolerance", 0);
     private final PIDSettings leftPIDSettings;
 
-    private final Namespace rightPIDNamespace = namespace.addChild("drive pid");
+    private final Namespace rightPIDNamespace = namespace.addChild("right pid");
     private final Supplier<Double> kPRight = rightPIDNamespace.addConstantDouble("kP", 0);
     private final Supplier<Double> kIRight = rightPIDNamespace.addConstantDouble("kI", 0);
     private final Supplier<Double> kDRight = rightPIDNamespace.addConstantDouble("kD", 0);
@@ -63,11 +65,11 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
     private final Supplier<Double> toleranceRight = rightPIDNamespace.addConstantDouble("tolerance", 0);
     private final PIDSettings rightPIDSettings;
 
-    private final Namespace feedForwardNamespace = namespace.addChild("feed forward settings");
-    private final Supplier<Double> kSFeedForward = feedForwardNamespace.addConstantDouble("kS", 0);
-    private final Supplier<Double> kVFeedForward = feedForwardNamespace.addConstantDouble("kV", 0);
-    private final Supplier<Double> kAFeedForward = feedForwardNamespace.addConstantDouble("kA", 0);
-    private final Supplier<Double> kGFeedForward = feedForwardNamespace.addConstantDouble("kG", 0);
+    private final Namespace feedForwardNamespace = namespace.addChild("feed forward");
+    private final Supplier<Double> kS = feedForwardNamespace.addConstantDouble("kS", 0);
+    private final Supplier<Double> kV = feedForwardNamespace.addConstantDouble("kV", 0);
+    private final Supplier<Double> kA = feedForwardNamespace.addConstantDouble("kA", 0);
+    private final Supplier<Double> kG = feedForwardNamespace.addConstantDouble("kG", 0);
     private final FeedForwardSettings feedForwardSettings;
 
     private final Namespace anglePIDNamespace = namespace.addChild("angle pid");
@@ -94,10 +96,17 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
         return instance;
     }
 
+    @Override
+    public void periodic() {
+        super.periodic();
+        odometry.update(new Rotation2d(Math.toRadians(gyro.getYaw())), getLeftEncoderPosition(), getRightEncoderPosition());
+        field2d.setRobotPose(getPose2d());
+    }
+
     private Drivetrain(String namespaceName, CANSparkMax leftMaster, CANSparkMax leftSlave,
                        CANSparkMax rightMaster, CANSparkMax rightSlave) {
         super(
-                "drivetrain",
+                namespaceName,
                 new CANSparkMax(RobotMap.CAN.DRIVETRAIN_LEFT_SPARKMAX_1,
                         CANSparkMaxLowLevel.MotorType.kBrushless),
                 new CANSparkMax(RobotMap.CAN.DRIVETRAIN_LEFT_SPARKMAX_2,
@@ -112,14 +121,14 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
         this.trapezoidProfileSettings = new TrapezoidProfileSettings(trapezoidVelocity, trapezoidAcceleration);
         this.leftPIDSettings = new PIDSettings(kPLeft, kILeft, kDLeft, waitTimeLeft, toleranceLeft);
         this.rightPIDSettings = new PIDSettings(kPRight, kIRight, kDRight, waitTimeRight, toleranceRight);
-        this.feedForwardSettings = new FeedForwardSettings(kSFeedForward, kVFeedForward, kAFeedForward, kGFeedForward);
+        this.feedForwardSettings = new FeedForwardSettings(kS, kV, kA, kG);
         this.anglePIDSettings = new PIDSettings(kPAngle, kIAngle, kDAngle, waitTimeAngle, toleranceAngle);
-        configureDashboard();
-        this.odometry = new DifferentialDriveOdometry(new Rotation2d(gyro.getYaw()), // @todo make sure this is correct
+        this.odometry = new DifferentialDriveOdometry(new Rotation2d(Math.toRadians(gyro.getYaw())), // @todo make sure this is actually yaw
                 getLeftEncoderPosition(), getRightEncoderPosition());
         this.kinematics = new DifferentialDriveKinematics(TRACK_WIDTH);
         this.ramseteController = new RamseteController();
         this.field2d = new Field2d();
+        configureDashboard();
     }
 
     public void resetEncoders() {
@@ -129,6 +138,18 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
 
     public void resetGyro() {
         gyro.reset();
+    }
+
+    @Override
+    public void configureLoop(PIDSettings leftPIDSettings, PIDSettings rightPIDSettings,
+                              FeedForwardSettings feedForwardSettings,
+                              TrapezoidProfileSettings trapezoidProfileSettings) {
+        super.configureLoop(leftPIDSettings, rightPIDSettings, feedForwardSettings, trapezoidProfileSettings);
+        leftEncoder.setPositionConversionFactor(DISTANCE_PER_PULSE);
+        leftEncoder.setVelocityConversionFactor(DISTANCE_PER_PULSE / SECONDS_IN_MINUTE);
+        rightEncoder.setPositionConversionFactor(DISTANCE_PER_PULSE);
+        rightEncoder.setVelocityConversionFactor(DISTANCE_PER_PULSE / SECONDS_IN_MINUTE);
+        configureDashboard();
     }
 
     public PIDSettings getLeftPIDSettings() {
@@ -176,20 +197,11 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
     }
 
     @Override
-    public void configureLoop(PIDSettings leftPIDSettings, PIDSettings rightPIDSettings,
-                              FeedForwardSettings feedForwardSettings,
-                              TrapezoidProfileSettings trapezoidProfileSettings) {
-        super.configureLoop(leftPIDSettings, rightPIDSettings, feedForwardSettings, trapezoidProfileSettings);
-        leftEncoder.setPositionConversionFactor(DISTANCE_PER_PULSE);
-        leftEncoder.setVelocityConversionFactor(DISTANCE_PER_PULSE / 60);
-        rightEncoder.setPositionConversionFactor(DISTANCE_PER_PULSE);
-        rightEncoder.setVelocityConversionFactor(DISTANCE_PER_PULSE / 60);
-    }
-
-    @Override
     public void configureDashboard() {
         namespace.putData("reset encoders", new InstantCommand(this::resetEncoders).ignoringDisable(true));
+        namespace.putData("reset gyro", new InstantCommand(this::resetGyro));
         namespace.putNumber("left neo 1 encoder value", this::getLeftEncoderPosition);
         namespace.putNumber("right neo 1 encoder value", this::getRightEncoderPosition);
+        namespace.putNumber("gyro", gyro.getYaw()); //@todo make sure this is actually yaw
     }
 }
