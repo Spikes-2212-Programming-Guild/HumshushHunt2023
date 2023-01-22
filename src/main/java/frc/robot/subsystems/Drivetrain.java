@@ -6,6 +6,12 @@ import com.revrobotics.RelativeEncoder;
 import com.spikes2212.command.drivetrains.smartmotorcontrollerdrivetrain.SparkMaxTankDrivetrain;
 import com.spikes2212.control.PIDSettings;
 import com.spikes2212.dashboard.Namespace;
+import edu.wpi.first.math.controller.RamseteController;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
+import edu.wpi.first.math.kinematics.DifferentialDriveOdometry;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import frc.robot.RobotMap;
 
@@ -18,7 +24,14 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
     public static final double GEAR_RATIO = -1;
     public static final double DISTANCE_PER_PULSE = WHEEL_DIAMETER_IN_INCHES * INCHES_TO_CM * GEAR_RATIO * Math.PI;
 
+    public static final double TRACK_WIDTH = -1;
+
     private static Drivetrain instance;
+
+    private final DifferentialDriveOdometry odometry;
+    private final DifferentialDriveKinematics kinematics;
+    private final RamseteController ramseteController;
+    private final Field2d field2d;
 
     private final RelativeEncoder leftEncoder;
     private final RelativeEncoder rightEncoder;
@@ -74,6 +87,11 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
         this.drivePIDSettings = new PIDSettings(kPDrive, kIDrive, kDDrive, waitTimeDrive, toleranceDrive);
         this.anglePIDSettings = new PIDSettings(kPAngle, kIAngle, kDAngle, waitTimeAngle, toleranceAngle);
         configureDashboard();
+        this.odometry = new DifferentialDriveOdometry(new Rotation2d(), // @todo add gyro
+                getLeftEncoderPosition(), getRightEncoderPosition());
+        this.kinematics = new DifferentialDriveKinematics(TRACK_WIDTH);
+        this.ramseteController = new RamseteController();
+        this.field2d = new Field2d();
     }
 
     public void resetEncoders() {
@@ -95,6 +113,30 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
 
     public double getRightEncoderPosition() {
         return rightEncoder.getPosition();
+    }
+
+    public double getLeftSpeed(double speed) {
+        return speed;
+    }
+
+    public double getRightSpeed(double speed) {
+        return speed;
+    }
+
+    public Pose2d getPose2d(Pose2d pose2d) {
+        return pose2d;
+    }
+
+    public DifferentialDriveOdometry getOdometry() {
+        return this.odometry;
+    }
+
+    public DifferentialDriveKinematics getKinematics() {
+        return this.kinematics;
+    }
+
+    public RamseteController getRamseteController() {
+        return this.ramseteController;
     }
 
     @Override
