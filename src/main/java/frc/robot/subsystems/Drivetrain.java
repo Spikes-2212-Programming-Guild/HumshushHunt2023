@@ -1,10 +1,13 @@
 package frc.robot.subsystems;
 
+import com.kauailabs.navx.frc.AHRS;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMaxLowLevel;
 import com.revrobotics.RelativeEncoder;
 import com.spikes2212.command.drivetrains.smartmotorcontrollerdrivetrain.SparkMaxTankDrivetrain;
+import com.spikes2212.control.FeedForwardSettings;
 import com.spikes2212.control.PIDSettings;
+import com.spikes2212.control.TrapezoidProfileSettings;
 import com.spikes2212.dashboard.Namespace;
 import edu.wpi.first.math.controller.RamseteController;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -28,6 +31,8 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
 
     private static Drivetrain instance;
 
+    private final AHRS gyro;
+
     private final DifferentialDriveOdometry odometry;
     private final DifferentialDriveKinematics kinematics;
     private final RamseteController ramseteController;
@@ -36,27 +41,47 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
     private final RelativeEncoder leftEncoder;
     private final RelativeEncoder rightEncoder;
 
-    private final Namespace drivePIDNamespace = namespace.addChild("drive pid");
-    private final Supplier<Double> kPDrive = drivePIDNamespace.addConstantDouble("kP", 0);
-    private final Supplier<Double> kIDrive = drivePIDNamespace.addConstantDouble("kI", 0);
-    private final Supplier<Double> kDDrive = drivePIDNamespace.addConstantDouble("kD", 0);
-    private final Supplier<Double> waitTimeDrive = drivePIDNamespace.addConstantDouble("wait time", 0);
-    private final Supplier<Double> toleranceDrive = drivePIDNamespace.addConstantDouble("tolerance", 0);
-    private final PIDSettings drivePIDSettings;
+    private final Namespace trapezoidSettingsNamespace = namespace.addChild("trapezoid profile settings");
+    private final Supplier<Double> trapezoidVelocity = trapezoidSettingsNamespace.addConstantDouble("velocity", 0);
+    private final Supplier<Double> trapezoidAcceleration = trapezoidSettingsNamespace.addConstantDouble
+            ("acceleration", 0);
+    private final TrapezoidProfileSettings trapezoidProfileSettings;
+
+    private final Namespace leftPIDNamespace = namespace.addChild("drive pid");
+    private final Supplier<Double> kPLeft = leftPIDNamespace.addConstantDouble("kP", 0);
+    private final Supplier<Double> kILeft = leftPIDNamespace.addConstantDouble("kI", 0);
+    private final Supplier<Double> kDLeft = leftPIDNamespace.addConstantDouble("kD", 0);
+    private final Supplier<Double> waitTimeLeft = leftPIDNamespace.addConstantDouble("wait time", 0);
+    private final Supplier<Double> toleranceLeft = leftPIDNamespace.addConstantDouble("tolerance", 0);
+    private final PIDSettings leftPIDSettings;
+
+    private final Namespace rightPIDNamespace = namespace.addChild("drive pid");
+    private final Supplier<Double> kPRight = rightPIDNamespace.addConstantDouble("kP", 0);
+    private final Supplier<Double> kIRight = rightPIDNamespace.addConstantDouble("kI", 0);
+    private final Supplier<Double> kDRight = rightPIDNamespace.addConstantDouble("kD", 0);
+    private final Supplier<Double> waitTimeRight = rightPIDNamespace.addConstantDouble("wait time", 0);
+    private final Supplier<Double> toleranceRight = rightPIDNamespace.addConstantDouble("tolerance", 0);
+    private final PIDSettings rightPIDSettings;
+
+    private final Namespace feedForwardNamespace = namespace.addChild("feed forward settings");
+    private final Supplier<Double> kSFeedForward = feedForwardNamespace.addConstantDouble("kS", 0);
+    private final Supplier<Double> kVFeedForward = feedForwardNamespace.addConstantDouble("kV", 0);
+    private final Supplier<Double> kAFeedForward = feedForwardNamespace.addConstantDouble("kA", 0);
+    private final Supplier<Double> kGFeedForward = feedForwardNamespace.addConstantDouble("kG", 0);
+    private final FeedForwardSettings feedForwardSettings;
 
     private final Namespace anglePIDNamespace = namespace.addChild("angle pid");
-    private final Supplier<Double> kPAngle = drivePIDNamespace.addConstantDouble("kP", 0);
-    private final Supplier<Double> kIAngle = drivePIDNamespace.addConstantDouble("kI", 0);
-    private final Supplier<Double> kDAngle = drivePIDNamespace.addConstantDouble("kD", 0);
-    private final Supplier<Double> waitTimeAngle = drivePIDNamespace.addConstantDouble("wait time", 0);
-    private final Supplier<Double> toleranceAngle = drivePIDNamespace.addConstantDouble("tolerance", 0);
+    private final Supplier<Double> kPAngle = anglePIDNamespace.addConstantDouble("kP", 0);
+    private final Supplier<Double> kIAngle = anglePIDNamespace.addConstantDouble("kI", 0);
+    private final Supplier<Double> kDAngle = anglePIDNamespace.addConstantDouble("kD", 0);
+    private final Supplier<Double> waitTimeAngle = anglePIDNamespace.addConstantDouble("wait time", 0);
+    private final Supplier<Double> toleranceAngle = anglePIDNamespace.addConstantDouble("tolerance", 0);
     private final PIDSettings anglePIDSettings;
-
-    //@todo add navx
 
     public static Drivetrain getInstance() {
         if (instance == null) {
             instance = new Drivetrain(
+                    "drivetrain",
                     new CANSparkMax(RobotMap.CAN.DRIVETRAIN_LEFT_SPARKMAX_1,
                             CANSparkMaxLowLevel.MotorType.kBrushless),
                     new CANSparkMax(RobotMap.CAN.DRIVETRAIN_LEFT_SPARKMAX_2,
@@ -69,7 +94,8 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
         return instance;
     }
 
-    private Drivetrain(CANSparkMax left1, CANSparkMax left2, CANSparkMax right1, CANSparkMax right2) {
+    private Drivetrain(String namespaceName, CANSparkMax leftMaster, CANSparkMax leftSlave,
+                       CANSparkMax rightMaster, CANSparkMax rightSlave) {
         super(
                 "drivetrain",
                 new CANSparkMax(RobotMap.CAN.DRIVETRAIN_LEFT_SPARKMAX_1,
@@ -80,14 +106,16 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
                         CANSparkMaxLowLevel.MotorType.kBrushless),
                 new CANSparkMax(RobotMap.CAN.DRIVETRAIN_RIGHT_SPARKMAX_2,
                         CANSparkMaxLowLevel.MotorType.kBrushless));
-        this.leftEncoder = left1.getEncoder();
-        this.rightEncoder = right1.getEncoder();
-        leftEncoder.setPositionConversionFactor(DISTANCE_PER_PULSE);
-        rightEncoder.setPositionConversionFactor(DISTANCE_PER_PULSE);
-        this.drivePIDSettings = new PIDSettings(kPDrive, kIDrive, kDDrive, waitTimeDrive, toleranceDrive);
+        this.gyro = new AHRS();
+        this.leftEncoder = leftMaster.getEncoder();
+        this.rightEncoder = rightMaster.getEncoder();
+        this.trapezoidProfileSettings = new TrapezoidProfileSettings(trapezoidVelocity, trapezoidAcceleration);
+        this.leftPIDSettings = new PIDSettings(kPLeft, kILeft, kDLeft, waitTimeLeft, toleranceLeft);
+        this.rightPIDSettings = new PIDSettings(kPRight, kIRight, kDRight, waitTimeRight, toleranceRight);
+        this.feedForwardSettings = new FeedForwardSettings(kSFeedForward, kVFeedForward, kAFeedForward, kGFeedForward);
         this.anglePIDSettings = new PIDSettings(kPAngle, kIAngle, kDAngle, waitTimeAngle, toleranceAngle);
         configureDashboard();
-        this.odometry = new DifferentialDriveOdometry(new Rotation2d(), // @todo add gyro
+        this.odometry = new DifferentialDriveOdometry(new Rotation2d(gyro.getYaw()), // @todo make sure this is correct
                 getLeftEncoderPosition(), getRightEncoderPosition());
         this.kinematics = new DifferentialDriveKinematics(TRACK_WIDTH);
         this.ramseteController = new RamseteController();
@@ -99,8 +127,16 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
         rightEncoder.setPosition(0);
     }
 
-    public PIDSettings getDrivePIDSettings() {
-        return drivePIDSettings;
+    public void resetGyro() {
+        gyro.reset();
+    }
+
+    public PIDSettings getLeftPIDSettings() {
+        return leftPIDSettings;
+    }
+
+    public PIDSettings getRightPIDSettings() {
+        return rightPIDSettings;
     }
 
     public PIDSettings getAnglePIDSettings() {
@@ -115,16 +151,16 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
         return rightEncoder.getPosition();
     }
 
-    public double getLeftSpeed(double speed) {
-        return speed;
+    public double getLeftSpeed() {
+        return leftEncoder.getVelocity();
     }
 
-    public double getRightSpeed(double speed) {
-        return speed;
+    public double getRightSpeed() {
+        return rightEncoder.getVelocity();
     }
 
-    public Pose2d getPose2d(Pose2d pose2d) {
-        return pose2d;
+    public Pose2d getPose2d() {
+        return this.odometry.getPoseMeters();
     }
 
     public DifferentialDriveOdometry getOdometry() {
@@ -140,13 +176,19 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
     }
 
     @Override
+    public void configureLoop(PIDSettings leftPIDSettings, PIDSettings rightPIDSettings,
+                              FeedForwardSettings feedForwardSettings,
+                              TrapezoidProfileSettings trapezoidProfileSettings) {
+        super.configureLoop(leftPIDSettings, rightPIDSettings, feedForwardSettings, trapezoidProfileSettings);
+        leftEncoder.setPositionConversionFactor(DISTANCE_PER_PULSE);
+        leftEncoder.setVelocityConversionFactor(DISTANCE_PER_PULSE / 60);
+        rightEncoder.setPositionConversionFactor(DISTANCE_PER_PULSE);
+        rightEncoder.setVelocityConversionFactor(DISTANCE_PER_PULSE / 60);
+    }
+
+    @Override
     public void configureDashboard() {
-        namespace.putData("reset encoders", new InstantCommand(this::resetEncoders) {
-            @Override
-            public boolean runsWhenDisabled() {
-                return true;
-            }
-        });
+        namespace.putData("reset encoders", new InstantCommand(this::resetEncoders).ignoringDisable(true));
         namespace.putNumber("left neo 1 encoder value", this::getLeftEncoderPosition);
         namespace.putNumber("right neo 1 encoder value", this::getRightEncoderPosition);
     }
