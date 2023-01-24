@@ -23,6 +23,7 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
 
     public static final double WHEEL_DIAMETER_IN_INCHES = -1;
     public static final double GEAR_RATIO = -1;
+    public static final double INCHES_TO_METERS = 0.0254;
     public static final double DISTANCE_PER_PULSE = WHEEL_DIAMETER_IN_INCHES * GEAR_RATIO * Math.PI;
 
     public static final double TRACK_WIDTH = -1;
@@ -100,12 +101,12 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
         this.gyro = new AHRS();
         this.leftEncoder = leftMaster.getEncoder();
         this.rightEncoder = rightMaster.getEncoder();
-        this.trapezoidProfileSettings = new TrapezoidProfileSettings(trapezoidVelocity, trapezoidAcceleration);
         this.leftPIDSettings = new PIDSettings(kPLeft, kILeft, kDLeft, waitTimeLeft, toleranceLeft);
         this.rightPIDSettings = new PIDSettings(kPRight, kIRight, kDRight, waitTimeRight, toleranceRight);
-        this.feedForwardSettings = new FeedForwardSettings(kS, kV, kA);
         this.anglePIDSettings = new PIDSettings(kPAngle, kIAngle, kDAngle, waitTimeAngle, toleranceAngle);
-        this.odometry = new DifferentialDriveOdometry(gyro.getRotation2d(), // @todo make sure this is actually yaw
+        this.trapezoidProfileSettings = new TrapezoidProfileSettings(trapezoidVelocity, trapezoidAcceleration);
+        this.feedForwardSettings = new FeedForwardSettings(kS, kV, kA);
+        this.odometry = new DifferentialDriveOdometry(gyro.getRotation2d(),
                 getLeftEncoderPosition(), getRightEncoderPosition());
         this.kinematics = new DifferentialDriveKinematics(TRACK_WIDTH);
         this.ramseteController = new RamseteController();
@@ -140,7 +141,6 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
     public void resetGyro() {
         gyro.reset();
     }
-
 
     public PIDSettings getLeftPIDSettings() {
         return leftPIDSettings;
@@ -201,6 +201,6 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
         namespace.putData("field2d", field2d);
         namespace.putNumber("left neo 1 encoder value", this::getLeftEncoderPosition);
         namespace.putNumber("right neo 1 encoder value", this::getRightEncoderPosition);
-        namespace.putNumber("gyro", gyro::getYaw);
+        namespace.putNumber("gyro yaw", gyro::getYaw);
     }
 }
