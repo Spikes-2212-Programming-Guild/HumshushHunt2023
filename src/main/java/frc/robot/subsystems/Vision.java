@@ -20,17 +20,17 @@ public class Vision extends DashboardedSubsystem {
     private final PhotonCamera photonCamera;
     private final Limelight limelight;
 
-    public static Vision getInstance() {
-        if (instance == null) {
-            instance = new Vision(new PhotonCamera(PHOTON_VISION_CAMERA_NAME), new Limelight());
-        }
-        return instance;
-    }
-
-    private Vision(PhotonCamera photonCamera, Limelight limelight) {
-        super("vision");
+    private Vision(String namespaceName, PhotonCamera photonCamera, Limelight limelight) {
+        super(namespaceName);
         this.photonCamera = photonCamera;
         this.limelight = limelight;
+    }
+
+    public static Vision getInstance() {
+        if (instance == null) {
+            instance = new Vision("vision", new PhotonCamera(PHOTON_VISION_CAMERA_NAME), new Limelight());
+        }
+        return instance;
     }
 
     private double getPhotonVisionYaw() {
