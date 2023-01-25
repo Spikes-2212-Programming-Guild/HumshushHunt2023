@@ -16,7 +16,7 @@ public class ArmFirstJoint extends SparkMaxGenericSubsystem {
 
     public static final double DISTANCE_PER_PULSE = -1;
 
-    public static ArmFirstJoint instance;
+    private static ArmFirstJoint instance;
 
     private final DutyCycleEncoder encoder;
 
