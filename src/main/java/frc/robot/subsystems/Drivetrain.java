@@ -24,7 +24,7 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
     public static final double WHEEL_DIAMETER_IN_INCHES = -1;
     public static final double GEAR_RATIO = -1;
     public static final double INCHES_TO_METERS = 0.0254;
-    public static final double DISTANCE_PER_PULSE = WHEEL_DIAMETER_IN_INCHES * GEAR_RATIO * Math.PI;
+    public static final double DISTANCE_PER_PULSE = WHEEL_DIAMETER_IN_INCHES * GEAR_RATIO * Math.PI * INCHES_TO_METERS;
 
     public static final double TRACK_WIDTH = -1;
 
@@ -101,6 +101,7 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
         this.gyro = new AHRS();
         this.leftEncoder = leftMaster.getEncoder();
         this.rightEncoder = rightMaster.getEncoder();
+        this.setConversionRates();
         this.leftPIDSettings = new PIDSettings(kPLeft, kILeft, kDLeft, waitTimeLeft, toleranceLeft);
         this.rightPIDSettings = new PIDSettings(kPRight, kIRight, kDRight, waitTimeRight, toleranceRight);
         this.anglePIDSettings = new PIDSettings(kPAngle, kIAngle, kDAngle, waitTimeAngle, toleranceAngle);
@@ -119,23 +120,26 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
                               FeedForwardSettings feedForwardSettings,
                               TrapezoidProfileSettings trapezoidProfileSettings) {
         super.configureLoop(leftPIDSettings, rightPIDSettings, feedForwardSettings, trapezoidProfileSettings);
-        leftEncoder.setPositionConversionFactor(DISTANCE_PER_PULSE);
-        leftEncoder.setVelocityConversionFactor(DISTANCE_PER_PULSE / SECONDS_IN_MINUTE);
-        rightEncoder.setPositionConversionFactor(DISTANCE_PER_PULSE);
-        rightEncoder.setVelocityConversionFactor(DISTANCE_PER_PULSE / SECONDS_IN_MINUTE);
+        this.setConversionRates();
     }
 
     @Override
     public void periodic() {
         super.periodic();
-        odometry.update(gyro.getRotation2d(),
-                getLeftEncoderPosition(), getRightEncoderPosition());
+        odometry.update(gyro.getRotation2d(), getLeftEncoderPosition(), getRightEncoderPosition());
         field2d.setRobotPose(getPose2d());
     }
 
     public void resetEncoders() {
         leftEncoder.setPosition(0);
         rightEncoder.setPosition(0);
+    }
+
+    public void setConversionRates() {
+        leftEncoder.setPositionConversionFactor(DISTANCE_PER_PULSE);
+        leftEncoder.setVelocityConversionFactor(DISTANCE_PER_PULSE / SECONDS_IN_MINUTE);
+        rightEncoder.setPositionConversionFactor(DISTANCE_PER_PULSE);
+        rightEncoder.setVelocityConversionFactor(DISTANCE_PER_PULSE / SECONDS_IN_MINUTE);
     }
 
     public void resetGyro() {
