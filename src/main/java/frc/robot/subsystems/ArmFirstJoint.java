@@ -41,6 +41,15 @@ public class ArmFirstJoint extends SparkMaxGenericSubsystem {
             ("acceleration", 0);
     private final TrapezoidProfileSettings trapezoidProfileSettings;
 
+    public static ArmFirstJoint getInstance() {
+        if (instance == null) {
+            instance = new ArmFirstJoint("arm first joint",
+                    new CANSparkMax(RobotMap.CAN.ARM_FIRST_JOINT_SPARKMAX_1, CANSparkMaxLowLevel.MotorType.kBrushless),
+                    new CANSparkMax(RobotMap.CAN.ARM_FIRST_JOINT_SPARKMAX_2, CANSparkMaxLowLevel.MotorType.kBrushless));
+        }
+        return instance;
+    }
+
     private ArmFirstJoint(String namespaceName, CANSparkMax sparkMax1, CANSparkMax sparkMax2) {
         super(namespaceName, sparkMax1, sparkMax2);
         sparkMax2.follow(sparkMax1, true);
@@ -49,15 +58,6 @@ public class ArmFirstJoint extends SparkMaxGenericSubsystem {
         this.feedForwardSettings = new FeedForwardSettings(kS, kV, kA, kG);
         this.trapezoidProfileSettings = new TrapezoidProfileSettings(trapezoidVelocity, trapezoidAcceleration);
         encoder.setDistancePerRotation(DISTANCE_PER_PULSE);
-    }
-
-    public static ArmFirstJoint getInstance() {
-        if (instance == null) {
-            instance = new ArmFirstJoint("arm first joint",
-                    new CANSparkMax(RobotMap.CAN.ARM_FIRST_JOINT_SPARKMAX_1, CANSparkMaxLowLevel.MotorType.kBrushless),
-                    new CANSparkMax(RobotMap.CAN.ARM_FIRST_JOINT_SPARKMAX_2, CANSparkMaxLowLevel.MotorType.kBrushless));
-        }
-        return instance;
     }
 
     public PIDSettings getPIDSettings() {
