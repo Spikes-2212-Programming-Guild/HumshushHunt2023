@@ -2,6 +2,7 @@ package frc.robot.subsystems;
 
 import com.spikes2212.command.DashboardedSubsystem;
 import com.spikes2212.util.Limelight;
+import edu.wpi.first.math.geometry.Pose3d;
 import org.photonvision.PhotonCamera;
 import org.photonvision.targeting.PhotonPipelineResult;
 
@@ -41,6 +42,10 @@ public class Vision extends DashboardedSubsystem {
         return 0; // if no target is detected
     }
 
+    public Pose3d getRobotPose() {
+        return limelight.getRobotPose();
+    }
+
     public void changePhotonVisionMode(boolean mode) {
         photonCamera.setDriverMode(mode);
     }
@@ -50,7 +55,7 @@ public class Vision extends DashboardedSubsystem {
     }
 
     public boolean limelightHasTarget() {
-        return limelight.isOnTarget();
+        return limelight.hasTarget();
     }
 
     public void changePhotonVisionPipeline(int pipelineIndex) {
