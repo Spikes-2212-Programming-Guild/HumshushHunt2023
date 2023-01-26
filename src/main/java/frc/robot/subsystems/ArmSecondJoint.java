@@ -12,11 +12,11 @@ import frc.robot.RobotMap;
 
 import java.util.function.Supplier;
 
-public class ArmFirstJoint extends SparkMaxGenericSubsystem {
+public class ArmSecondJoint extends SparkMaxGenericSubsystem {
 
     public static final int DISTANCE_PER_PULSE = -1;
 
-    private static ArmFirstJoint instance;
+    private static ArmSecondJoint instance;
 
     private final RelativeEncoder encoder;
 
@@ -26,7 +26,7 @@ public class ArmFirstJoint extends SparkMaxGenericSubsystem {
     private final Supplier<Double> kD = PIDNamespace.addConstantDouble("kD", 0);
     private final Supplier<Double> waitTime = PIDNamespace.addConstantDouble("wait time", 0);
     private final Supplier<Double> tolerance = PIDNamespace.addConstantDouble("tolerance", 0);
-    private final PIDSettings PIDSettings;
+    private final com.spikes2212.control.PIDSettings PIDSettings;
 
     private final Namespace feedForwardNamespace = namespace.addChild("feed forward");
     private final Supplier<Double> kS = feedForwardNamespace.addConstantDouble("kS", 0);
@@ -41,22 +41,23 @@ public class ArmFirstJoint extends SparkMaxGenericSubsystem {
             ("acceleration", 0);
     private final TrapezoidProfileSettings trapezoidProfileSettings;
 
-    public static ArmFirstJoint getInstance() {
-        if (instance == null) {
-            instance = new ArmFirstJoint("arm first joint",
-                    new CANSparkMax(RobotMap.CAN.ARM_FIRST_JOINT_SPARKMAX_1, CANSparkMaxLowLevel.MotorType.kBrushless),
-                    new CANSparkMax(RobotMap.CAN.ARM_FIRST_JOINT_SPARKMAX_2, CANSparkMaxLowLevel.MotorType.kBrushless));
-        }
-        return instance;
-    }
-
-    private ArmFirstJoint(String namespaceName, CANSparkMax master, CANSparkMax slave) {
-        super(namespaceName, master, slave);
-        this.encoder = master.getAlternateEncoder(DISTANCE_PER_PULSE);
-        slave.follow(master, true);
+    public ArmSecondJoint(String namespaceName, CANSparkMax sparkMax) {
+        super(namespaceName, sparkMax);
+        this.encoder = sparkMax.getAlternateEncoder(DISTANCE_PER_PULSE);
         this.PIDSettings = new PIDSettings(kP, kI, kD, waitTime, tolerance);
         this.feedForwardSettings = new FeedForwardSettings(kS, kV, kA, kG);
         this.trapezoidProfileSettings = new TrapezoidProfileSettings(trapezoidVelocity, trapezoidAcceleration);
+    }
+
+    public static ArmSecondJoint getInstance() {
+        if (instance == null) {
+            instance = new ArmSecondJoint(
+                    "arm second joint",
+                    new CANSparkMax(RobotMap.CAN.ARM_SECOND_JOINT_SPARKMAX_1, CANSparkMaxLowLevel.MotorType.kBrushless)
+            );
+            return instance;
+        }
+        return instance;
     }
 
     public PIDSettings getPIDSettings() {
@@ -73,10 +74,5 @@ public class ArmFirstJoint extends SparkMaxGenericSubsystem {
 
     public double getEncoderPosition() {
         return encoder.getPosition();
-    }
-
-    @Override
-    public void configureDashboard() {
-        namespace.putNumber("encoder position", this::getEncoderPosition);
     }
 }
