@@ -77,6 +77,6 @@ public class ArmFirstJoint extends SparkMaxGenericSubsystem {
 
     @Override
     public void configureDashboard() {
-        namespace.putNumber("encoder position", this::getEncoderPosition);
+        namespace.putNumber("first joint encoder position", this::getEncoderPosition);
     }
 }

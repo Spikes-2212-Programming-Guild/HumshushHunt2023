@@ -41,7 +41,7 @@ public class ArmSecondJoint extends SparkMaxGenericSubsystem {
             ("acceleration", 0);
     private final TrapezoidProfileSettings trapezoidProfileSettings;
 
-    public ArmSecondJoint(String namespaceName, CANSparkMax sparkMax) {
+    private ArmSecondJoint(String namespaceName, CANSparkMax sparkMax) {
         super(namespaceName, sparkMax);
         this.encoder = sparkMax.getAlternateEncoder(DISTANCE_PER_PULSE);
         this.PIDSettings = new PIDSettings(kP, kI, kD, waitTime, tolerance);
@@ -74,5 +74,10 @@ public class ArmSecondJoint extends SparkMaxGenericSubsystem {
 
     public double getEncoderPosition() {
         return encoder.getPosition();
+    }
+
+    @Override
+    public void configureDashboard() {
+        namespace.putNumber("second joint encoder position", this::getEncoderPosition);
     }
 }
