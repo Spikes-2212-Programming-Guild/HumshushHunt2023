@@ -42,7 +42,6 @@ public class Vision extends DashboardedSubsystem {
         super(namespaceName);
         this.photonCamera = photonCamera;
         this.limelight = limelight;
-//        this.cameraServer =
         configureDashboard();
     }
 
@@ -87,5 +86,6 @@ public class Vision extends DashboardedSubsystem {
         namespace.putBoolean("limelight has target", this::limelightHasTarget);
         namespace.putNumber("limelight yaw", this::getLimelightYaw);
         namespace.putNumber("photonvision yaw", this::getPhotonVisionYaw);
+        CameraServer.startAutomaticCapture();
     }
 }
