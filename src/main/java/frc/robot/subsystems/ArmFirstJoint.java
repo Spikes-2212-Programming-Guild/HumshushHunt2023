@@ -57,6 +57,7 @@ public class ArmFirstJoint extends SparkMaxGenericSubsystem {
         this.PIDSettings = new PIDSettings(kP, kI, kD, waitTime, tolerance);
         this.feedForwardSettings = new FeedForwardSettings(kS, kV, kA, kG);
         this.trapezoidProfileSettings = new TrapezoidProfileSettings(trapezoidVelocity, trapezoidAcceleration);
+        configureDashboard();
     }
 
     public PIDSettings getPIDSettings() {
@@ -77,6 +78,6 @@ public class ArmFirstJoint extends SparkMaxGenericSubsystem {
 
     @Override
     public void configureDashboard() {
-        namespace.putNumber("first joint encoder position", this::getEncoderPosition);
+        namespace.putNumber("encoder position", this::getEncoderPosition);
     }
 }
