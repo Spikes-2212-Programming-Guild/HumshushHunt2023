@@ -11,11 +11,6 @@ public class Gripper extends DashboardedSubsystem {
 
     private final DoubleSolenoid solenoid;
 
-    private Gripper(String namespaceName, DoubleSolenoid solenoid) {
-        super(namespaceName);
-        this.solenoid = solenoid;
-    }
-
     public static Gripper getInstance() {
         if (instance == null) {
             instance = new Gripper("gripper", new DoubleSolenoid(PneumaticsModuleType.CTREPCM,
@@ -23,6 +18,12 @@ public class Gripper extends DashboardedSubsystem {
             return instance;
         }
         return instance;
+    }
+
+    private Gripper(String namespaceName, DoubleSolenoid solenoid) {
+        super(namespaceName);
+        this.solenoid = solenoid;
+        configureDashboard();
     }
 
     public void openGripper() {
