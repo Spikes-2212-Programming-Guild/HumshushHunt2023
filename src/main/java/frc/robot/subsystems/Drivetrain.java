@@ -6,7 +6,6 @@ import edu.wpi.first.wpilibj.motorcontrol.MotorController;
 
 public class Drivetrain extends TankDrivetrain {
 
-
     public Drivetrain(String namespaceName, MotorController left, MotorController right) {
         super(namespaceName, left, right);
     }
