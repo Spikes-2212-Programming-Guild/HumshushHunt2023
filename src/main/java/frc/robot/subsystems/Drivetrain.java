@@ -21,8 +21,8 @@ import java.util.function.Supplier;
 
 public class Drivetrain extends SparkMaxTankDrivetrain {
 
-    public static final double WHEEL_DIAMETER_IN_INCHES = -1;
-    public static final double GEAR_RATIO = -1;
+    public static final double WHEEL_DIAMETER_IN_INCHES = 6;
+    public static final double GEAR_RATIO = 1 / 12.755;
     public static final double INCHES_TO_METERS = 0.0254;
     public static final double DISTANCE_PER_PULSE = WHEEL_DIAMETER_IN_INCHES * GEAR_RATIO * Math.PI * INCHES_TO_METERS;
 
