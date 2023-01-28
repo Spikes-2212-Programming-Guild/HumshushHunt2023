@@ -10,6 +10,7 @@ import com.spikes2212.control.TrapezoidProfileSettings;
 import com.spikes2212.dashboard.Namespace;
 import frc.robot.RobotMap;
 
+import java.beans.Encoder;
 import java.util.function.Supplier;
 
 public class ArmFirstJoint extends SparkMaxGenericSubsystem {
@@ -45,15 +46,18 @@ public class ArmFirstJoint extends SparkMaxGenericSubsystem {
         if (instance == null) {
             instance = new ArmFirstJoint("arm first joint",
                     new CANSparkMax(RobotMap.CAN.ARM_FIRST_JOINT_SPARKMAX_1, CANSparkMaxLowLevel.MotorType.kBrushless),
-                    new CANSparkMax(RobotMap.CAN.ARM_FIRST_JOINT_SPARKMAX_2, CANSparkMaxLowLevel.MotorType.kBrushless));
+                    new CANSparkMax(RobotMap.CAN.ARM_FIRST_JOINT_SPARKMAX_2, CANSparkMaxLowLevel.MotorType.kBrushless),
+                    new CANSparkMax(RobotMap.CAN.ARM_FIRST_JOINT_SPARKMAX_3, CANSparkMaxLowLevel.MotorType.kBrushless)
+            );
         }
         return instance;
     }
 
-    private ArmFirstJoint(String namespaceName, CANSparkMax master, CANSparkMax slave) {
-        super(namespaceName, master, slave);
-        this.encoder = master.getAlternateEncoder(DISTANCE_PER_PULSE);
-        slave.follow(master, true);
+    private ArmFirstJoint(String namespaceName, CANSparkMax master, CANSparkMax slave1, CANSparkMax slave2) {
+        super(namespaceName, master, slave1, slave2);
+        this.encoder = master.getEncoder();
+        encoder.setPositionConversionFactor(DISTANCE_PER_PULSE);
+        slave2.follow(master, true);
         this.PIDSettings = new PIDSettings(kP, kI, kD, waitTime, tolerance);
         this.feedForwardSettings = new FeedForwardSettings(kS, kV, kA, kG);
         this.trapezoidProfileSettings = new TrapezoidProfileSettings(trapezoidVelocity, trapezoidAcceleration);
