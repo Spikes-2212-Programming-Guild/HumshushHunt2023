@@ -32,15 +32,15 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
 
     private static Drivetrain instance;
 
+    private final RelativeEncoder leftEncoder;
+    private final RelativeEncoder rightEncoder;
+
     private final AHRS gyro;
 
     private final DifferentialDriveOdometry odometry;
     private final DifferentialDriveKinematics kinematics;
     private final RamseteController ramseteController;
     private final Field2d field2d;
-
-    private final RelativeEncoder leftEncoder;
-    private final RelativeEncoder rightEncoder;
 
     private final Namespace leftPIDNamespace = namespace.addChild("left pid");
     private final Supplier<Double> kPLeft = leftPIDNamespace.addConstantDouble("kP", 0);
@@ -72,9 +72,9 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
     private final Supplier<Double> kA = feedForwardNamespace.addConstantDouble("kA", 0);
     private final FeedForwardSettings feedForwardSettings;
 
-    private final Namespace trapezoidSettingsNamespace = namespace.addChild("trapezoid profile settings");
-    private final Supplier<Double> trapezoidVelocity = trapezoidSettingsNamespace.addConstantDouble("velocity", 0);
-    private final Supplier<Double> trapezoidAcceleration = trapezoidSettingsNamespace.addConstantDouble
+    private final Namespace trapezoidProfile = namespace.addChild("trapezoid profile settings");
+    private final Supplier<Double> maxVelocity = trapezoidProfile.addConstantDouble("max velocity", 0);
+    private final Supplier<Double> trapezoidAcceleration = trapezoidProfile.addConstantDouble
             ("acceleration", 0);
     private final TrapezoidProfileSettings trapezoidProfileSettings;
 
@@ -82,13 +82,13 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
         if (instance == null) {
             instance = new Drivetrain(
                     "drivetrain",
-                    new CANSparkMax(RobotMap.CAN.DRIVETRAIN_LEFT_SPARKMAX_1,
+                    new CANSparkMax(RobotMap.CAN.DRIVETRAIN_LEFT_SPARKMAX_MASTER,
                             CANSparkMaxLowLevel.MotorType.kBrushless),
-                    new CANSparkMax(RobotMap.CAN.DRIVETRAIN_LEFT_SPARKMAX_2,
+                    new CANSparkMax(RobotMap.CAN.DRIVETRAIN_LEFT_SPARKMAX_SLAVE,
                             CANSparkMaxLowLevel.MotorType.kBrushless),
-                    new CANSparkMax(RobotMap.CAN.DRIVETRAIN_RIGHT_SPARKMAX_1,
+                    new CANSparkMax(RobotMap.CAN.DRIVETRAIN_RIGHT_SPARKMAX_MASTER,
                             CANSparkMaxLowLevel.MotorType.kBrushless),
-                    new CANSparkMax(RobotMap.CAN.DRIVETRAIN_RIGHT_SPARKMAX_2,
+                    new CANSparkMax(RobotMap.CAN.DRIVETRAIN_RIGHT_SPARKMAX_SLAVE,
                             CANSparkMaxLowLevel.MotorType.kBrushless));
         }
         return instance;
@@ -105,10 +105,10 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
         this.leftPIDSettings = new PIDSettings(kPLeft, kILeft, kDLeft, waitTimeLeft, toleranceLeft);
         this.rightPIDSettings = new PIDSettings(kPRight, kIRight, kDRight, waitTimeRight, toleranceRight);
         this.anglePIDSettings = new PIDSettings(kPAngle, kIAngle, kDAngle, waitTimeAngle, toleranceAngle);
-        this.trapezoidProfileSettings = new TrapezoidProfileSettings(trapezoidVelocity, trapezoidAcceleration);
+        this.trapezoidProfileSettings = new TrapezoidProfileSettings(maxVelocity, trapezoidAcceleration);
         this.feedForwardSettings = new FeedForwardSettings(kS, kV, kA);
         this.odometry = new DifferentialDriveOdometry(gyro.getRotation2d(),
-                getLeftEncoderPosition(), getRightEncoderPosition());
+                getLeftPosition(), getRightPosition());
         this.kinematics = new DifferentialDriveKinematics(TRACK_WIDTH);
         this.ramseteController = new RamseteController();
         this.field2d = new Field2d();
@@ -126,24 +126,46 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
     @Override
     public void periodic() {
         super.periodic();
-        odometry.update(gyro.getRotation2d(), getLeftEncoderPosition(), getRightEncoderPosition());
+        odometry.update(gyro.getRotation2d(), getLeftPosition(), getRightPosition());
         field2d.setRobotPose(getPose2d());
     }
 
-    public void resetEncoders() {
+    private void resetEncoders() {
         leftEncoder.setPosition(0);
         rightEncoder.setPosition(0);
     }
 
-    public void setConversionRates() {
+    private void resetOdometry(Pose2d pose2d) {
+        odometry.resetPosition(gyro.getRotation2d(), 0, 0, pose2d);
+    }
+
+    private void setConversionRates() {
         leftEncoder.setPositionConversionFactor(DISTANCE_PER_PULSE);
         leftEncoder.setVelocityConversionFactor(DISTANCE_PER_PULSE / SECONDS_IN_MINUTE);
         rightEncoder.setPositionConversionFactor(DISTANCE_PER_PULSE);
         rightEncoder.setVelocityConversionFactor(DISTANCE_PER_PULSE / SECONDS_IN_MINUTE);
     }
 
-    public void resetGyro() {
+    private void resetGyro() {
         gyro.reset();
+    }
+
+    @Override
+    public void configureDashboard() {
+        namespace.putData("reset encoders", new InstantCommand(this::resetEncoders).ignoringDisable(true));
+        namespace.putData("reset gyro", new InstantCommand(this::resetGyro).ignoringDisable(true));
+        namespace.putData("field2d", field2d);
+        namespace.putNumber("left neo 1 encoder value", this::getLeftPosition);
+        namespace.putNumber("right neo 1 encoder value", this::getRightPosition);
+        namespace.putNumber("gyro yaw", gyro::getYaw);
+    }
+
+    public double getLeftPosition() {
+        return leftEncoder.getPosition();
+    }
+
+    public double getRightPosition() {
+        return rightEncoder.getPosition();
     }
 
     public PIDSettings getLeftPIDSettings() {
@@ -156,14 +178,6 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
 
     public PIDSettings getAnglePIDSettings() {
         return anglePIDSettings;
-    }
-
-    public double getLeftEncoderPosition() {
-        return leftEncoder.getPosition();
-    }
-
-    public double getRightEncoderPosition() {
-        return rightEncoder.getPosition();
     }
 
     public double getLeftSpeed() {
@@ -196,15 +210,5 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
 
     public RamseteController getRamseteController() {
         return this.ramseteController;
-    }
-
-    @Override
-    public void configureDashboard() {
-        namespace.putData("reset encoders", new InstantCommand(this::resetEncoders).ignoringDisable(true));
-        namespace.putData("reset gyro", new InstantCommand(this::resetGyro).ignoringDisable(true));
-        namespace.putData("field2d", field2d);
-        namespace.putNumber("left neo 1 encoder value", this::getLeftEncoderPosition);
-        namespace.putNumber("right neo 1 encoder value", this::getRightEncoderPosition);
-        namespace.putNumber("gyro yaw", gyro::getYaw);
     }
 }
