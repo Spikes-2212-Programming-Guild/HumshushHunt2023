@@ -11,11 +11,6 @@ import org.photonvision.PhotonCamera;
 import org.photonvision.targeting.PhotonPipelineResult;
 
 public class Vision extends DashboardedSubsystem {
-//
-//    private final CameraServer cameraServer;
-//    private final UsbCamera usbCamera;
-//    private final CvSink cvSink;
-//    private final CvSource cvSource;
 
     public static final String PHOTON_VISION_CAMERA_NAME = "photoncamera";
 
