@@ -10,11 +10,14 @@ import com.spikes2212.control.TrapezoidProfileSettings;
 import com.spikes2212.dashboard.Namespace;
 import frc.robot.RobotMap;
 
+import java.beans.Encoder;
 import java.util.function.Supplier;
 
 public class ArmSecondJoint extends SparkMaxGenericSubsystem {
 
     public static final int DISTANCE_PER_PULSE = -1;
+
+    public static final int SECONDS_IN_MINUTE = 60;
 
     private static ArmSecondJoint instance;
 
@@ -45,20 +48,36 @@ public class ArmSecondJoint extends SparkMaxGenericSubsystem {
         if (instance == null) {
             instance = new ArmSecondJoint(
                     "arm second joint",
-                    new CANSparkMax(RobotMap.CAN.ARM_SECOND_JOINT_SPARKMAX, CANSparkMaxLowLevel.MotorType.kBrushless)
+                    new CANSparkMax(RobotMap.CAN.ARM_SECOND_JOINT_SPARKMAX_1, CANSparkMaxLowLevel.MotorType.kBrushless),
+                    new CANSparkMax(RobotMap.CAN.ARM_SECOND_JOINT_SPARKMAX_2, CANSparkMaxLowLevel.MotorType.kBrushless)
             );
             return instance;
         }
         return instance;
     }
 
-    private ArmSecondJoint(String namespaceName, CANSparkMax sparkMax) {
-        super(namespaceName, sparkMax);
-        this.encoder = sparkMax.getAlternateEncoder(DISTANCE_PER_PULSE);
+    private ArmSecondJoint(String namespaceName, CANSparkMax master, CANSparkMax slave) {
+        super(namespaceName, master, slave);
+        this.encoder = master.getEncoder();
+        encoder.setPositionConversionFactor(DISTANCE_PER_PULSE);
+        slave.follow(master, false);
         this.PIDSettings = new PIDSettings(kP, kI, kD, waitTime, tolerance);
         this.feedForwardSettings = new FeedForwardSettings(kS, kV, kA, kG);
         this.trapezoidProfileSettings = new TrapezoidProfileSettings(trapezoidVelocity, trapezoidAcceleration);
         configureDashboard();
+    }
+
+    @Override
+    public void configureLoop(PIDSettings PIDSettings, FeedForwardSettings feedForwardSettings,
+                              TrapezoidProfileSettings trapezoidProfileSettings) {
+        super.configureLoop(PIDSettings, feedForwardSettings, trapezoidProfileSettings);
+        this.setConversionRates();
+    }
+
+
+    public void setConversionRates() {
+        encoder.setPositionConversionFactor(DISTANCE_PER_PULSE);
+        encoder.setVelocityConversionFactor(DISTANCE_PER_PULSE / SECONDS_IN_MINUTE);
     }
 
     public PIDSettings getPIDSettings() {

@@ -17,6 +17,8 @@ public class ArmFirstJoint extends SparkMaxGenericSubsystem {
 
     public static final int DISTANCE_PER_PULSE = -1;
 
+    public static final int SECONDS_IN_MINUTE = 60;
+
     private static ArmFirstJoint instance;
 
     private final RelativeEncoder encoder;
@@ -62,6 +64,19 @@ public class ArmFirstJoint extends SparkMaxGenericSubsystem {
         this.feedForwardSettings = new FeedForwardSettings(kS, kV, kA, kG);
         this.trapezoidProfileSettings = new TrapezoidProfileSettings(trapezoidVelocity, trapezoidAcceleration);
         configureDashboard();
+    }
+
+    @Override
+    public void configureLoop(PIDSettings PIDSettings, FeedForwardSettings feedForwardSettings,
+                              TrapezoidProfileSettings trapezoidProfileSettings) {
+        super.configureLoop(PIDSettings, feedForwardSettings, trapezoidProfileSettings);
+        this.setConversionRates();
+    }
+
+
+    public void setConversionRates() {
+        encoder.setPositionConversionFactor(DISTANCE_PER_PULSE);
+        encoder.setVelocityConversionFactor(DISTANCE_PER_PULSE / SECONDS_IN_MINUTE);
     }
 
     public PIDSettings getPIDSettings() {
