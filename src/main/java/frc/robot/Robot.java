@@ -4,9 +4,6 @@
 
 package frc.robot;
 
-import edu.wpi.first.cameraserver.CameraServer;
-import edu.wpi.first.cscore.CvSink;
-import edu.wpi.first.cscore.CvSource;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
@@ -14,6 +11,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void robotInit() {
+
   }
 
   @Override
