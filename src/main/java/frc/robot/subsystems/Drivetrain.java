@@ -146,6 +146,10 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
         gyro.reset();
     }
 
+    public double getNavxPitch() {
+        return gyro.getPitch();
+    }
+
     public PIDSettings getLeftPIDSettings() {
         return leftPIDSettings;
     }
