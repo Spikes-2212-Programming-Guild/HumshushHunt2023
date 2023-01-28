@@ -26,7 +26,7 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
     public static final double INCHES_TO_METERS = 0.0254;
     public static final double DISTANCE_PER_PULSE = WHEEL_DIAMETER_IN_INCHES * GEAR_RATIO * Math.PI * INCHES_TO_METERS;
 
-    public static final double TRACK_WIDTH = -1;
+    public static final double TRACK_WIDTH = 0.57;
 
     public static final int SECONDS_IN_MINUTE = 60;
 
