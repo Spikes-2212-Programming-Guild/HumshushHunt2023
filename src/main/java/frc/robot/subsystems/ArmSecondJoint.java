@@ -72,10 +72,18 @@ public class ArmSecondJoint extends SparkMaxGenericSubsystem {
         this.setConversionFactors();
     }
 
-
     public void setConversionFactors() {
         encoder.setPositionConversionFactor(DISTANCE_PER_PULSE);
         encoder.setVelocityConversionFactor(DISTANCE_PER_PULSE / SECONDS_IN_MINUTE);
+    }
+
+    public double getPosition() {
+        return encoder.getPosition();
+    }
+
+    @Override
+    public void configureDashboard() {
+        namespace.putNumber("encoder position", this::getPosition);
     }
 
     public PIDSettings getPIDSettings() {
@@ -88,14 +96,5 @@ public class ArmSecondJoint extends SparkMaxGenericSubsystem {
 
     public TrapezoidProfileSettings getTrapezoidProfileSettings() {
         return this.trapezoidProfileSettings;
-    }
-
-    public double getEncoderPosition() {
-        return encoder.getPosition();
-    }
-
-    @Override
-    public void configureDashboard() {
-        namespace.putNumber("encoder position", this::getEncoderPosition);
     }
 }

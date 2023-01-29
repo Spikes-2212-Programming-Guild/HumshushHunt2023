@@ -18,17 +18,17 @@ public class ArmFirstJoint extends SparkMaxGenericSubsystem {
 
     public static final int SECONDS_IN_MINUTE = 60;
 
+    private final RelativeEncoder encoder; // @todo check encoder type
+
     private static ArmFirstJoint instance;
 
-    private final RelativeEncoder encoder;
-
-    private final Namespace PIDNamespace = namespace.addChild("pid");
-    private final Supplier<Double> kP = PIDNamespace.addConstantDouble("kP", 0);
-    private final Supplier<Double> kI = PIDNamespace.addConstantDouble("kI", 0);
-    private final Supplier<Double> kD = PIDNamespace.addConstantDouble("kD", 0);
-    private final Supplier<Double> waitTime = PIDNamespace.addConstantDouble("wait time", 0);
-    private final Supplier<Double> tolerance = PIDNamespace.addConstantDouble("tolerance", 0);
-    private final PIDSettings PIDSettings;
+    private final Namespace pidNamespace = namespace.addChild("pid");
+    private final Supplier<Double> kP = pidNamespace.addConstantDouble("kP", 0);
+    private final Supplier<Double> kI = pidNamespace.addConstantDouble("kI", 0);
+    private final Supplier<Double> kD = pidNamespace.addConstantDouble("kD", 0);
+    private final Supplier<Double> waitTime = pidNamespace.addConstantDouble("wait time", 0);
+    private final Supplier<Double> tolerance = pidNamespace.addConstantDouble("tolerance", 0);
+    private final PIDSettings pidSettings;
 
     private final Namespace feedForwardNamespace = namespace.addChild("feed forward");
     private final Supplier<Double> kS = feedForwardNamespace.addConstantDouble("kS", 0);
@@ -59,10 +59,10 @@ public class ArmFirstJoint extends SparkMaxGenericSubsystem {
 
     private ArmFirstJoint(String namespaceName, CANSparkMax master, CANSparkMax slave1, CANSparkMax slave2) {
         super(namespaceName, master, slave1, slave2);
-        this.encoder = master.getEncoder();
+        this.encoder = master.getAlternateEncoder(RobotMap.CAN.ARM_FIRST_JOINT_SPARKMAX_SLAVE_1);
         setConversionFactors();
         slave2.follow(master, true);
-        this.PIDSettings = new PIDSettings(kP, kI, kD, waitTime, tolerance);
+        this.pidSettings = new PIDSettings(kP, kI, kD, waitTime, tolerance);
         this.feedForwardSettings = new FeedForwardSettings(kS, kV, kA, kG);
         this.trapezoidProfileSettings = new TrapezoidProfileSettings(trapezoidVelocity, trapezoidAcceleration);
         configureDashboard();
@@ -80,8 +80,17 @@ public class ArmFirstJoint extends SparkMaxGenericSubsystem {
         encoder.setVelocityConversionFactor(DISTANCE_PER_PULSE / SECONDS_IN_MINUTE);
     }
 
+    public double getPosition() {
+        return encoder.getPosition();
+    }
+
+    @Override
+    public void configureDashboard() {
+        namespace.putNumber("encoder position", this::getPosition);
+    }
+
     public PIDSettings getPIDSettings() {
-        return this.PIDSettings;
+        return this.pidSettings;
     }
 
     public FeedForwardSettings getFeedForwardSettings() {
@@ -90,14 +99,5 @@ public class ArmFirstJoint extends SparkMaxGenericSubsystem {
 
     public TrapezoidProfileSettings getTrapezoidProfileSettings() {
         return this.trapezoidProfileSettings;
-    }
-
-    public double getEncoderPosition() {
-        return encoder.getPosition();
-    }
-
-    @Override
-    public void configureDashboard() {
-        namespace.putNumber("encoder position", this::getEncoderPosition);
     }
 }
