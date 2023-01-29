@@ -37,7 +37,9 @@ public class Climb extends CommandBase {
         } else {
             if (startedClimbing) {
                 if (Math.abs(pitch) <= tolerance.get()) {
-                    climbOnCenter().schedule();
+                    new DriveTankWithPID(drivetrain, drivetrain.getLeftPIDSettings(), drivetrain.getRightPIDSettings(),
+                            setpoint.get(), setpoint.get(),
+                            drivetrain::getLeftEncoderPosition, drivetrain::getRightEncoderPosition);
                 } else {
                     if ((int) Math.signum(pitch) == 1) {
                         drivetrain.arcadeDrive(speed.get(), 0);
@@ -47,17 +49,5 @@ public class Climb extends CommandBase {
                 }
             }
         }
-    }
-
-    public DriveTankWithPID climbOnCenter() {
-        return new DriveTankWithPID(drivetrain, drivetrain.getLeftPIDSettings(), drivetrain.getRightPIDSettings(),
-                setpoint.get(), setpoint.get(),
-                drivetrain::getLeftEncoderPosition, drivetrain::getRightEncoderPosition) {
-            @Override
-            public void initialize() {
-                Drivetrain drivetrain1 = (Drivetrain) drivetrain;
-                drivetrain1.resetEncoders();
-            }
-        };
     }
 }
