@@ -30,19 +30,20 @@ public class Climb extends CommandBase {
 
     @Override
     public void execute() {
-        double pitch = drivetrain.getNavxPitch();
+        double pitch = drivetrain.getPitch();
         if (!startedClimbing) {
             drivetrain.arcadeDrive(speed.get(), 0);
             startedClimbing = Math.abs(pitch) > tolerance.get();
-        }
-        if (startedClimbing) {
-            if (Math.abs(pitch) <= tolerance.get()) {
-                climbOnCenter().schedule();
-            } else {
-                if ((int) Math.signum(pitch) == 1) {
-                    drivetrain.arcadeDrive(speed.get(), 0);
+        } else {
+            if (startedClimbing) {
+                if (Math.abs(pitch) <= tolerance.get()) {
+                    climbOnCenter().schedule();
                 } else {
-                    drivetrain.arcadeDrive(-speed.get(), 0);
+                    if ((int) Math.signum(pitch) == 1) {
+                        drivetrain.arcadeDrive(speed.get(), 0);
+                    } else {
+                        drivetrain.arcadeDrive(-speed.get(), 0);
+                    }
                 }
             }
         }
