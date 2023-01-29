@@ -10,7 +10,7 @@ public class CenterOnRRT extends DriveArcadeWithPID {
     private final int pipeline;
 
     public CenterOnRRT(Drivetrain drivetrain, Vision vision, int pipeline) {
-        super(drivetrain, () -> vision.getLimelightYaw(), 0, 0, drivetrain.getAnglePIDSettings());
+        super(drivetrain, vision::getLimelightYaw, 0, 0, drivetrain.getAnglePIDSettings());
         this.vision = vision;
         this.pipeline = pipeline;
     }
