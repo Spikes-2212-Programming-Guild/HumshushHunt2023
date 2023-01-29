@@ -10,7 +10,6 @@ import com.spikes2212.control.TrapezoidProfileSettings;
 import com.spikes2212.dashboard.Namespace;
 import frc.robot.RobotMap;
 
-import java.beans.Encoder;
 import java.util.function.Supplier;
 
 public class ArmSecondJoint extends SparkMaxGenericSubsystem {
@@ -48,8 +47,8 @@ public class ArmSecondJoint extends SparkMaxGenericSubsystem {
         if (instance == null) {
             instance = new ArmSecondJoint(
                     "arm second joint",
-                    new CANSparkMax(RobotMap.CAN.ARM_SECOND_JOINT_SPARKMAX_1, CANSparkMaxLowLevel.MotorType.kBrushless),
-                    new CANSparkMax(RobotMap.CAN.ARM_SECOND_JOINT_SPARKMAX_2, CANSparkMaxLowLevel.MotorType.kBrushless)
+                    new CANSparkMax(RobotMap.CAN.ARM_SECOND_JOINT_SPARKMAX_MASTER, CANSparkMaxLowLevel.MotorType.kBrushless),
+                    new CANSparkMax(RobotMap.CAN.ARM_SECOND_JOINT_SPARKMAX_SLAVE, CANSparkMaxLowLevel.MotorType.kBrushless)
             );
             return instance;
         }

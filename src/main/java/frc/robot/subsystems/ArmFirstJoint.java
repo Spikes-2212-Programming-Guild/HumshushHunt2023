@@ -46,9 +46,12 @@ public class ArmFirstJoint extends SparkMaxGenericSubsystem {
     public static ArmFirstJoint getInstance() {
         if (instance == null) {
             instance = new ArmFirstJoint("arm first joint",
-                    new CANSparkMax(RobotMap.CAN.ARM_FIRST_JOINT_SPARKMAX_1, CANSparkMaxLowLevel.MotorType.kBrushless),
-                    new CANSparkMax(RobotMap.CAN.ARM_FIRST_JOINT_SPARKMAX_2, CANSparkMaxLowLevel.MotorType.kBrushless),
-                    new CANSparkMax(RobotMap.CAN.ARM_FIRST_JOINT_SPARKMAX_3, CANSparkMaxLowLevel.MotorType.kBrushless)
+                    new CANSparkMax(RobotMap.CAN.ARM_FIRST_JOINT_SPARKMAX_MASTER,
+                            CANSparkMaxLowLevel.MotorType.kBrushless),
+                    new CANSparkMax(RobotMap.CAN.ARM_FIRST_JOINT_SPARKMAX_SLAVE_1,
+                            CANSparkMaxLowLevel.MotorType.kBrushless),
+                    new CANSparkMax(RobotMap.CAN.ARM_FIRST_JOINT_SPARKMAX_SLAVE_2,
+                            CANSparkMaxLowLevel.MotorType.kBrushless)
             );
         }
         return instance;
