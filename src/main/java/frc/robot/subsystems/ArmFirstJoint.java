@@ -60,7 +60,7 @@ public class ArmFirstJoint extends SparkMaxGenericSubsystem {
     private ArmFirstJoint(String namespaceName, CANSparkMax master, CANSparkMax slave1, CANSparkMax slave2) {
         super(namespaceName, master, slave1, slave2);
         this.encoder = master.getEncoder();
-        encoder.setPositionConversionFactor(DISTANCE_PER_PULSE);
+        setConversionFactors();
         slave2.follow(master, true);
         this.PIDSettings = new PIDSettings(kP, kI, kD, waitTime, tolerance);
         this.feedForwardSettings = new FeedForwardSettings(kS, kV, kA, kG);
@@ -72,10 +72,10 @@ public class ArmFirstJoint extends SparkMaxGenericSubsystem {
     public void configureLoop(PIDSettings PIDSettings, FeedForwardSettings feedForwardSettings,
                               TrapezoidProfileSettings trapezoidProfileSettings) {
         super.configureLoop(PIDSettings, feedForwardSettings, trapezoidProfileSettings);
-        this.setConversionRates();
+        this.setConversionFactors();
     }
 
-    public void setConversionRates() {
+    public void setConversionFactors() {
         encoder.setPositionConversionFactor(DISTANCE_PER_PULSE);
         encoder.setVelocityConversionFactor(DISTANCE_PER_PULSE / SECONDS_IN_MINUTE);
     }
