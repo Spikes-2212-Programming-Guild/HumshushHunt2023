@@ -1,6 +1,5 @@
 package frc.robot.commands;
 
-import com.spikes2212.command.drivetrains.commands.DriveArcadeWithPID;
 import com.spikes2212.command.drivetrains.commands.DriveTankWithPID;
 import com.spikes2212.dashboard.RootNamespace;
 import edu.wpi.first.wpilibj2.command.CommandBase;
@@ -40,13 +39,10 @@ public class Climb extends CommandBase {
             if (Math.abs(pitch) <= tolerance.get()) {
                 climbOnCenter().schedule();
             } else {
-                switch ((int) Math.signum(pitch)) {
-                    case 1:
-                        drivetrain.arcadeDrive(speed.get(), 0);
-                        break;
-                    case -1:
-                        drivetrain.arcadeDrive(-speed.get(), 0);
-                        break;
+                if ((int) Math.signum(pitch) == 1) {
+                    drivetrain.arcadeDrive(speed.get(), 0);
+                } else {
+                    drivetrain.arcadeDrive(-speed.get(), 0);
                 }
             }
         }
