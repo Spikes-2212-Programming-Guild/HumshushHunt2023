@@ -101,7 +101,7 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
         this.gyro = new AHRS();
         this.leftEncoder = leftMaster.getEncoder();
         this.rightEncoder = rightMaster.getEncoder();
-        this.setConversionRates();
+        this.setConversionFactors();
         this.leftPIDSettings = new PIDSettings(kPLeft, kILeft, kDLeft, waitTimeLeft, toleranceLeft);
         this.rightPIDSettings = new PIDSettings(kPRight, kIRight, kDRight, waitTimeRight, toleranceRight);
         this.anglePIDSettings = new PIDSettings(kPAngle, kIAngle, kDAngle, waitTimeAngle, toleranceAngle);
@@ -120,7 +120,7 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
                               FeedForwardSettings feedForwardSettings,
                               TrapezoidProfileSettings trapezoidProfileSettings) {
         super.configureLoop(leftPIDSettings, rightPIDSettings, feedForwardSettings, trapezoidProfileSettings);
-        this.setConversionRates();
+        this.setConversionFactors();
     }
 
     @Override
@@ -139,25 +139,15 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
         odometry.resetPosition(gyro.getRotation2d(), 0, 0, pose2d);
     }
 
-    private void setConversionRates() {
-        leftEncoder.setPositionConversionFactor(DISTANCE_PER_PULSE);
-        leftEncoder.setVelocityConversionFactor(DISTANCE_PER_PULSE / SECONDS_IN_MINUTE);
-        rightEncoder.setPositionConversionFactor(DISTANCE_PER_PULSE);
-        rightEncoder.setVelocityConversionFactor(DISTANCE_PER_PULSE / SECONDS_IN_MINUTE);
-    }
-
     private void resetGyro() {
         gyro.reset();
     }
 
-    @Override
-    public void configureDashboard() {
-        namespace.putData("reset encoders", new InstantCommand(this::resetEncoders).ignoringDisable(true));
-        namespace.putData("reset gyro", new InstantCommand(this::resetGyro).ignoringDisable(true));
-        namespace.putData("field2d", field2d);
-        namespace.putNumber("left neo 1 encoder value", this::getLeftPosition);
-        namespace.putNumber("right neo 1 encoder value", this::getRightPosition);
-        namespace.putNumber("gyro yaw", gyro::getYaw);
+    private void setConversionFactors() {
+        leftEncoder.setPositionConversionFactor(DISTANCE_PER_PULSE);
+        leftEncoder.setVelocityConversionFactor(DISTANCE_PER_PULSE / SECONDS_IN_MINUTE);
+        rightEncoder.setPositionConversionFactor(DISTANCE_PER_PULSE);
+        rightEncoder.setVelocityConversionFactor(DISTANCE_PER_PULSE / SECONDS_IN_MINUTE);
     }
 
     public double getLeftPosition() {
@@ -210,5 +200,15 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
 
     public RamseteController getRamseteController() {
         return this.ramseteController;
+    }
+
+    @Override
+    public void configureDashboard() {
+        namespace.putData("reset encoders", new InstantCommand(this::resetEncoders).ignoringDisable(true));
+        namespace.putData("reset gyro", new InstantCommand(this::resetGyro).ignoringDisable(true));
+        namespace.putData("field2d", field2d);
+        namespace.putNumber("left neo 1 encoder value", this::getLeftPosition);
+        namespace.putNumber("right neo 1 encoder value", this::getRightPosition);
+        namespace.putNumber("gyro yaw", gyro::getYaw);
     }
 }
