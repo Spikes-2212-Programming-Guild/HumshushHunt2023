@@ -10,7 +10,6 @@ import com.spikes2212.control.TrapezoidProfileSettings;
 import com.spikes2212.dashboard.Namespace;
 import frc.robot.RobotMap;
 
-import java.beans.Encoder;
 import java.util.function.Supplier;
 
 public class ArmFirstJoint extends SparkMaxGenericSubsystem {
@@ -72,7 +71,6 @@ public class ArmFirstJoint extends SparkMaxGenericSubsystem {
         super.configureLoop(PIDSettings, feedForwardSettings, trapezoidProfileSettings);
         this.setConversionRates();
     }
-
 
     public void setConversionRates() {
         encoder.setPositionConversionFactor(DISTANCE_PER_PULSE);
