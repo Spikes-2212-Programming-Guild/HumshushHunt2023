@@ -3,16 +3,13 @@ package frc.robot.subsystems;
 import com.spikes2212.command.DashboardedSubsystem;
 import com.spikes2212.util.Limelight;
 import edu.wpi.first.cameraserver.CameraServer;
-import edu.wpi.first.cscore.CvSink;
-import edu.wpi.first.cscore.CvSource;
-import edu.wpi.first.cscore.UsbCamera;
 import edu.wpi.first.math.geometry.Pose3d;
 import org.photonvision.PhotonCamera;
 import org.photonvision.targeting.PhotonPipelineResult;
 
 public class Vision extends DashboardedSubsystem {
 
-    public static final String PHOTON_VISION_CAMERA_NAME = "photoncamera";
+    public static final String PHOTON_VISION_CAMERA_NAME = "photonvision";
 
     public static final int PIPELINE_CONE_INDEX = 0;
     public static final int PIPELINE_CUBE_INDEX = 1;
@@ -56,12 +53,12 @@ public class Vision extends DashboardedSubsystem {
         return limelight.getID();
     }
 
-    public void changePhotonVisionMode(boolean mode) {
-        photonCamera.setDriverMode(mode);
-    }
-
     public double getLimelightYaw() {
         return limelight.getHorizontalOffsetFromTargetInDegrees();
+    }
+
+    public void changePhotonVisionMode(boolean mode) {
+        photonCamera.setDriverMode(mode);
     }
 
     public boolean limelightHasTarget() {
