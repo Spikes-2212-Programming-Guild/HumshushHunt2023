@@ -8,19 +8,22 @@ import com.spikes2212.control.FeedForwardSettings;
 import com.spikes2212.control.PIDSettings;
 import com.spikes2212.control.TrapezoidProfileSettings;
 import com.spikes2212.dashboard.Namespace;
+import edu.wpi.first.wpilibj.DutyCycleEncoder;
 import frc.robot.RobotMap;
 
 import java.util.function.Supplier;
 
 public class ArmFirstJoint extends SparkMaxGenericSubsystem {
 
-    public static final int DISTANCE_PER_PULSE = -1;
+    public static final double DISTANCE_PER_PULSE = -1;
 
     public static final int SECONDS_IN_MINUTE = 60;
 
-    private final RelativeEncoder encoder; // @todo check encoder type
-
     private static ArmFirstJoint instance;
+    public final Supplier<Double> forwardSpeed = namespace.addConstantDouble("first joint forward speed", 0.1);
+    public final Supplier<Double> backwardsSpeed = namespace.addConstantDouble("first joint backwards speed", -0.1);
+    private final RelativeEncoder sparkmaxEncoder;
+    private final DutyCycleEncoder absoluteEncoder;
 
     private final Namespace pidNamespace = namespace.addChild("pid");
     private final Supplier<Double> kP = pidNamespace.addConstantDouble("kP", 0);
@@ -43,50 +46,46 @@ public class ArmFirstJoint extends SparkMaxGenericSubsystem {
             ("acceleration", 0);
     private final TrapezoidProfileSettings trapezoidProfileSettings;
 
+    private ArmFirstJoint(String namespaceName, CANSparkMax master, CANSparkMax slave1) {
+        super(namespaceName, master, slave1);
+        sparkmaxEncoder = master.getAlternateEncoder(RobotMap.CAN.ARM_FIRST_JOINT_SPARKMAX_SLAVE);
+        absoluteEncoder = new DutyCycleEncoder(RobotMap.DIO.ARM_FIRST_JOINT_ABSOLUTE_ENCODER);
+        setConversionFactors();
+        slave1.follow(master, true);
+        pidSettings = new PIDSettings(kP, kI, kD, waitTime, tolerance);
+        feedForwardSettings = new FeedForwardSettings(kS, kV, kA, kG);
+        trapezoidProfileSettings = new TrapezoidProfileSettings(trapezoidVelocity, trapezoidAcceleration);
+        configureDashboard();
+    }
+
     public static ArmFirstJoint getInstance() {
         if (instance == null) {
             instance = new ArmFirstJoint("arm first joint",
                     new CANSparkMax(RobotMap.CAN.ARM_FIRST_JOINT_SPARKMAX_MASTER,
                             CANSparkMaxLowLevel.MotorType.kBrushless),
-                    new CANSparkMax(RobotMap.CAN.ARM_FIRST_JOINT_SPARKMAX_SLAVE_1,
-                            CANSparkMaxLowLevel.MotorType.kBrushless),
-                    new CANSparkMax(RobotMap.CAN.ARM_FIRST_JOINT_SPARKMAX_SLAVE_2,
+                    new CANSparkMax(RobotMap.CAN.ARM_FIRST_JOINT_SPARKMAX_SLAVE,
                             CANSparkMaxLowLevel.MotorType.kBrushless)
             );
         }
         return instance;
     }
 
-    private ArmFirstJoint(String namespaceName, CANSparkMax master, CANSparkMax slave1, CANSparkMax slave2) {
-        super(namespaceName, master, slave1, slave2);
-        this.encoder = master.getAlternateEncoder(RobotMap.CAN.ARM_FIRST_JOINT_SPARKMAX_SLAVE_1);
-        setConversionFactors();
-        slave2.follow(master, true);
-        this.pidSettings = new PIDSettings(kP, kI, kD, waitTime, tolerance);
-        this.feedForwardSettings = new FeedForwardSettings(kS, kV, kA, kG);
-        this.trapezoidProfileSettings = new TrapezoidProfileSettings(trapezoidVelocity, trapezoidAcceleration);
-        configureDashboard();
-    }
-
     @Override
     public void configureLoop(PIDSettings PIDSettings, FeedForwardSettings feedForwardSettings,
                               TrapezoidProfileSettings trapezoidProfileSettings) {
         super.configureLoop(PIDSettings, feedForwardSettings, trapezoidProfileSettings);
-        this.setConversionFactors();
+        setConversionFactors();
     }
 
     public void setConversionFactors() {
-        encoder.setPositionConversionFactor(DISTANCE_PER_PULSE);
-        encoder.setVelocityConversionFactor(DISTANCE_PER_PULSE / SECONDS_IN_MINUTE);
+        sparkmaxEncoder.setPositionConversionFactor(DISTANCE_PER_PULSE);
+        sparkmaxEncoder.setVelocityConversionFactor(DISTANCE_PER_PULSE / SECONDS_IN_MINUTE);
+        absoluteEncoder.setDistancePerRotation(DISTANCE_PER_PULSE);
+        sparkmaxEncoder.setPosition(absoluteEncoder.getDistance());
     }
 
     public double getPosition() {
-        return encoder.getPosition();
-    }
-
-    @Override
-    public void configureDashboard() {
-        namespace.putNumber("encoder position", this::getPosition);
+        return sparkmaxEncoder.getPosition();
     }
 
     public PIDSettings getPIDSettings() {
@@ -99,5 +98,10 @@ public class ArmFirstJoint extends SparkMaxGenericSubsystem {
 
     public TrapezoidProfileSettings getTrapezoidProfileSettings() {
         return this.trapezoidProfileSettings;
+    }
+
+    @Override
+    public void configureDashboard() {
+        namespace.putNumber("encoder position", this::getPosition);
     }
 }
