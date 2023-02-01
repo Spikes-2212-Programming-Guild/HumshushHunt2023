@@ -14,13 +14,13 @@ import java.util.function.Supplier;
 
 public class ArmFirstJoint extends SparkMaxGenericSubsystem {
 
+    private static ArmFirstJoint instance;
+
     public static final int DISTANCE_PER_PULSE = -1;
 
     public static final int SECONDS_IN_MINUTE = 60;
 
     private final RelativeEncoder encoder; // @todo check encoder type
-
-    private static ArmFirstJoint instance;
 
     private final Namespace pidNamespace = namespace.addChild("pid");
     private final Supplier<Double> kP = pidNamespace.addConstantDouble("kP", 0);
@@ -69,9 +69,9 @@ public class ArmFirstJoint extends SparkMaxGenericSubsystem {
     }
 
     @Override
-    public void configureLoop(PIDSettings PIDSettings, FeedForwardSettings feedForwardSettings,
+    public void configureLoop(PIDSettings pidSettings, FeedForwardSettings feedForwardSettings,
                               TrapezoidProfileSettings trapezoidProfileSettings) {
-        super.configureLoop(PIDSettings, feedForwardSettings, trapezoidProfileSettings);
+        super.configureLoop(pidSettings, feedForwardSettings, trapezoidProfileSettings);
         this.setConversionFactors();
     }
 
@@ -84,11 +84,6 @@ public class ArmFirstJoint extends SparkMaxGenericSubsystem {
         return encoder.getPosition();
     }
 
-    @Override
-    public void configureDashboard() {
-        namespace.putNumber("encoder position", this::getPosition);
-    }
-
     public PIDSettings getPIDSettings() {
         return this.pidSettings;
     }
@@ -99,5 +94,10 @@ public class ArmFirstJoint extends SparkMaxGenericSubsystem {
 
     public TrapezoidProfileSettings getTrapezoidProfileSettings() {
         return this.trapezoidProfileSettings;
+    }
+
+    @Override
+    public void configureDashboard() {
+        namespace.putNumber("encoder position", this::getPosition);
     }
 }

@@ -14,21 +14,21 @@ import java.util.function.Supplier;
 
 public class ArmSecondJoint extends SparkMaxGenericSubsystem {
 
+    private static ArmSecondJoint instance;
+
     public static final int DISTANCE_PER_PULSE = -1;
 
     public static final int SECONDS_IN_MINUTE = 60;
 
-    private static ArmSecondJoint instance;
-
     private final RelativeEncoder encoder;
 
-    private final Namespace PIDNamespace = namespace.addChild("pid");
-    private final Supplier<Double> kP = PIDNamespace.addConstantDouble("kP", 0);
-    private final Supplier<Double> kI = PIDNamespace.addConstantDouble("kI", 0);
-    private final Supplier<Double> kD = PIDNamespace.addConstantDouble("kD", 0);
-    private final Supplier<Double> waitTime = PIDNamespace.addConstantDouble("wait time", 0);
-    private final Supplier<Double> tolerance = PIDNamespace.addConstantDouble("tolerance", 0);
-    private final PIDSettings PIDSettings;
+    private final Namespace pidNamespace = namespace.addChild("pid");
+    private final Supplier<Double> kP = pidNamespace.addConstantDouble("kP", 0);
+    private final Supplier<Double> kI = pidNamespace.addConstantDouble("kI", 0);
+    private final Supplier<Double> kD = pidNamespace.addConstantDouble("kD", 0);
+    private final Supplier<Double> waitTime = pidNamespace.addConstantDouble("wait time", 0);
+    private final Supplier<Double> tolerance = pidNamespace.addConstantDouble("tolerance", 0);
+    private final PIDSettings pidSettings;
 
     private final Namespace feedForwardNamespace = namespace.addChild("feed forward");
     private final Supplier<Double> kS = feedForwardNamespace.addConstantDouble("kS", 0);
@@ -59,16 +59,16 @@ public class ArmSecondJoint extends SparkMaxGenericSubsystem {
         super(namespaceName, master, slave);
         this.encoder = master.getEncoder();
         setConversionFactors();
-        this.PIDSettings = new PIDSettings(kP, kI, kD, waitTime, tolerance);
+        this.pidSettings = new PIDSettings(kP, kI, kD, waitTime, tolerance);
         this.feedForwardSettings = new FeedForwardSettings(kS, kV, kA, kG);
         this.trapezoidProfileSettings = new TrapezoidProfileSettings(trapezoidVelocity, trapezoidAcceleration);
         configureDashboard();
     }
 
     @Override
-    public void configureLoop(PIDSettings PIDSettings, FeedForwardSettings feedForwardSettings,
+    public void configureLoop(PIDSettings pidSettings, FeedForwardSettings feedForwardSettings,
                               TrapezoidProfileSettings trapezoidProfileSettings) {
-        super.configureLoop(PIDSettings, feedForwardSettings, trapezoidProfileSettings);
+        super.configureLoop(pidSettings, feedForwardSettings, trapezoidProfileSettings);
         this.setConversionFactors();
     }
 
@@ -81,13 +81,8 @@ public class ArmSecondJoint extends SparkMaxGenericSubsystem {
         return encoder.getPosition();
     }
 
-    @Override
-    public void configureDashboard() {
-        namespace.putNumber("encoder position", this::getPosition);
-    }
-
     public PIDSettings getPIDSettings() {
-        return this.PIDSettings;
+        return this.pidSettings;
     }
 
     public FeedForwardSettings getFeedForwardSettings() {
@@ -96,5 +91,10 @@ public class ArmSecondJoint extends SparkMaxGenericSubsystem {
 
     public TrapezoidProfileSettings getTrapezoidProfileSettings() {
         return this.trapezoidProfileSettings;
+    }
+
+    @Override
+    public void configureDashboard() {
+        namespace.putNumber("encoder position", this::getPosition);
     }
 }
