@@ -20,10 +20,12 @@ public class ArmSecondJoint extends SparkMaxGenericSubsystem {
     public static final int SECONDS_IN_MINUTE = 60;
 
     private static ArmSecondJoint instance;
-    public final Supplier<Double> forwardSpeed = namespace.addConstantDouble("second joint forward speed", 0.1);
-    public final Supplier<Double> backwardsSpeed = namespace.addConstantDouble("second joint backwards speed", -0.1);
+
     private final DutyCycleEncoder absoluteEncoder;
     private final RelativeEncoder sparkMaxEncoder;
+
+    public final Supplier<Double> forwardSpeed = namespace.addConstantDouble("second joint forward speed", 0.1);
+    public final Supplier<Double> backwardsSpeed = namespace.addConstantDouble("second joint backwards speed", -0.1);
 
     private final Namespace PIDNamespace = namespace.addChild("pid");
     private final Supplier<Double> kP = PIDNamespace.addConstantDouble("kP", 0);
@@ -31,7 +33,7 @@ public class ArmSecondJoint extends SparkMaxGenericSubsystem {
     private final Supplier<Double> kD = PIDNamespace.addConstantDouble("kD", 0);
     private final Supplier<Double> waitTime = PIDNamespace.addConstantDouble("wait time", 0);
     private final Supplier<Double> tolerance = PIDNamespace.addConstantDouble("tolerance", 0);
-    private final PIDSettings PIDSettings;
+    private final PIDSettings pidSettings;
 
     private final Namespace feedForwardNamespace = namespace.addChild("feed forward");
     private final Supplier<Double> kS = feedForwardNamespace.addConstantDouble("kS", 0);
@@ -51,7 +53,7 @@ public class ArmSecondJoint extends SparkMaxGenericSubsystem {
         sparkMaxEncoder = master.getEncoder();
         absoluteEncoder = new DutyCycleEncoder(RobotMap.DIO.ARM_SECOND_JOINT_ABSOLUTE_ENCODER);
         setConversionFactors();
-        PIDSettings = new PIDSettings(kP, kI, kD, waitTime, tolerance);
+        pidSettings = new PIDSettings(kP, kI, kD, waitTime, tolerance);
         feedForwardSettings = new FeedForwardSettings(kS, kV, kA, kG);
         trapezoidProfileSettings = new TrapezoidProfileSettings(trapezoidVelocity, trapezoidAcceleration);
         configureDashboard();
@@ -87,7 +89,7 @@ public class ArmSecondJoint extends SparkMaxGenericSubsystem {
     }
 
     public PIDSettings getPIDSettings() {
-        return this.PIDSettings;
+        return this.pidSettings;
     }
 
     public FeedForwardSettings getFeedForwardSettings() {
