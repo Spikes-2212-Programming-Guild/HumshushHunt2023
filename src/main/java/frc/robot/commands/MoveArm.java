@@ -10,31 +10,23 @@ public class MoveArm extends ParallelCommandGroup {
     public MoveArm(ArmFirstJoint firstJoint, ArmSecondJoint secondJoint, ArmState state) {
         super(new MoveSmartMotorControllerSubsystemTrapezically(firstJoint,
                         firstJoint.getPIDSettings(), firstJoint.getFeedForwardSettings(),
-                        state::getFirstJointPosition, firstJoint.getTrapezoidProfileSettings()),
+                        () -> state.firstJointPosition, firstJoint.getTrapezoidProfileSettings()),
                 new MoveSmartMotorControllerSubsystemTrapezically(secondJoint,
                         secondJoint.getPIDSettings(), secondJoint.getFeedForwardSettings(),
-                        state::getSecondJointPosition, secondJoint.getTrapezoidProfileSettings()));
+                        () -> state.secondJointPosition, secondJoint.getTrapezoidProfileSettings()));
     }
 
     public enum ArmState {
 
-        RESTING(0, 0), COLLECTING(0, 0), PLACING_LOW(0, 0), PLACING_MID_CUBE(0, 0), PLACING_HIGH_CUBE(0, 0),
-        PLACING_MID_CONE(0, 0), PLACING_HIGH_CONE(0, 0);
+        RESTING(0, 0), COLLECTING_FLOOR(0, 0), DOUBLE_SUBSTATION(0, 0), PLACING_LOW(0, 0), PLACING_MID_CUBE(0, 0),
+        PLACING_HIGH_CUBE(0, 0), PLACING_MID_CONE(0, 0), PLACING_HIGH_CONE(0, 0);
 
-        private final double firstJointPosition;
-        private final double secondJointPosition;
+        public final double firstJointPosition;
+        public final double secondJointPosition;
 
         ArmState(double firstJointPosition, double secondJointPosition) {
             this.firstJointPosition = firstJointPosition;
             this.secondJointPosition = secondJointPosition;
-        }
-
-        public double getFirstJointPosition() {
-            return this.firstJointPosition;
-        }
-
-        public double getSecondJointPosition() {
-            return this.secondJointPosition;
         }
     }
 }
