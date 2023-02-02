@@ -98,20 +98,19 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
                        CANSparkMax rightMaster, CANSparkMax rightSlave) {
         super(
                 namespaceName, leftMaster, leftSlave, rightMaster, rightSlave);
-        this.gyro = new AHRS();
-        this.leftEncoder = leftMaster.getEncoder();
-        this.rightEncoder = rightMaster.getEncoder();
-        this.setConversionFactors();
-        this.leftPIDSettings = new PIDSettings(kPLeft, kILeft, kDLeft, waitTimeLeft, toleranceLeft);
-        this.rightPIDSettings = new PIDSettings(kPRight, kIRight, kDRight, waitTimeRight, toleranceRight);
-        this.anglePIDSettings = new PIDSettings(kPAngle, kIAngle, kDAngle, waitTimeAngle, toleranceAngle);
-        this.trapezoidProfileSettings = new TrapezoidProfileSettings(maxVelocity, trapezoidAcceleration);
-        this.feedForwardSettings = new FeedForwardSettings(kS, kV, kA);
-        this.odometry = new DifferentialDriveOdometry(gyro.getRotation2d(),
-                getLeftPosition(), getRightPosition());
-        this.kinematics = new DifferentialDriveKinematics(TRACK_WIDTH);
-        this.ramseteController = new RamseteController();
-        this.field2d = new Field2d();
+        gyro = new AHRS();
+        leftEncoder = leftMaster.getEncoder();
+        rightEncoder = rightMaster.getEncoder();
+        setConversionFactors();
+        leftPIDSettings = new PIDSettings(kPLeft, kILeft, kDLeft, waitTimeLeft, toleranceLeft);
+        rightPIDSettings = new PIDSettings(kPRight, kIRight, kDRight, waitTimeRight, toleranceRight);
+        anglePIDSettings = new PIDSettings(kPAngle, kIAngle, kDAngle, waitTimeAngle, toleranceAngle);
+        trapezoidProfileSettings = new TrapezoidProfileSettings(maxVelocity, trapezoidAcceleration);
+        feedForwardSettings = new FeedForwardSettings(kS, kV, kA);
+        odometry = new DifferentialDriveOdometry(gyro.getRotation2d(), getLeftPosition(), getRightPosition());
+        kinematics = new DifferentialDriveKinematics(TRACK_WIDTH);
+        ramseteController = new RamseteController();
+        field2d = new Field2d();
         configureDashboard();
     }
 
@@ -120,7 +119,7 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
                               FeedForwardSettings feedForwardSettings,
                               TrapezoidProfileSettings trapezoidProfileSettings) {
         super.configureLoop(leftPIDSettings, rightPIDSettings, feedForwardSettings, trapezoidProfileSettings);
-        this.setConversionFactors();
+        setConversionFactors();
     }
 
     @Override
@@ -130,24 +129,17 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
         field2d.setRobotPose(getPose2d());
     }
 
-    private void resetEncoders() {
+    public void resetEncoders() {
         leftEncoder.setPosition(0);
         rightEncoder.setPosition(0);
     }
 
-    private void resetOdometry(Pose2d pose2d) {
-        odometry.resetPosition(gyro.getRotation2d(), 0, 0, pose2d);
+    public void resetOdometry(Pose2d pose2d) {
+        odometry.resetPosition(gyro.getRotation2d(), getLeftPosition(), getRightPosition(), pose2d);
     }
 
-    private void resetGyro() {
+    public void resetGyro() {
         gyro.reset();
-    }
-
-    private void setConversionFactors() {
-        leftEncoder.setPositionConversionFactor(DISTANCE_PER_PULSE);
-        leftEncoder.setVelocityConversionFactor(DISTANCE_PER_PULSE / SECONDS_IN_MINUTE);
-        rightEncoder.setPositionConversionFactor(DISTANCE_PER_PULSE);
-        rightEncoder.setVelocityConversionFactor(DISTANCE_PER_PULSE / SECONDS_IN_MINUTE);
     }
 
     public double getLeftPosition() {
@@ -179,27 +171,34 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
     }
 
     public Pose2d getPose2d() {
-        return this.odometry.getPoseMeters();
+        return odometry.getPoseMeters();
     }
 
     public FeedForwardSettings getFeedForwardSettings() {
-        return this.feedForwardSettings;
+        return feedForwardSettings;
     }
 
     public TrapezoidProfileSettings getTrapezoidProfileSettings() {
-        return this.trapezoidProfileSettings;
+        return trapezoidProfileSettings;
     }
 
     public DifferentialDriveOdometry getOdometry() {
-        return this.odometry;
+        return odometry;
     }
 
     public DifferentialDriveKinematics getKinematics() {
-        return this.kinematics;
+        return kinematics;
     }
 
     public RamseteController getRamseteController() {
-        return this.ramseteController;
+        return ramseteController;
+    }
+
+    private void setConversionFactors() {
+        leftEncoder.setPositionConversionFactor(DISTANCE_PER_PULSE);
+        leftEncoder.setVelocityConversionFactor(DISTANCE_PER_PULSE / SECONDS_IN_MINUTE);
+        rightEncoder.setPositionConversionFactor(DISTANCE_PER_PULSE);
+        rightEncoder.setVelocityConversionFactor(DISTANCE_PER_PULSE / SECONDS_IN_MINUTE);
     }
 
     @Override
@@ -207,8 +206,8 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
         namespace.putData("reset encoders", new InstantCommand(this::resetEncoders).ignoringDisable(true));
         namespace.putData("reset gyro", new InstantCommand(this::resetGyro).ignoringDisable(true));
         namespace.putData("field2d", field2d);
-        namespace.putNumber("left neo 1 encoder value", this::getLeftPosition);
-        namespace.putNumber("right neo 1 encoder value", this::getRightPosition);
+        namespace.putNumber("left position", this::getLeftPosition);
+        namespace.putNumber("right position", this::getRightPosition);
         namespace.putNumber("gyro yaw", gyro::getYaw);
     }
 }
