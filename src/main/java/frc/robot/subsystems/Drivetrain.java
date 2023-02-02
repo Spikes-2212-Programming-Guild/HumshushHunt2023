@@ -146,6 +146,10 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
         gyro.reset();
     }
 
+    public void resetYaw(){
+        gyro.zeroYaw(); // check if it actually resets the yaw
+    }
+
     public double getPitch() {
         return gyro.getPitch();
     }

@@ -16,7 +16,7 @@ public class Climb extends CommandBase {
     private static final Supplier<Double> preClimbTolerance = namespace.addConstantDouble("pre climb tolerance", 15);
     private static final Supplier<Double> midClimbTolerance = namespace.addConstantDouble("mid climb tolerance", 3);
     private static final Supplier<Double> yawSetpoint = namespace.addConstantDouble("yaw setpoint", 75);
-    private static final Supplier<Double> waitTime = namespace.addConstantDouble("wait time", 1.5);
+    private static final Supplier<Double> waitTime = namespace.addConstantDouble("wait time", 0.5);
 
     private final Drivetrain drivetrain;
 
@@ -32,6 +32,7 @@ public class Climb extends CommandBase {
     public void initialize() {
         startedClimbing = false;
         lastTimeNotOnTarget = Timer.getFPGATimestamp();
+        drivetrain.resetYaw();
     }
 
     @Override
