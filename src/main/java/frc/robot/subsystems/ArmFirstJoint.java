@@ -20,10 +20,12 @@ public class ArmFirstJoint extends SparkMaxGenericSubsystem {
     public static final int SECONDS_IN_MINUTE = 60;
 
     private static ArmFirstJoint instance;
+
+    private final RelativeEncoder sparkMaxEncoder;
+    private final DutyCycleEncoder absoluteEncoder;
+
     public final Supplier<Double> forwardSpeed = namespace.addConstantDouble("first joint forward speed", 0.1);
     public final Supplier<Double> backwardsSpeed = namespace.addConstantDouble("first joint backwards speed", -0.1);
-    private final RelativeEncoder sparkmaxEncoder;
-    private final DutyCycleEncoder absoluteEncoder;
 
     private final Namespace pidNamespace = namespace.addChild("pid");
     private final Supplier<Double> kP = pidNamespace.addConstantDouble("kP", 0);
@@ -48,7 +50,7 @@ public class ArmFirstJoint extends SparkMaxGenericSubsystem {
 
     private ArmFirstJoint(String namespaceName, CANSparkMax master, CANSparkMax slave1) {
         super(namespaceName, master, slave1);
-        sparkmaxEncoder = master.getAlternateEncoder(RobotMap.CAN.ARM_FIRST_JOINT_SPARKMAX_SLAVE);
+        sparkMaxEncoder = master.getAlternateEncoder(RobotMap.CAN.ARM_FIRST_JOINT_SPARKMAX_SLAVE);
         absoluteEncoder = new DutyCycleEncoder(RobotMap.DIO.ARM_FIRST_JOINT_ABSOLUTE_ENCODER);
         setConversionFactors();
         slave1.follow(master, true);
@@ -78,14 +80,14 @@ public class ArmFirstJoint extends SparkMaxGenericSubsystem {
     }
 
     public void setConversionFactors() {
-        sparkmaxEncoder.setPositionConversionFactor(DISTANCE_PER_PULSE);
-        sparkmaxEncoder.setVelocityConversionFactor(DISTANCE_PER_PULSE / SECONDS_IN_MINUTE);
+        sparkMaxEncoder.setPositionConversionFactor(DISTANCE_PER_PULSE);
+        sparkMaxEncoder.setVelocityConversionFactor(DISTANCE_PER_PULSE / SECONDS_IN_MINUTE);
         absoluteEncoder.setDistancePerRotation(DISTANCE_PER_PULSE);
-        sparkmaxEncoder.setPosition(absoluteEncoder.getDistance());
+        sparkMaxEncoder.setPosition(absoluteEncoder.getDistance());
     }
 
     public double getPosition() {
-        return sparkmaxEncoder.getPosition();
+        return sparkMaxEncoder.getPosition();
     }
 
     public PIDSettings getPIDSettings() {
