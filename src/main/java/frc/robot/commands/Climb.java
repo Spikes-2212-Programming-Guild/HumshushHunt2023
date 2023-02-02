@@ -31,7 +31,6 @@ public class Climb extends CommandBase {
     public void initialize() {
         startedClimbing = false;
         lastTimeNotOnTarget = Timer.getFPGATimestamp();
-        drivetrain.resetYaw();
     }
 
     @Override
