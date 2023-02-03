@@ -13,6 +13,7 @@ import edu.wpi.first.math.controller.RamseteController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
 import edu.wpi.first.math.kinematics.DifferentialDriveOdometry;
+import edu.wpi.first.wpilibj.SerialPort;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import frc.robot.RobotMap;
@@ -21,14 +22,14 @@ import java.util.function.Supplier;
 
 public class Drivetrain extends SparkMaxTankDrivetrain {
 
-    public static final double WHEEL_DIAMETER_IN_INCHES = 6;
-    public static final double GEAR_RATIO = 1 / 12.755;
-    public static final double INCHES_TO_METERS = 0.0254;
-    public static final double DISTANCE_PER_PULSE = WHEEL_DIAMETER_IN_INCHES * GEAR_RATIO * Math.PI * INCHES_TO_METERS;
+    private static final double WHEEL_DIAMETER_IN_INCHES = 6;
+    private static final double GEAR_RATIO = 1 / 12.755;
+    private static final double INCHES_TO_METERS = 0.0254;
+    private static final double DISTANCE_PER_PULSE = WHEEL_DIAMETER_IN_INCHES * GEAR_RATIO * Math.PI * INCHES_TO_METERS;
 
-    public static final double TRACK_WIDTH = 0.57;
+    private static final double TRACK_WIDTH = 0.57;
 
-    public static final int SECONDS_IN_MINUTE = 60;
+    private static final int SECONDS_IN_MINUTE = 60;
 
     private static Drivetrain instance;
 
@@ -89,16 +90,18 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
                     new CANSparkMax(RobotMap.CAN.DRIVETRAIN_RIGHT_SPARKMAX_MASTER,
                             CANSparkMaxLowLevel.MotorType.kBrushless),
                     new CANSparkMax(RobotMap.CAN.DRIVETRAIN_RIGHT_SPARKMAX_SLAVE,
-                            CANSparkMaxLowLevel.MotorType.kBrushless));
+                            CANSparkMaxLowLevel.MotorType.kBrushless),
+                    SerialPort.Port.kUSB,
+                    TRACK_WIDTH);
         }
         return instance;
     }
 
     private Drivetrain(String namespaceName, CANSparkMax leftMaster, CANSparkMax leftSlave,
-                       CANSparkMax rightMaster, CANSparkMax rightSlave) {
+                       CANSparkMax rightMaster, CANSparkMax rightSlave, SerialPort.Port gyroPort, double trackWidth) {
         super(
                 namespaceName, leftMaster, leftSlave, rightMaster, rightSlave);
-        gyro = new AHRS();
+        gyro = new AHRS(gyroPort);
         leftEncoder = leftMaster.getEncoder();
         rightEncoder = rightMaster.getEncoder();
         configureEncoders();
@@ -108,7 +111,7 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
         trapezoidProfileSettings = new TrapezoidProfileSettings(maxVelocity, trapezoidAcceleration);
         feedForwardSettings = new FeedForwardSettings(kS, kV, kA);
         odometry = new DifferentialDriveOdometry(gyro.getRotation2d(), getLeftPosition(), getRightPosition());
-        kinematics = new DifferentialDriveKinematics(TRACK_WIDTH);
+        kinematics = new DifferentialDriveKinematics(trackWidth);
         ramseteController = new RamseteController();
         field2d = new Field2d();
         configureDashboard();
@@ -209,11 +212,11 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
         rightEncoder.setVelocityConversionFactor(DISTANCE_PER_PULSE / SECONDS_IN_MINUTE);
     }
 
-    private double getPoseX(){
+    private double getPoseX() {
         return getPose2d().getX();
     }
 
-    private double getPoseY(){
+    private double getPoseY() {
         return getPose2d().getY();
     }
 
