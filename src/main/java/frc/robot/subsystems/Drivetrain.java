@@ -59,13 +59,13 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
     private final Supplier<Double> toleranceRight = rightPIDNamespace.addConstantDouble("tolerance", 0);
     private final PIDSettings rightPIDSettings;
 
-    private final Namespace anglePIDNamespace = namespace.addChild("angle pid");
-    private final Supplier<Double> kPAngle = anglePIDNamespace.addConstantDouble("kP", 0);
-    private final Supplier<Double> kIAngle = anglePIDNamespace.addConstantDouble("kI", 0);
-    private final Supplier<Double> kDAngle = anglePIDNamespace.addConstantDouble("kD", 0);
-    private final Supplier<Double> waitTimeAngle = anglePIDNamespace.addConstantDouble("wait time", 0);
-    private final Supplier<Double> toleranceAngle = anglePIDNamespace.addConstantDouble("tolerance", 0);
-    private final PIDSettings anglePIDSettings;
+    private final Namespace cameraPIDNamespace = namespace.addChild("camera pid");
+    private final Supplier<Double> kPCamera = cameraPIDNamespace.addConstantDouble("kP", 0);
+    private final Supplier<Double> kICamera = cameraPIDNamespace.addConstantDouble("kI", 0);
+    private final Supplier<Double> kDCamera = cameraPIDNamespace.addConstantDouble("kD", 0);
+    private final Supplier<Double> waitTimeCamera = cameraPIDNamespace.addConstantDouble("wait time", 0);
+    private final Supplier<Double> toleranceCamera = cameraPIDNamespace.addConstantDouble("tolerance", 0);
+    private final PIDSettings cameraPIDSettings;
 
     private final Namespace feedForwardNamespace = namespace.addChild("feed forward");
     private final Supplier<Double> kS = feedForwardNamespace.addConstantDouble("kS", 0);
@@ -107,7 +107,7 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
         configureEncoders();
         leftPIDSettings = new PIDSettings(kPLeft, kILeft, kDLeft, waitTimeLeft, toleranceLeft);
         rightPIDSettings = new PIDSettings(kPRight, kIRight, kDRight, waitTimeRight, toleranceRight);
-        anglePIDSettings = new PIDSettings(kPAngle, kIAngle, kDAngle, waitTimeAngle, toleranceAngle);
+        cameraPIDSettings = new PIDSettings(kPCamera, kICamera, kDCamera, waitTimeCamera, toleranceCamera);
         trapezoidProfileSettings = new TrapezoidProfileSettings(maxVelocity, trapezoidAcceleration);
         feedForwardSettings = new FeedForwardSettings(kS, kV, kA);
         odometry = new DifferentialDriveOdometry(gyro.getRotation2d(), getLeftPosition(), getRightPosition());
@@ -181,8 +181,8 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
         return rightPIDSettings;
     }
 
-    public PIDSettings getAnglePIDSettings() {
-        return anglePIDSettings;
+    public PIDSettings getCameraPIDSettings() {
+        return cameraPIDSettings;
     }
 
     public FeedForwardSettings getFeedForwardSettings() {
