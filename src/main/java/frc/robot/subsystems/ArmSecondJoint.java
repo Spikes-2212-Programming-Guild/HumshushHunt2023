@@ -24,8 +24,8 @@ public class ArmSecondJoint extends SparkMaxGenericSubsystem {
     private final DutyCycleEncoder absoluteEncoder;
     private final RelativeEncoder sparkMaxEncoder;
 
-    public final Supplier<Double> forwardSpeed = namespace.addConstantDouble("second joint forward speed", 0.1);
-    public final Supplier<Double> backwardsSpeed = namespace.addConstantDouble("second joint backwards speed", -0.1);
+    public final Supplier<Double> forwardSpeed = namespace.addConstantDouble("forward speed", 0.1);
+    public final Supplier<Double> backwardsSpeed = namespace.addConstantDouble("backwards speed", -0.1);
 
     private final Namespace pidNamespace = namespace.addChild("pid");
     private final Supplier<Double> kP = pidNamespace.addConstantDouble("kP", 0);
@@ -86,15 +86,15 @@ public class ArmSecondJoint extends SparkMaxGenericSubsystem {
     }
 
     public PIDSettings getPIDSettings() {
-        return this.pidSettings;
+        return pidSettings;
     }
 
     public FeedForwardSettings getFeedForwardSettings() {
-        return this.feedForwardSettings;
+        return feedForwardSettings;
     }
 
     public TrapezoidProfileSettings getTrapezoidProfileSettings() {
-        return this.trapezoidProfileSettings;
+        return trapezoidProfileSettings;
     }
 
     private void configureEncoders() {

@@ -24,8 +24,8 @@ public class ArmFirstJoint extends SparkMaxGenericSubsystem {
     private final RelativeEncoder sparkMaxEncoder;
     private final DutyCycleEncoder absoluteEncoder;
 
-    public final Supplier<Double> forwardSpeed = namespace.addConstantDouble("first joint forward speed", 0.1);
-    public final Supplier<Double> backwardsSpeed = namespace.addConstantDouble("first joint backwards speed", -0.1);
+    public final Supplier<Double> forwardSpeed = namespace.addConstantDouble("forward speed", 0.1);
+    public final Supplier<Double> backwardsSpeed = namespace.addConstantDouble("backwards speed", -0.1);
 
     private final Namespace pidNamespace = namespace.addChild("pid");
     private final Supplier<Double> kP = pidNamespace.addConstantDouble("kP", 0);
@@ -62,7 +62,7 @@ public class ArmFirstJoint extends SparkMaxGenericSubsystem {
 
     private ArmFirstJoint(String namespaceName, CANSparkMax master, CANSparkMax slave) {
         super(namespaceName, master, slave);
-        sparkMaxEncoder = master.getAlternateEncoder(RobotMap.CAN.ARM_FIRST_JOINT_SPARKMAX_SLAVE);
+        sparkMaxEncoder = master.getEncoder();
         absoluteEncoder = new DutyCycleEncoder(RobotMap.DIO.ARM_FIRST_JOINT_ABSOLUTE_ENCODER);
         configureEncoders();
         slave.follow(master, true);
@@ -88,15 +88,15 @@ public class ArmFirstJoint extends SparkMaxGenericSubsystem {
     }
 
     public PIDSettings getPIDSettings() {
-        return this.pidSettings;
+        return pidSettings;
     }
 
     public FeedForwardSettings getFeedForwardSettings() {
-        return this.feedForwardSettings;
+        return feedForwardSettings;
     }
 
     public TrapezoidProfileSettings getTrapezoidProfileSettings() {
-        return this.trapezoidProfileSettings;
+        return trapezoidProfileSettings;
     }
 
     private void configureEncoders() {
