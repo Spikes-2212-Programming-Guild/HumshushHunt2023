@@ -43,7 +43,7 @@ public class ArmFirstJoint extends SparkMaxGenericSubsystem {
     private final FeedForwardSettings feedForwardSettings;
 
     private final Namespace trapezoidProfileNamespace = namespace.addChild("trapezoid profile settings");
-    private final Supplier<Double> trapezoidVelocity = trapezoidProfileNamespace.addConstantDouble("velocity", 0);
+    private final Supplier<Double> maxVelocity = trapezoidProfileNamespace.addConstantDouble("max velocity", 0);
     private final Supplier<Double> trapezoidAcceleration = trapezoidProfileNamespace.addConstantDouble
             ("acceleration", 0);
     private final TrapezoidProfileSettings trapezoidProfileSettings;
@@ -68,7 +68,7 @@ public class ArmFirstJoint extends SparkMaxGenericSubsystem {
         slave.follow(master, true);
         pidSettings = new PIDSettings(kP, kI, kD, waitTime, tolerance);
         feedForwardSettings = new FeedForwardSettings(kS, kV, kA, kG);
-        trapezoidProfileSettings = new TrapezoidProfileSettings(trapezoidVelocity, trapezoidAcceleration);
+        trapezoidProfileSettings = new TrapezoidProfileSettings(maxVelocity, trapezoidAcceleration);
         configureDashboard();
     }
 
