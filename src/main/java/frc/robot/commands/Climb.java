@@ -44,10 +44,10 @@ public class Climb extends CommandBase {
             if (Math.abs(pitch) <= midClimbTolerance.get()) {
                 if (Math.abs(drivetrain.getYaw()) <= yawSetpoint.get()) {
                     drivetrain.arcadeDrive(0, midClimbSpeed.get());
-                } else {
-                    drivetrain.arcadeDrive(Math.signum(pitch) * midClimbSpeed.get(), 0);
-                    lastTimeNotOnTarget = Timer.getFPGATimestamp();
                 }
+            } else {
+                drivetrain.arcadeDrive(Math.signum(pitch) * midClimbSpeed.get(), 0);
+                lastTimeNotOnTarget = Timer.getFPGATimestamp();
             }
         }
     }
