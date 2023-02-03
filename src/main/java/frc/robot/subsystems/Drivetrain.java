@@ -150,16 +150,12 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
         return rightEncoder.getPosition();
     }
 
-    public PIDSettings getLeftPIDSettings() {
-        return leftPIDSettings;
+    public double getPitch() {
+        return gyro.getPitch();
     }
 
-    public PIDSettings getRightPIDSettings() {
-        return rightPIDSettings;
-    }
-
-    public PIDSettings getAnglePIDSettings() {
-        return anglePIDSettings;
+    public double getYaw() {
+        return gyro.getYaw();
     }
 
     public double getLeftSpeed() {
@@ -172,6 +168,18 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
 
     public Pose2d getPose2d() {
         return odometry.getPoseMeters();
+    }
+
+    public PIDSettings getLeftPIDSettings() {
+        return leftPIDSettings;
+    }
+
+    public PIDSettings getRightPIDSettings() {
+        return rightPIDSettings;
+    }
+
+    public PIDSettings getAnglePIDSettings() {
+        return anglePIDSettings;
     }
 
     public FeedForwardSettings getFeedForwardSettings() {
