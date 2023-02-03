@@ -72,9 +72,9 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
     private final Supplier<Double> kA = feedForwardNamespace.addConstantDouble("kA", 0);
     private final FeedForwardSettings feedForwardSettings;
 
-    private final Namespace trapezoidProfile = namespace.addChild("trapezoid profile settings");
-    private final Supplier<Double> maxVelocity = trapezoidProfile.addConstantDouble("max velocity", 0);
-    private final Supplier<Double> trapezoidAcceleration = trapezoidProfile.addConstantDouble
+    private final Namespace trapezoidProfileNamespace = namespace.addChild("trapezoid profile settings");
+    private final Supplier<Double> maxVelocity = trapezoidProfileNamespace.addConstantDouble("max velocity", 0);
+    private final Supplier<Double> trapezoidAcceleration = trapezoidProfileNamespace.addConstantDouble
             ("acceleration", 0);
     private final TrapezoidProfileSettings trapezoidProfileSettings;
 
@@ -101,7 +101,7 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
         gyro = new AHRS();
         leftEncoder = leftMaster.getEncoder();
         rightEncoder = rightMaster.getEncoder();
-        setConversionFactors();
+        configureEncoders();
         leftPIDSettings = new PIDSettings(kPLeft, kILeft, kDLeft, waitTimeLeft, toleranceLeft);
         rightPIDSettings = new PIDSettings(kPRight, kIRight, kDRight, waitTimeRight, toleranceRight);
         anglePIDSettings = new PIDSettings(kPAngle, kIAngle, kDAngle, waitTimeAngle, toleranceAngle);
@@ -119,7 +119,7 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
                               FeedForwardSettings feedForwardSettings,
                               TrapezoidProfileSettings trapezoidProfileSettings) {
         super.configureLoop(leftPIDSettings, rightPIDSettings, feedForwardSettings, trapezoidProfileSettings);
-        setConversionFactors();
+        configureEncoders();
     }
 
     @Override
@@ -202,7 +202,7 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
         return ramseteController;
     }
 
-    private void setConversionFactors() {
+    private void configureEncoders() {
         leftEncoder.setPositionConversionFactor(DISTANCE_PER_PULSE);
         leftEncoder.setVelocityConversionFactor(DISTANCE_PER_PULSE / SECONDS_IN_MINUTE);
         rightEncoder.setPositionConversionFactor(DISTANCE_PER_PULSE);
