@@ -48,18 +48,6 @@ public class ArmFirstJoint extends SparkMaxGenericSubsystem {
             ("acceleration", 0);
     private final TrapezoidProfileSettings trapezoidProfileSettings;
 
-    private ArmFirstJoint(String namespaceName, CANSparkMax master, CANSparkMax slave1) {
-        super(namespaceName, master, slave1);
-        sparkMaxEncoder = master.getAlternateEncoder(RobotMap.CAN.ARM_FIRST_JOINT_SPARKMAX_SLAVE);
-        absoluteEncoder = new DutyCycleEncoder(RobotMap.DIO.ARM_FIRST_JOINT_ABSOLUTE_ENCODER);
-        setConversionFactors();
-        slave1.follow(master, true);
-        pidSettings = new PIDSettings(kP, kI, kD, waitTime, tolerance);
-        feedForwardSettings = new FeedForwardSettings(kS, kV, kA, kG);
-        trapezoidProfileSettings = new TrapezoidProfileSettings(trapezoidVelocity, trapezoidAcceleration);
-        configureDashboard();
-    }
-
     public static ArmFirstJoint getInstance() {
         if (instance == null) {
             instance = new ArmFirstJoint("arm first joint",
@@ -72,10 +60,22 @@ public class ArmFirstJoint extends SparkMaxGenericSubsystem {
         return instance;
     }
 
+    private ArmFirstJoint(String namespaceName, CANSparkMax master, CANSparkMax slave) {
+        super(namespaceName, master, slave);
+        sparkMaxEncoder = master.getAlternateEncoder(RobotMap.CAN.ARM_FIRST_JOINT_SPARKMAX_SLAVE);
+        absoluteEncoder = new DutyCycleEncoder(RobotMap.DIO.ARM_FIRST_JOINT_ABSOLUTE_ENCODER);
+        setConversionFactors();
+        slave.follow(master, true);
+        pidSettings = new PIDSettings(kP, kI, kD, waitTime, tolerance);
+        feedForwardSettings = new FeedForwardSettings(kS, kV, kA, kG);
+        trapezoidProfileSettings = new TrapezoidProfileSettings(trapezoidVelocity, trapezoidAcceleration);
+        configureDashboard();
+    }
+
     @Override
-    public void configureLoop(PIDSettings PIDSettings, FeedForwardSettings feedForwardSettings,
+    public void configureLoop(PIDSettings pidSettings, FeedForwardSettings feedForwardSettings,
                               TrapezoidProfileSettings trapezoidProfileSettings) {
-        super.configureLoop(PIDSettings, feedForwardSettings, trapezoidProfileSettings);
+        super.configureLoop(pidSettings, feedForwardSettings, trapezoidProfileSettings);
         setConversionFactors();
     }
 
