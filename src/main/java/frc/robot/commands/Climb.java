@@ -11,7 +11,7 @@ public class Climb extends CommandBase {
 
     private static final RootNamespace namespace = new RootNamespace("climb");
     private static final Supplier<Double> preClimbSpeed = namespace.addConstantDouble("pre climb speed", 0.6);
-    private static final Supplier<Double> midClimbSpeed = namespace.addConstantDouble("mid speed climb", 0.3);
+    private static final Supplier<Double> midClimbSpeed = namespace.addConstantDouble("mid climb speed", 0.3);
     private static final Supplier<Double> preClimbTolerance = namespace.addConstantDouble("pre climb tolerance", 15);
     private static final Supplier<Double> midClimbTolerance = namespace.addConstantDouble("mid climb tolerance", 3);
     private static final Supplier<Double> yawSetpoint = namespace.addConstantDouble("yaw setpoint", 75);
