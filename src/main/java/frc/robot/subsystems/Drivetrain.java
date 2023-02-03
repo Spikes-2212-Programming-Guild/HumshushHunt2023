@@ -209,6 +209,14 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
         rightEncoder.setVelocityConversionFactor(DISTANCE_PER_PULSE / SECONDS_IN_MINUTE);
     }
 
+    private double getPoseX(){
+        return getPose2d().getX();
+    }
+
+    private double getPoseY(){
+        return getPose2d().getY();
+    }
+
     @Override
     public void configureDashboard() {
         namespace.putData("reset encoders", new InstantCommand(this::resetEncoders).ignoringDisable(true));
@@ -217,5 +225,7 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
         namespace.putNumber("left position", this::getLeftPosition);
         namespace.putNumber("right position", this::getRightPosition);
         namespace.putNumber("gyro yaw", gyro::getYaw);
+        namespace.putNumber("pose x", this::getPoseX);
+        namespace.putNumber("pose y", this::getPoseY);
     }
 }
