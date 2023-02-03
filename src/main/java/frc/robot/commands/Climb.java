@@ -10,12 +10,12 @@ import java.util.function.Supplier;
 public class Climb extends CommandBase {
 
     private static final RootNamespace namespace = new RootNamespace("climb");
-    private static final Supplier<Double> preClimbSpeed = namespace.addConstantDouble("pre climb speed", 0.6);
-    private static final Supplier<Double> midClimbSpeed = namespace.addConstantDouble("mid climb speed", 0.3);
-    private static final Supplier<Double> preClimbTolerance = namespace.addConstantDouble("pre climb tolerance", 15);
-    private static final Supplier<Double> midClimbTolerance = namespace.addConstantDouble("mid climb tolerance", 3);
-    private static final Supplier<Double> yawSetpoint = namespace.addConstantDouble("yaw setpoint", 75);
-    private static final Supplier<Double> waitTime = namespace.addConstantDouble("wait time", 0.5);
+    private static final Supplier<Double> PRE_CLIMB_SPEED = namespace.addConstantDouble("pre climb speed", 0.6);
+    private static final Supplier<Double> MID_CLIMB_SPEED = namespace.addConstantDouble("mid climb speed", 0.3);
+    private static final Supplier<Double> PRE_CLIMB_TOLERANCE = namespace.addConstantDouble("pre climb tolerance", 15);
+    private static final Supplier<Double> MID_CLIMB_TOLERANCE = namespace.addConstantDouble("mid climb tolerance", 3);
+    private static final Supplier<Double> YAW_SETPOINT = namespace.addConstantDouble("yaw setpoint", 75);
+    private static final Supplier<Double> WAIT_TIME = namespace.addConstantDouble("wait time", 0.5);
 
     private final Drivetrain drivetrain;
 
@@ -37,16 +37,16 @@ public class Climb extends CommandBase {
     public void execute() {
         double pitch = drivetrain.getPitch();
         if (!startedClimbing) {
-            drivetrain.arcadeDrive(preClimbSpeed.get(), 0);
-            startedClimbing = Math.abs(pitch) > preClimbTolerance.get();
+            drivetrain.arcadeDrive(PRE_CLIMB_SPEED.get(), 0);
+            startedClimbing = Math.abs(pitch) > PRE_CLIMB_TOLERANCE.get();
             lastTimeNotOnTarget = Timer.getFPGATimestamp();
         } else {
-            if (Math.abs(pitch) <= midClimbTolerance.get()) {
-                if (Math.abs(drivetrain.getYaw()) <= yawSetpoint.get()) {
-                    drivetrain.arcadeDrive(0, midClimbSpeed.get());
+            if (Math.abs(pitch) <= MID_CLIMB_TOLERANCE.get()) {
+                if (Math.abs(drivetrain.getYaw()) <= YAW_SETPOINT.get()) {
+                    drivetrain.arcadeDrive(0, MID_CLIMB_SPEED.get());
                 }
             } else {
-                drivetrain.arcadeDrive(Math.signum(pitch) * midClimbSpeed.get(), 0);
+                drivetrain.arcadeDrive(Math.signum(pitch) * MID_CLIMB_SPEED.get(), 0);
                 lastTimeNotOnTarget = Timer.getFPGATimestamp();
             }
         }
@@ -54,7 +54,7 @@ public class Climb extends CommandBase {
 
     @Override
     public boolean isFinished() {
-        return lastTimeNotOnTarget >= waitTime.get();
+        return lastTimeNotOnTarget >= WAIT_TIME.get();
     }
 
     @Override
