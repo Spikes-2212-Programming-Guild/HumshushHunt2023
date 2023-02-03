@@ -88,6 +88,10 @@ public class ArmSecondJoint extends SparkMaxGenericSubsystem {
         return sparkMaxEncoder.getPosition();
     }
 
+    public double getAbsolutePosition() {
+        return absoluteEncoder.getDistance();
+    }
+
     public PIDSettings getPIDSettings() {
         return this.pidSettings;
     }
@@ -102,6 +106,7 @@ public class ArmSecondJoint extends SparkMaxGenericSubsystem {
 
     @Override
     public void configureDashboard() {
-        namespace.putNumber("encoder position", this::getPosition);
+        namespace.putNumber("absolute encoder position", this::getAbsolutePosition);
+        namespace.putNumber("spark max encoder position", this::getPosition);
     }
 }
