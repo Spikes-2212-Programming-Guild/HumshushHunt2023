@@ -63,7 +63,7 @@ public class ArmSecondJoint extends SparkMaxGenericSubsystem {
         super(namespaceName, master);
         sparkMaxEncoder = master.getEncoder();
         absoluteEncoder = new DutyCycleEncoder(RobotMap.DIO.ARM_SECOND_JOINT_ABSOLUTE_ENCODER);
-        setConversionFactors();
+        configureEncoders();
         pidSettings = new PIDSettings(kP, kI, kD, waitTime, tolerance);
         feedForwardSettings = new FeedForwardSettings(kS, kV, kA, kG);
         trapezoidProfileSettings = new TrapezoidProfileSettings(trapezoidVelocity, trapezoidAcceleration);
@@ -74,14 +74,7 @@ public class ArmSecondJoint extends SparkMaxGenericSubsystem {
     public void configureLoop(PIDSettings pidSettings, FeedForwardSettings feedForwardSettings,
                               TrapezoidProfileSettings trapezoidProfileSettings) {
         super.configureLoop(pidSettings, feedForwardSettings, trapezoidProfileSettings);
-        setConversionFactors();
-    }
-
-    public void setConversionFactors() {
-        sparkMaxEncoder.setPositionConversionFactor(DISTANCE_PER_PULSE);
-        sparkMaxEncoder.setVelocityConversionFactor(DISTANCE_PER_PULSE / SECONDS_IN_MINUTE);
-        absoluteEncoder.setDistancePerRotation(DISTANCE_PER_PULSE);
-        sparkMaxEncoder.setPosition(absoluteEncoder.getDistance());
+        configureEncoders();
     }
 
     public double getPosition() {
@@ -102,6 +95,13 @@ public class ArmSecondJoint extends SparkMaxGenericSubsystem {
 
     public TrapezoidProfileSettings getTrapezoidProfileSettings() {
         return this.trapezoidProfileSettings;
+    }
+
+    private void configureEncoders() {
+        sparkMaxEncoder.setPositionConversionFactor(DISTANCE_PER_PULSE);
+        sparkMaxEncoder.setVelocityConversionFactor(DISTANCE_PER_PULSE / SECONDS_IN_MINUTE);
+        absoluteEncoder.setDistancePerRotation(DISTANCE_PER_PULSE);
+        sparkMaxEncoder.setPosition(absoluteEncoder.getDistance());
     }
 
     @Override
