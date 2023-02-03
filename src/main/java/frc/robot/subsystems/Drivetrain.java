@@ -10,7 +10,7 @@ public class Drivetrain extends TankDrivetrain {
         super(namespaceName, left, right);
     }
 
-    public PIDSettings getAnglePIDSettings() {
+    public PIDSettings getCameraPIDSettings() {
         return null;
     }
 }
