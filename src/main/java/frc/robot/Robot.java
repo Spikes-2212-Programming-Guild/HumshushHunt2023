@@ -4,17 +4,18 @@
 
 package frc.robot;
 
-import com.spikes2212.command.drivetrains.commands.DriveArcade;
 import com.spikes2212.util.PlaystationControllerWrapper;
+import com.spikes2212.util.XboxControllerWrapper;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import frc.robot.subsystems.Drivetrain;
+import frc.robot.subsystems.Drivotrain;
 
 public class Robot extends TimedRobot {
 
-    Drivetrain drivetrain = Drivetrain.getInstance();
+    Drivotrain drivotrain = new Drivotrain();
 
     PlaystationControllerWrapper ps = new PlaystationControllerWrapper(0);
+    XboxControllerWrapper xbox = new XboxControllerWrapper(1);
 
     @Override
     public void robotInit() {
@@ -24,6 +25,7 @@ public class Robot extends TimedRobot {
     @Override
     public void robotPeriodic() {
         CommandScheduler.getInstance().run();
+        drivotrain.periodic();
     }
 
     @Override
@@ -38,7 +40,6 @@ public class Robot extends TimedRobot {
 
     @Override
     public void autonomousInit() {
-
     }
 
     @Override
@@ -48,13 +49,20 @@ public class Robot extends TimedRobot {
 
     @Override
     public void teleopInit() {
-        DriveArcade driveArcade = new DriveArcade(drivetrain, ps::getRightY, ps::getLeftX);
-        drivetrain.setDefaultCommand(driveArcade);
+
     }
 
     @Override
     public void teleopPeriodic() {
-
+        double speed = xbox.getRightY();
+        double rotate = xbox.getLeftX();
+        if (Math.abs(speed) > 0.05 || Math.abs(rotate) > 0.05)
+            drivotrain.setSpeeds(speed - rotate, speed + rotate);
+        else {
+            speed = 0;
+            rotate = 0;
+            drivotrain.setSpeeds(speed - rotate, speed + rotate);
+        }
     }
 
     @Override
@@ -74,6 +82,6 @@ public class Robot extends TimedRobot {
 
     @Override
     public void simulationPeriodic() {
-
+        drivotrain.simulationPeriodic();
     }
 }

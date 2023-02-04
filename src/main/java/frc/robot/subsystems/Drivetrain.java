@@ -241,6 +241,13 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
         return this.ramseteController;
     }
 
+    public void brake() {
+        rightMaster.setIdleMode(CANSparkMax.IdleMode.kBrake);
+        leftMaster.setIdleMode(CANSparkMax.IdleMode.kBrake);
+        rightSlaves.get(0).setIdleMode(CANSparkMax.IdleMode.kBrake);
+        leftSlaves.get(0).setIdleMode(CANSparkMax.IdleMode.kBrake);
+    }
+
     @Override
     public void configureDashboard() {
         namespace.putData("reset encoders", new InstantCommand(this::resetEncoders).ignoringDisable(true));
