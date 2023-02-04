@@ -6,25 +6,17 @@ import com.pathplanner.lib.PathPlannerTrajectory;
 import com.pathplanner.lib.PathPoint;
 import com.pathplanner.lib.commands.PPRamseteCommand;
 import com.spikes2212.util.Limelight;
-import edu.wpi.first.apriltag.*;
-import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.controller.RamseteController;
-import edu.wpi.first.math.controller.SimpleMotorFeedforward;
-import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
-import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj2.command.CommandBase;
-import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
+import edu.wpi.first.wpilibj2.command.Subsystem;
 import frc.robot.subsystems.Drivetrain;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Optional;
-import java.util.function.BiConsumer;
-import java.util.function.Supplier;
 
 public class CenterAgainstAprilTag extends CommandBase {
 
@@ -53,6 +45,7 @@ public class CenterAgainstAprilTag extends CommandBase {
             command = new PPRamseteCommand(trajectory, drivetrain::getPose2d, drivetrain.getRamseteController(), drivetrain.getKinematics(),
                     (leftMS, rightMS) -> drivetrain.setMetersPerSecond(leftMS, rightMS, drivetrain.getLeftPIDSettings(),
                             drivetrain.getRightPIDSettings(), drivetrain.getFeedForwardSettings()), drivetrain);
+            addRequirements(command.getRequirements().toArray(new Subsystem[0]));
         }
     }
 
