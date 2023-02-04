@@ -1,19 +1,26 @@
 package frc.robot.subsystems;
 
-import com.kauailabs.navx.frc.AHRS;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMaxLowLevel;
-import com.revrobotics.RelativeEncoder;
 import com.spikes2212.command.drivetrains.smartmotorcontrollerdrivetrain.SparkMaxTankDrivetrain;
 import com.spikes2212.control.FeedForwardSettings;
 import com.spikes2212.control.PIDSettings;
 import com.spikes2212.control.TrapezoidProfileSettings;
 import com.spikes2212.dashboard.Namespace;
+import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.controller.RamseteController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
 import edu.wpi.first.math.kinematics.DifferentialDriveOdometry;
+import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.wpilibj.ADXRS450_Gyro;
+import edu.wpi.first.wpilibj.Encoder;
+import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.simulation.ADXRS450_GyroSim;
+import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim;
+import edu.wpi.first.wpilibj.simulation.EncoderSim;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import frc.robot.RobotMap;
 
@@ -32,10 +39,17 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
 
     private static Drivetrain instance;
 
-    private final RelativeEncoder leftEncoder;
-    private final RelativeEncoder rightEncoder;
+    private final DifferentialDrivetrainSim drivetrainSim;
 
-    private final AHRS gyro;
+    private final Encoder leftEncoder;
+    private final Encoder rightEncoder;
+
+    private final ADXRS450_Gyro gyro;
+
+    private final EncoderSim leftEncoderSim;
+    private final EncoderSim rightEncoderSim;
+
+    private final ADXRS450_GyroSim gyroSim;
 
     private final DifferentialDriveOdometry odometry;
     private final DifferentialDriveKinematics kinematics;
@@ -98,9 +112,21 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
                        CANSparkMax rightMaster, CANSparkMax rightSlave) {
         super(
                 namespaceName, leftMaster, leftSlave, rightMaster, rightSlave);
-        this.gyro = new AHRS();
-        this.leftEncoder = leftMaster.getEncoder();
-        this.rightEncoder = rightMaster.getEncoder();
+        this.gyro = new ADXRS450_Gyro();
+        this.leftEncoder = new Encoder(0, 1);
+        this.rightEncoder = new Encoder(2, 3);
+        this.gyroSim = new ADXRS450_GyroSim(gyro);
+        this.leftEncoderSim = new EncoderSim(leftEncoder);
+        this.rightEncoderSim = new EncoderSim(rightEncoder);
+        this.drivetrainSim = new DifferentialDrivetrainSim(
+                DCMotor.getNEO(2),
+                1 / 12.755,
+                1,
+                10,
+                INCHES_TO_METERS * 3,
+                0.57,
+                VecBuilder.fill(0, 0, 0.0001, 0.1, 0.1, 0.005, 0.005)
+        );
         this.setConversionFactors();
         this.leftPIDSettings = new PIDSettings(kPLeft, kILeft, kDLeft, waitTimeLeft, toleranceLeft);
         this.rightPIDSettings = new PIDSettings(kPRight, kIRight, kDRight, waitTimeRight, toleranceRight);
@@ -112,6 +138,7 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
         this.kinematics = new DifferentialDriveKinematics(TRACK_WIDTH);
         this.ramseteController = new RamseteController();
         this.field2d = new Field2d();
+        SmartDashboard.putData("field 2d", field2d);
         configureDashboard();
     }
 
@@ -126,13 +153,27 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
     @Override
     public void periodic() {
         super.periodic();
-        odometry.update(gyro.getRotation2d(), getLeftPosition(), getRightPosition());
-        field2d.setRobotPose(getPose2d());
+        odometry.update(gyro.getRotation2d(), leftEncoder.getDistance(), rightEncoder.getDistance());
+        field2d.setRobotPose(odometry.getPoseMeters());
+    }
+
+    @Override
+    public void simulationPeriodic() {
+        drivetrainSim.setInputs(leftMaster.get() * RobotController.getInputVoltage(),
+                rightMaster.get() * RobotController.getInputVoltage());
+
+        drivetrainSim.update(0.02);
+
+        leftEncoderSim.setDistance(drivetrainSim.getLeftPositionMeters());
+        leftEncoderSim.setRate(drivetrainSim.getLeftVelocityMetersPerSecond());
+        rightEncoderSim.setDistance(drivetrainSim.getRightPositionMeters());
+        rightEncoderSim.setRate(drivetrainSim.getRightVelocityMetersPerSecond());
+        gyroSim.setAngle(-drivetrainSim.getHeading().getDegrees());
     }
 
     private void resetEncoders() {
-        leftEncoder.setPosition(0);
-        rightEncoder.setPosition(0);
+        leftEncoder.reset();
+        rightEncoder.reset();
     }
 
     private void resetOdometry(Pose2d pose2d) {
@@ -144,18 +185,16 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
     }
 
     private void setConversionFactors() {
-        leftEncoder.setPositionConversionFactor(DISTANCE_PER_PULSE);
-        leftEncoder.setVelocityConversionFactor(DISTANCE_PER_PULSE / SECONDS_IN_MINUTE);
-        rightEncoder.setPositionConversionFactor(DISTANCE_PER_PULSE);
-        rightEncoder.setVelocityConversionFactor(DISTANCE_PER_PULSE / SECONDS_IN_MINUTE);
+        leftEncoder.setDistancePerPulse(DISTANCE_PER_PULSE);
+        rightEncoder.setDistancePerPulse(DISTANCE_PER_PULSE);
     }
 
     public double getLeftPosition() {
-        return leftEncoder.getPosition();
+        return leftEncoder.getDistance();
     }
 
     public double getRightPosition() {
-        return rightEncoder.getPosition();
+        return rightEncoder.getDistance();
     }
 
     public PIDSettings getLeftPIDSettings() {
@@ -171,11 +210,11 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
     }
 
     public double getLeftSpeed() {
-        return leftEncoder.getVelocity();
+        return leftEncoder.getRate();
     }
 
     public double getRightSpeed() {
-        return rightEncoder.getVelocity();
+        return rightEncoder.getRate();
     }
 
     public Pose2d getPose2d() {
@@ -209,6 +248,9 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
         namespace.putData("field2d", field2d);
         namespace.putNumber("left neo 1 encoder value", this::getLeftPosition);
         namespace.putNumber("right neo 1 encoder value", this::getRightPosition);
-        namespace.putNumber("gyro yaw", gyro::getYaw);
+        namespace.putNumber("gyro yaw", gyro::getAngle);
+        namespace.putNumber("left master value", leftMaster::get);
+        namespace.putNumber("x", () -> getPose2d().getX());
+        namespace.putNumber("y", () -> getPose2d().getY());
     }
 }

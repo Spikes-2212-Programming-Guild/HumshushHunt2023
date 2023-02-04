@@ -4,10 +4,17 @@
 
 package frc.robot;
 
+import com.spikes2212.command.drivetrains.commands.DriveArcade;
+import com.spikes2212.util.PlaystationControllerWrapper;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import frc.robot.subsystems.Drivetrain;
 
 public class Robot extends TimedRobot {
+
+    Drivetrain drivetrain = Drivetrain.getInstance();
+
+    PlaystationControllerWrapper ps = new PlaystationControllerWrapper(0);
 
     @Override
     public void robotInit() {
@@ -41,10 +48,13 @@ public class Robot extends TimedRobot {
 
     @Override
     public void teleopInit() {
+        DriveArcade driveArcade = new DriveArcade(drivetrain, ps::getRightY, ps::getLeftX);
+        drivetrain.setDefaultCommand(driveArcade);
     }
 
     @Override
     public void teleopPeriodic() {
+
     }
 
     @Override
