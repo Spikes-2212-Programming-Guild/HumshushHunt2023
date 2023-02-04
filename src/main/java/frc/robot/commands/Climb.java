@@ -7,6 +7,7 @@ import frc.robot.subsystems.Drivetrain;
 
 import java.util.function.Supplier;
 
+//@TODO other direction
 public class Climb extends CommandBase {
 
     private static final RootNamespace namespace = new RootNamespace("climb");
