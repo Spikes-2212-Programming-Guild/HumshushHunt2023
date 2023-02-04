@@ -51,7 +51,7 @@ public class ArmFirstJoint extends SparkMaxGenericSubsystem {
     public static ArmFirstJoint getInstance() {
         if (instance == null) {
             instance = new ArmFirstJoint("arm first joint",
-                    new CANSparkMax(RobotMap.CAN.ARM_FIRST_JOINT_SPARKMAX_MASTER,
+                    new CANSparkMax(RobotMap.CAN.ARM_FIRST_JOINT_SPARKMAX,
                             CANSparkMaxLowLevel.MotorType.kBrushless),
                     new CANSparkMax(RobotMap.CAN.ARM_FIRST_JOINT_SPARKMAX_SLAVE,
                             CANSparkMaxLowLevel.MotorType.kBrushless)
@@ -110,5 +110,6 @@ public class ArmFirstJoint extends SparkMaxGenericSubsystem {
     public void configureDashboard() {
         namespace.putNumber("absolute encoder position", this::getAbsolutePosition);
         namespace.putNumber("spark max encoder position", this::getPosition);
+        namespace.putNumber("first joint speed", forwardSpeed);
     }
 }

@@ -108,5 +108,6 @@ public class ArmSecondJoint extends SparkMaxGenericSubsystem {
     public void configureDashboard() {
         namespace.putNumber("absolute encoder position", this::getAbsolutePosition);
         namespace.putNumber("spark max encoder position", this::getPosition);
+        namespace.putNumber("second joint speed", forwardSpeed);
     }
 }
