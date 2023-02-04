@@ -79,29 +79,11 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
             ("acceleration", 0);
     private final TrapezoidProfileSettings trapezoidProfileSettings;
 
-    public static Drivetrain getInstance() {
-        if (instance == null) {
-            instance = new Drivetrain(
-                    "drivetrain",
-                    new CANSparkMax(RobotMap.CAN.DRIVETRAIN_LEFT_SPARKMAX_MASTER,
-                            CANSparkMaxLowLevel.MotorType.kBrushless),
-                    new CANSparkMax(RobotMap.CAN.DRIVETRAIN_LEFT_SPARKMAX_SLAVE,
-                            CANSparkMaxLowLevel.MotorType.kBrushless),
-                    new CANSparkMax(RobotMap.CAN.DRIVETRAIN_RIGHT_SPARKMAX_MASTER,
-                            CANSparkMaxLowLevel.MotorType.kBrushless),
-                    new CANSparkMax(RobotMap.CAN.DRIVETRAIN_RIGHT_SPARKMAX_SLAVE,
-                            CANSparkMaxLowLevel.MotorType.kBrushless),
-                    SerialPort.Port.kUSB,
-                    TRACK_WIDTH);
-        }
-        return instance;
-    }
-
     private Drivetrain(String namespaceName, CANSparkMax leftMaster, CANSparkMax leftSlave,
-                       CANSparkMax rightMaster, CANSparkMax rightSlave, SerialPort.Port gyroPort, double trackWidth) {
+                       CANSparkMax rightMaster, CANSparkMax rightSlave, AHRS gyro, double trackWidth) {
         super(
                 namespaceName, leftMaster, leftSlave, rightMaster, rightSlave);
-        gyro = new AHRS(gyroPort);
+        this.gyro = gyro;
         leftEncoder = leftMaster.getEncoder();
         rightEncoder = rightMaster.getEncoder();
         configureEncoders();
@@ -115,6 +97,24 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
         ramseteController = new RamseteController();
         field2d = new Field2d();
         configureDashboard();
+    }
+
+    public static Drivetrain getInstance() {
+        if (instance == null) {
+            instance = new Drivetrain(
+                    "drivetrain",
+                    new CANSparkMax(RobotMap.CAN.DRIVETRAIN_LEFT_SPARKMAX_MASTER,
+                            CANSparkMaxLowLevel.MotorType.kBrushless),
+                    new CANSparkMax(RobotMap.CAN.DRIVETRAIN_LEFT_SPARKMAX_SLAVE,
+                            CANSparkMaxLowLevel.MotorType.kBrushless),
+                    new CANSparkMax(RobotMap.CAN.DRIVETRAIN_RIGHT_SPARKMAX_MASTER,
+                            CANSparkMaxLowLevel.MotorType.kBrushless),
+                    new CANSparkMax(RobotMap.CAN.DRIVETRAIN_RIGHT_SPARKMAX_SLAVE,
+                            CANSparkMaxLowLevel.MotorType.kBrushless),
+                    new AHRS(SerialPort.Port.kUSB),
+                    TRACK_WIDTH);
+        }
+        return instance;
     }
 
     @Override
@@ -227,7 +227,7 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
         namespace.putData("field2d", field2d);
         namespace.putNumber("left position", this::getLeftPosition);
         namespace.putNumber("right position", this::getRightPosition);
-        namespace.putNumber("gyro yaw", gyro::getYaw);
+        namespace.putNumber("yaw", gyro::getYaw);
         namespace.putNumber("pose x", this::getPoseX);
         namespace.putNumber("pose y", this::getPoseY);
     }
