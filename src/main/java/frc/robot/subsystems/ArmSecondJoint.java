@@ -100,7 +100,7 @@ public class ArmSecondJoint extends SparkMaxGenericSubsystem {
     private void configureEncoders() {
         sparkMaxEncoder.setPositionConversionFactor(DISTANCE_PER_PULSE);
         sparkMaxEncoder.setVelocityConversionFactor(DISTANCE_PER_PULSE / SECONDS_IN_MINUTE);
-        absoluteEncoder.setDistancePerRotation(DISTANCE_PER_PULSE);
+        absoluteEncoder.setDistancePerRotation(DISTANCE_PER_PULSE / sparkMaxEncoder.getCountsPerRevolution());
         sparkMaxEncoder.setPosition(absoluteEncoder.getDistance());
     }
 
