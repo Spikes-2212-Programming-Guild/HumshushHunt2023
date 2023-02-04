@@ -7,9 +7,9 @@ import frc.robot.subsystems.Drivetrain;
 public class CenterOnRRT extends DriveArcadeWithPID {
 
     private final VisionService vision;
-    private final int pipeline;
+    private final VisionService.LimelightPipeline pipeline;
 
-    public CenterOnRRT(Drivetrain drivetrain, VisionService vision, int pipeline) {
+    public CenterOnRRT(Drivetrain drivetrain, VisionService vision, VisionService.LimelightPipeline pipeline) {
         super(drivetrain, vision::getLimelightYaw, 0, 0, drivetrain.getCameraPIDSettings());
         this.vision = vision;
         this.pipeline = pipeline;

@@ -9,12 +9,13 @@ import org.photonvision.targeting.PhotonPipelineResult;
 
 public class VisionService {
 
-    public static final int PIPELINE_CONE_INDEX = 0;
-    public static final int PIPELINE_CUBE_INDEX = 1;
+    public void setPhotonVisionPipeline(PhotonVisionPipeline pipeline) {
+        photonCamera.setPipelineIndex(pipeline.pipeline);
+    }
 
-    public static final int PIPELINE_HIGH_RRT_INDEX = 0;
-    public static final int PIPELINE_LOW_RRT_INDEX = 1;
-    public static final int PIPELINE_APRILTAG_INDEX = 2;
+    public void setLimelightPipeline(LimelightPipeline pipeline) {
+        limelight.setPipeline(pipeline.pipeline);
+    }
 
     private static final String PHOTON_VISION_CAMERA_NAME = "photonvision";
 
@@ -71,12 +72,26 @@ public class VisionService {
         return limelight.hasTarget();
     }
 
-    public void setPhotonVisionPipeline(int pipelineIndex) {
-        photonCamera.setPipelineIndex(pipelineIndex);
+    public enum PhotonVisionPipeline {
+
+        CONE(0), CUBE(1);
+
+        public final int pipeline;
+
+        PhotonVisionPipeline(int pipeline) {
+            this.pipeline = pipeline;
+        }
     }
 
-    public void setLimelightPipeline(int pipelineIndex) {
-        limelight.setPipeline(pipelineIndex);
+    public enum LimelightPipeline {
+
+        HIGH_RRT(0), LOW_RRT(1), APRIL_TAG(2);
+
+        public final int pipeline;
+
+        LimelightPipeline(int pipeline) {
+            this.pipeline = pipeline;
+        }
     }
 
     public void configureDashboard() {
