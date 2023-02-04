@@ -87,6 +87,10 @@ public class ArmFirstJoint extends SparkMaxGenericSubsystem {
         return absoluteEncoder.getDistance();
     }
 
+    public double getVelocity() {
+        return sparkMaxEncoder.getVelocity();
+    }
+
     public PIDSettings getPIDSettings() {
         return pidSettings;
     }
@@ -110,6 +114,6 @@ public class ArmFirstJoint extends SparkMaxGenericSubsystem {
     public void configureDashboard() {
         namespace.putNumber("absolute encoder position", this::getAbsolutePosition);
         namespace.putNumber("spark max encoder position", this::getPosition);
-        namespace.putNumber("first joint speed", forwardSpeed);
+        namespace.putNumber("velocity", this::getVelocity);
     }
 }
