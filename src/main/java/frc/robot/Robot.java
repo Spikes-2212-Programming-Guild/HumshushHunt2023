@@ -4,16 +4,39 @@
 
 package frc.robot;
 
+import com.spikes2212.command.drivetrains.commands.DriveArcade;
+import com.spikes2212.dashboard.RootNamespace;
 import com.spikes2212.util.PlaystationControllerWrapper;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import frc.robot.commands.DrivoTankWithPID;
 import frc.robot.subsystems.Drivetrain;
+
+import java.util.function.Supplier;
 
 public class Robot extends TimedRobot {
 
-    Drivetrain drivetrain = new Drivetrain();
+    Drivetrain drivetrain = Drivetrain.getInstance();
+    DriveArcade command = new DriveArcade(drivetrain, 0.2, 0) {
+        @Override
+        public void execute() {
+//                super.execute();
+            drivetrain.setSpeeds(moveValueSupplier.get(), moveValueSupplier.get());
+        }
 
+        @Override
+        public void end(boolean interrupted) {
+            drivetrain.setSpeeds(0, 0);
+//            drivetrain.stop();
+        }
+    };
     PlaystationControllerWrapper ps = new PlaystationControllerWrapper(0);
+
+    private RootNamespace name = new RootNamespace("jejoha");
+    private Supplier<Double> set1 = name.addConstantDouble("s1", 8);
+    private Supplier<Double> set2 = name.addConstantDouble("s2", 8);
+    private Supplier<Double> src1 = name.addConstantDouble("sr1", 0);
+    private Supplier<Double> src2 = name.addConstantDouble("sr2", 0);
 
     @Override
     public void robotInit() {
@@ -38,16 +61,21 @@ public class Robot extends TimedRobot {
 
     @Override
     public void autonomousInit() {
+        DrivoTankWithPID driveTankWithPID = new DrivoTankWithPID(drivetrain, drivetrain.getLeftPIDSettings(),
+                drivetrain.getRightPIDSettings(), set1, set2, drivetrain::getLeftEncoderPosition,
+                drivetrain::getRightEncoderPosition);
+        driveTankWithPID.schedule();
+//        new lol().schedule();
+//        command.schedule();
     }
 
     @Override
     public void autonomousPeriodic() {
-
     }
 
     @Override
     public void teleopInit() {
-
+        command.cancel();
     }
 
     @Override
@@ -61,7 +89,7 @@ public class Robot extends TimedRobot {
         if (Math.abs(rotate) < 0.05) {
             rotate = 0;
         }
-        drivetrain.setSpeeds((speed - rotate) * -0.7, (speed + rotate) * -0.7);
+        // drivetrain.setSpeeds((speed - rotate) * -0.4, (speed + rotate) * -0.4);
     }
 
     @Override
