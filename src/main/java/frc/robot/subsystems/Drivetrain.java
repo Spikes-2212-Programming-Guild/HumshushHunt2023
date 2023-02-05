@@ -129,7 +129,8 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
     public void periodic() {
         super.periodic();
         odometry.update(gyro.getRotation2d(), getLeftPosition(), getRightPosition());
-        field2d.setRobotPose(getPose2d());
+        field2d.setRobotPose(getPose2d()); //I think Field2d coordinate system has (0,0) at top/bottom left
+        //so we might need to do a minus here @TODO check this
     }
 
     public void resetEncoders() {
