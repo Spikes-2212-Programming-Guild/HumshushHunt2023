@@ -228,7 +228,10 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
         namespace.putData("field2d", field2d);
         namespace.putNumber("left position", this::getLeftPosition);
         namespace.putNumber("right position", this::getRightPosition);
-        namespace.putNumber("yaw", gyro::getYaw);
+        namespace.putNumber("left velocity", this::getLeftSpeed);
+        namespace.putNumber("right velocity", this::getRightSpeed);
+        namespace.putNumber("yaw", this::getYaw);
+        namespace.putNumber("pitch", this::getPitch);
         namespace.putNumber("pose x", this::getPoseX);
         namespace.putNumber("pose y", this::getPoseY);
     }
