@@ -77,7 +77,7 @@ public class ArmSecondJoint extends SparkMaxGenericSubsystem {
         configureEncoders();
     }
 
-    public double getPosition() {
+    public double getRelativePosition() {
         return sparkMaxEncoder.getPosition();
     }
 
@@ -111,7 +111,7 @@ public class ArmSecondJoint extends SparkMaxGenericSubsystem {
     @Override
     public void configureDashboard() {
         namespace.putNumber("absolute encoder position", this::getAbsolutePosition);
-        namespace.putNumber("spark max encoder position", this::getPosition);
+        namespace.putNumber("spark max encoder position", this::getRelativePosition);
         namespace.putNumber("velocity", this::getVelocity);
     }
 }
