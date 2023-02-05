@@ -4,19 +4,34 @@
 
 package frc.robot;
 
+import com.spikes2212.dashboard.RootNamespace;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import frc.robot.commands.CenterAgainstAprilTag;
+import frc.robot.subsystems.Drivetrain;
+
+import java.io.IOException;
 
 public class Robot extends TimedRobot {
 
+    private final RootNamespace root = new RootNamespace("robot");
+
     @Override
     public void robotInit() {
+        CenterAgainstAprilTag center = null;
+        try {
+            center = new CenterAgainstAprilTag(Drivetrain.getInstance());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        root.putData("center", center);
 
     }
 
     @Override
     public void robotPeriodic() {
         CommandScheduler.getInstance().run();
+        root.update();
     }
 
     @Override
