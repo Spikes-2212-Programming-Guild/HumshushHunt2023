@@ -54,11 +54,16 @@ public class Robot extends TimedRobot {
 
     @Override
     public void teleopPeriodic() {
-        double speed = xbox.getRightY();
-        double rotate = xbox.getLeftX();
-        if (Math.abs(speed) > 0.05 || Math.abs(rotate) > 0.05)
-            drivotrain.setSpeeds(speed - rotate, speed + rotate);
-        else {
+        double speed = ps.getRightY();
+        double rotate = ps.getLeftX();
+        if (Math.abs(speed) > 0.05 || Math.abs(rotate) > 0.05) {
+            if (Math.abs(speed) < 0.05) {
+                speed = 0;
+            } else if (Math.abs(rotate) < 0.05) {
+                rotate = 0;
+            }
+            drivotrain.setSpeeds((speed - rotate) * 0.7, (speed + rotate) * 0.7);
+        } else {
             speed = 0;
             rotate = 0;
             drivotrain.setSpeeds(speed - rotate, speed + rotate);
