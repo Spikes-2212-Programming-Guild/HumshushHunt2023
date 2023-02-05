@@ -9,7 +9,7 @@ public class MoveArm extends ParallelCommandGroup {
 
     public enum ArmState {
 
-        REST(0, 0), FLOOR(0, 0), DOUBLE_SUBSTATION(0, 0), BOTTOM(0, 0), CUBE_MID(0, 0),
+        REST(0, 0), FLOOR_BACK(0, 0), FLOOR_FRONT(0, 0), DOUBLE_SUBSTATION(0, 0), BOTTOM(0, 0), CUBE_MID(0, 0),
         CUBE_TOP(0, 0), CONE_MID(0, 0), CONE_TOP(0, 0);
 
         public final double firstJointPosition;
