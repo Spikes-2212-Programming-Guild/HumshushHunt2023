@@ -5,17 +5,15 @@
 package frc.robot;
 
 import com.spikes2212.util.PlaystationControllerWrapper;
-import com.spikes2212.util.XboxControllerWrapper;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import frc.robot.subsystems.Drivotrain;
+import frc.robot.subsystems.Drivetrain;
 
 public class Robot extends TimedRobot {
 
-    Drivotrain drivotrain = new Drivotrain();
+    Drivetrain drivetrain = new Drivetrain();
 
     PlaystationControllerWrapper ps = new PlaystationControllerWrapper(0);
-    XboxControllerWrapper xbox = new XboxControllerWrapper(1);
 
     @Override
     public void robotInit() {
@@ -25,7 +23,7 @@ public class Robot extends TimedRobot {
     @Override
     public void robotPeriodic() {
         CommandScheduler.getInstance().run();
-        drivotrain.periodic();
+        drivetrain.periodic();
     }
 
     @Override
@@ -63,7 +61,7 @@ public class Robot extends TimedRobot {
         if (Math.abs(rotate) < 0.05) {
             rotate = 0;
         }
-        drivotrain.setSpeeds((speed - rotate) * -0.7, (speed + rotate) * -0.7);
+        drivetrain.setSpeeds((speed - rotate) * -0.7, (speed + rotate) * -0.7);
     }
 
     @Override
@@ -83,6 +81,6 @@ public class Robot extends TimedRobot {
 
     @Override
     public void simulationPeriodic() {
-        drivotrain.simulationPeriodic();
+        drivetrain.simulationPeriodic();
     }
 }
