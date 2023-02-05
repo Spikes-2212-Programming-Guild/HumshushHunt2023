@@ -9,12 +9,26 @@ import org.photonvision.targeting.PhotonPipelineResult;
 
 public class VisionService {
 
-    public void setPhotonVisionPipeline(PhotonVisionPipeline pipeline) {
-        photonCamera.setPipelineIndex(pipeline.pipeline);
+    public enum PhotonVisionPipeline {
+
+        CONE(0), CUBE(1);
+
+        public final int pipeline;
+
+        PhotonVisionPipeline(int pipeline) {
+            this.pipeline = pipeline;
+        }
     }
 
-    public void setLimelightPipeline(LimelightPipeline pipeline) {
-        limelight.setPipeline(pipeline.pipeline);
+    public enum LimelightPipeline {
+
+        HIGH_RRT(0), LOW_RRT(1), APRIL_TAG(2);
+
+        public final int pipeline;
+
+        LimelightPipeline(int pipeline) {
+            this.pipeline = pipeline;
+        }
     }
 
     private static final String PHOTON_VISION_CAMERA_NAME = "photonvision";
@@ -64,7 +78,7 @@ public class VisionService {
         return limelight.getHorizontalOffsetFromTargetInDegrees();
     }
 
-    public void changePhotonVisionDriverMode(boolean mode) {
+    public void setPhotonVisionDriverMode(boolean mode) {
         photonCamera.setDriverMode(mode);
     }
 
@@ -72,32 +86,18 @@ public class VisionService {
         return limelight.hasTarget();
     }
 
-    public enum PhotonVisionPipeline {
-
-        CONE(0), CUBE(1);
-
-        public final int pipeline;
-
-        PhotonVisionPipeline(int pipeline) {
-            this.pipeline = pipeline;
-        }
+    public void setPhotonVisionPipeline(PhotonVisionPipeline pipeline) {
+        photonCamera.setPipelineIndex(pipeline.pipeline);
     }
 
-    public enum LimelightPipeline {
-
-        HIGH_RRT(0), LOW_RRT(1), APRIL_TAG(2);
-
-        public final int pipeline;
-
-        LimelightPipeline(int pipeline) {
-            this.pipeline = pipeline;
-        }
+    public void setLimelightPipeline(LimelightPipeline pipeline) {
+        limelight.setPipeline(pipeline.pipeline);
     }
 
     public void configureDashboard() {
         namespace.putBoolean("limelight has target", this::limelightHasTarget);
         namespace.putNumber("limelight yaw", this::getLimelightYaw);
-        namespace.putNumber("photonvision yaw", this::getPhotonVisionYaw);
+        namespace.putNumber("photon vision yaw", this::getPhotonVisionYaw);
         CameraServer.startAutomaticCapture();
     }
 }
