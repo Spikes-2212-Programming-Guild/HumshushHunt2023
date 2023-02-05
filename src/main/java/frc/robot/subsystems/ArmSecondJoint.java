@@ -85,6 +85,10 @@ public class ArmSecondJoint extends SparkMaxGenericSubsystem {
         return absoluteEncoder.getDistance();
     }
 
+    public double getVelocity() {
+        return sparkMaxEncoder.getVelocity();
+    }
+
     public PIDSettings getPIDSettings() {
         return pidSettings;
     }
@@ -100,7 +104,7 @@ public class ArmSecondJoint extends SparkMaxGenericSubsystem {
     private void configureEncoders() {
         sparkMaxEncoder.setPositionConversionFactor(DISTANCE_PER_PULSE);
         sparkMaxEncoder.setVelocityConversionFactor(DISTANCE_PER_PULSE / SECONDS_IN_MINUTE);
-        absoluteEncoder.setDistancePerRotation(DISTANCE_PER_PULSE);
+        absoluteEncoder.setDistancePerRotation(DISTANCE_PER_PULSE / sparkMaxEncoder.getCountsPerRevolution());
         sparkMaxEncoder.setPosition(absoluteEncoder.getDistance());
     }
 
@@ -108,5 +112,6 @@ public class ArmSecondJoint extends SparkMaxGenericSubsystem {
     public void configureDashboard() {
         namespace.putNumber("absolute encoder position", this::getAbsolutePosition);
         namespace.putNumber("spark max encoder position", this::getRelativePosition);
+        namespace.putNumber("velocity", this::getVelocity);
     }
 }
