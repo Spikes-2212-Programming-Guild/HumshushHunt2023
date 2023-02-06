@@ -7,6 +7,7 @@ package frc.robot;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMaxLowLevel;
 import com.spikes2212.command.drivetrains.commands.DriveArcade;
+import com.spikes2212.dashboard.RootNamespace;
 import com.spikes2212.util.PlaystationControllerWrapper;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.TimedRobot;
@@ -18,22 +19,30 @@ import frc.robot.commands.SetSparkMax;
 import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.Gripper;
 
+import java.util.function.Supplier;
+
 public class Robot extends TimedRobot {
 
 //    Drivetrain drivetrain = Drivetrain.getInstance();
+    RootNamespace namespace = new RootNamespace("testing");
+    Supplier<Double> speed = namespace.addConstantDouble("speed", 0.2);
     PlaystationControllerWrapper ps = new PlaystationControllerWrapper(0);
 
     @Override
     public void robotInit() {
-        ps.getCircleButton().whileTrue(new SetSparkMax(new CANSparkMax(1, CANSparkMaxLowLevel.MotorType.kBrushless), 0.2));
-        ps.getCrossButton().whileTrue(new SetSparkMax(new CANSparkMax(2, CANSparkMaxLowLevel.MotorType.kBrushless), 0.2));
-        ps.getSquareButton().whileTrue(new SetSparkMax(new CANSparkMax(3, CANSparkMaxLowLevel.MotorType.kBrushless), 0.2));
-        ps.getTriangleButton().whileTrue(new SetSparkMax(new CANSparkMax(4, CANSparkMaxLowLevel.MotorType.kBrushless), 0.2));
+        ps.getCircleButton().whileTrue(new SetSparkMax(new CANSparkMax(1, CANSparkMaxLowLevel.MotorType.kBrushless), speed));
+        ps.getCrossButton().whileTrue(new SetSparkMax(new CANSparkMax(2, CANSparkMaxLowLevel.MotorType.kBrushless), speed));
+        ps.getSquareButton().whileTrue(new SetSparkMax(new CANSparkMax(3, CANSparkMaxLowLevel.MotorType.kBrushless), speed));
+        ps.getTriangleButton().whileTrue(new SetSparkMax(new CANSparkMax(4, CANSparkMaxLowLevel.MotorType.kBrushless), speed));
 
-        ps.getR1Button().whileTrue(new SetSparkMax(new CANSparkMax(5, CANSparkMaxLowLevel.MotorType.kBrushless), 0.2));
-        ps.getR2Button().whileTrue(new SetSparkMax(new CANSparkMax(6, CANSparkMaxLowLevel.MotorType.kBrushless), 0.2));
-
-        ps.getL1Button().whileTrue(new SetSparkMax(new CANSparkMax(7, CANSparkMaxLowLevel.MotorType.kBrushless), 0.2));
+        ps.getR1Button().whileTrue(new SetSparkMax(new CANSparkMax(5, CANSparkMaxLowLevel.MotorType.kBrushless), speed));
+        ps.getR2Button().whileTrue(new SetSparkMax(new CANSparkMax(6, CANSparkMaxLowLevel.MotorType.kBrushless), speed){
+            @Override
+            public void initialize() {
+                sparkMax.setInverted(true);
+            }
+        });
+        ps.getL1Button().whileTrue(new SetSparkMax(new CANSparkMax(7, CANSparkMaxLowLevel.MotorType.kBrushless), speed));
 //
 //        Gripper gripper = Gripper.getInstance();
 //        ps.getUpButton().onTrue(new OpenGripper(gripper));
@@ -43,6 +52,7 @@ public class Robot extends TimedRobot {
     @Override
     public void robotPeriodic() {
         CommandScheduler.getInstance().run();
+        namespace.update();
     }
 
     @Override
