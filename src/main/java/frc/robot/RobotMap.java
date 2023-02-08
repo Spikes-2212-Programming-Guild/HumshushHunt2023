@@ -16,8 +16,8 @@ public class RobotMap {
 
     public interface DIO {
 
-        int ARM_FIRST_JOINT_ABSOLUTE_ENCODER = -1;
-        int ARM_SECOND_JOINT_ABSOLUTE_ENCODER = -1;
+        int ARM_FIRST_JOINT_ABSOLUTE_ENCODER = 0;
+        int ARM_SECOND_JOINT_ABSOLUTE_ENCODER = 2;
     }
 
     public interface PWM {
@@ -30,7 +30,7 @@ public class RobotMap {
 
     public interface PCM {
 
-        int GRIPPER_SOLENOID_FORWARD = -1;
-        int GRIPPER_SOLENOID_REVERSE = -1;
+        int GRIPPER_SOLENOID_FORWARD = 0;
+        int GRIPPER_SOLENOID_REVERSE = 1;
     }
 }

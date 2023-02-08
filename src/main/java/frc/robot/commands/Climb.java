@@ -55,7 +55,7 @@ public class Climb extends CommandBase {
 
     @Override
     public boolean isFinished() {
-        return lastTimeNotOnTarget >= WAIT_TIME.get();
+        return Timer.getFPGATimestamp() - lastTimeNotOnTarget >= WAIT_TIME.get();
     }
 
     @Override

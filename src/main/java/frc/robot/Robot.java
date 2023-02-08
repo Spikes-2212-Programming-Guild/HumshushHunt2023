@@ -7,15 +7,22 @@ package frc.robot;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMaxLowLevel;
 import com.spikes2212.command.drivetrains.commands.DriveArcade;
+import com.spikes2212.command.genericsubsystem.commands.smartmotorcontrollergenericsubsystem.MoveSmartMotorControllerGenericSubsystem;
 import com.spikes2212.dashboard.RootNamespace;
 import com.spikes2212.util.PlaystationControllerWrapper;
+import com.spikes2212.util.UnifiedControlMode;
+import com.spikes2212.util.XboxControllerWrapper;
+import edu.wpi.first.wpilibj.AddressableLED;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import frc.robot.commands.Climb;
 import frc.robot.commands.CloseGripper;
 import frc.robot.commands.OpenGripper;
 import frc.robot.commands.SetSparkMax;
+import frc.robot.subsystems.ArmFirstJoint;
+import frc.robot.subsystems.ArmSecondJoint;
 import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.Gripper;
 
@@ -23,36 +30,68 @@ import java.util.function.Supplier;
 
 public class Robot extends TimedRobot {
 
-//    Drivetrain drivetrain = Drivetrain.getInstance();
     RootNamespace namespace = new RootNamespace("testing");
-    Supplier<Double> speed = namespace.addConstantDouble("speed", 0.2);
+    Supplier<Double> speed = namespace.addConstantDouble("speed1", 0.2);
     PlaystationControllerWrapper ps = new PlaystationControllerWrapper(0);
+    XboxControllerWrapper xbox = new XboxControllerWrapper(1);
+    Drivetrain drivetrain;
+    ArmFirstJoint firstJoint;
+    ArmSecondJoint secondJoint;
+    Gripper gripper;
 
     @Override
     public void robotInit() {
-        ps.getCircleButton().whileTrue(new SetSparkMax(new CANSparkMax(1, CANSparkMaxLowLevel.MotorType.kBrushless), speed));
-        ps.getCrossButton().whileTrue(new SetSparkMax(new CANSparkMax(2, CANSparkMaxLowLevel.MotorType.kBrushless), speed));
-        ps.getSquareButton().whileTrue(new SetSparkMax(new CANSparkMax(3, CANSparkMaxLowLevel.MotorType.kBrushless), speed));
-        ps.getTriangleButton().whileTrue(new SetSparkMax(new CANSparkMax(4, CANSparkMaxLowLevel.MotorType.kBrushless), speed));
-
-        ps.getR1Button().whileTrue(new SetSparkMax(new CANSparkMax(5, CANSparkMaxLowLevel.MotorType.kBrushless), speed));
-        ps.getR2Button().whileTrue(new SetSparkMax(new CANSparkMax(6, CANSparkMaxLowLevel.MotorType.kBrushless), speed){
+        drivetrain = Drivetrain.getInstance();
+        firstJoint = ArmFirstJoint.getInstance();
+        secondJoint = ArmSecondJoint.getInstance();
+        gripper = Gripper.getInstance();
+//        ps.getCircleButton().whileTrue(new SetSparkMax(new CANSparkMax(1, CANSparkMaxLowLevel.MotorType.kBrushless), speed));
+//        ps.getCrossButton().whileTrue(new SetSparkMax(new CANSparkMax(2, CANSparkMaxLowLevel.MotorType.kBrushless), speed));
+//        ps.getSquareButton().whileTrue(new SetSparkMax(new CANSparkMax(3, CANSparkMaxLowLevel.MotorType.kBrushless), speed));
+//        ps.getTriangleButton().whileTrue(new SetSparkMax(new CANSparkMax(4, CANSparkMaxLowLevel.MotorType.kBrushless), speed));
+        ps.getR1Button().whileTrue(new MoveSmartMotorControllerGenericSubsystem(firstJoint, firstJoint.getPIDSettings(), firstJoint.getFeedForwardSettings(), UnifiedControlMode.PERCENT_OUTPUT, firstJoint.forwardSpeed) {
             @Override
-            public void initialize() {
-                sparkMax.setInverted(true);
+            public boolean isFinished() {
+                return false;
             }
         });
-        ps.getL1Button().whileTrue(new SetSparkMax(new CANSparkMax(7, CANSparkMaxLowLevel.MotorType.kBrushless), speed));
-//
-//        Gripper gripper = Gripper.getInstance();
-//        ps.getUpButton().onTrue(new OpenGripper(gripper));
-//        ps.getDownButton().onTrue(new CloseGripper(gripper));
+        ps.getR2Button().whileTrue(new MoveSmartMotorControllerGenericSubsystem(firstJoint, firstJoint.getPIDSettings(), firstJoint.getFeedForwardSettings(), UnifiedControlMode.PERCENT_OUTPUT, firstJoint.backwardsSpeed) {
+            @Override
+            public boolean isFinished() {
+                return false;
+            }
+        });
+        ps.getL2Button().whileTrue(new MoveSmartMotorControllerGenericSubsystem(secondJoint, secondJoint.getPIDSettings(), secondJoint.getFeedForwardSettings(), UnifiedControlMode.PERCENT_OUTPUT, secondJoint.backwardsSpeed) {
+            @Override
+            public boolean isFinished() {
+                return false;
+            }
+        });
+        ps.getL1Button().whileTrue(new MoveSmartMotorControllerGenericSubsystem(secondJoint, secondJoint.getPIDSettings(), secondJoint.getFeedForwardSettings(), UnifiedControlMode.PERCENT_OUTPUT, secondJoint.forwardSpeed) {
+            @Override
+            public boolean isFinished() {
+                return false;
+            }
+        });
+//        CANSparkMax sparkMax = new CANSparkMax(6, CANSparkMaxLowLevel.MotorType.kBrushless);
+//        sparkMax.setInverted(true);x
+//        ps.getR2Button().whileTrue(new SetSparkMax(new CANSparkMax(5, CANSparkMaxLowLevel.MotorType.kBrushless), speed));
+//        ps.getR1Button().whileTrue(new SetSparkMax(sparkMax, speed));
+//        ps.getL1Button().whileTrue(new SetSparkMax(new CANSparkMax(7, CANSparkMaxLowLevel.MotorType.kBrushless), -speed.get()));
+        ps.getUpButton().onTrue(new OpenGripper(gripper));
+        ps.getDownButton().onTrue(new CloseGripper(gripper));
+
+        ps.getTriangleButton().onTrue(new Climb(drivetrain));
     }
 
     @Override
     public void robotPeriodic() {
         CommandScheduler.getInstance().run();
         namespace.update();
+        drivetrain.periodic();
+        firstJoint.periodic();
+        secondJoint.periodic();
+        gripper.periodic();
     }
 
     @Override
@@ -75,9 +114,17 @@ public class Robot extends TimedRobot {
 
     }
 
+    private double getRightY() {
+        return xbox.getRightY();
+    }
+
+    private double getLeftX() {
+        return xbox.getLeftX();
+    }
+
     @Override
     public void teleopInit() {
-//        drivetrain.setDefaultCommand(new DriveArcade(drivetrain, drivetrain::getRightY, drivetrain::getLeftX));
+        drivetrain.setDefaultCommand(new DriveArcade(drivetrain, this::getRightY, this::getLeftX));
     }
 
     @Override
