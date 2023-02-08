@@ -7,14 +7,13 @@ package frc.robot;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMaxLowLevel;
 import com.spikes2212.command.drivetrains.commands.DriveArcade;
+import com.spikes2212.command.drivetrains.commands.DriveTankWithPID;
 import com.spikes2212.command.genericsubsystem.commands.smartmotorcontrollergenericsubsystem.MoveSmartMotorControllerGenericSubsystem;
 import com.spikes2212.dashboard.RootNamespace;
 import com.spikes2212.util.PlaystationControllerWrapper;
 import com.spikes2212.util.UnifiedControlMode;
 import com.spikes2212.util.XboxControllerWrapper;
-import edu.wpi.first.wpilibj.AddressableLED;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.*;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import frc.robot.commands.Climb;
@@ -32,6 +31,7 @@ public class Robot extends TimedRobot {
 
     RootNamespace namespace = new RootNamespace("testing");
     Supplier<Double> speed = namespace.addConstantDouble("speed1", 0.2);
+    Supplier<Double> setpoint = namespace.addConstantDouble("setpoint", 0);
     PlaystationControllerWrapper ps = new PlaystationControllerWrapper(0);
     XboxControllerWrapper xbox = new XboxControllerWrapper(1);
     Drivetrain drivetrain;
@@ -41,10 +41,16 @@ public class Robot extends TimedRobot {
 
     @Override
     public void robotInit() {
+        Compressor compressor = new Compressor(0, PneumaticsModuleType.CTREPCM);
+        compressor.disable();
         drivetrain = Drivetrain.getInstance();
         firstJoint = ArmFirstJoint.getInstance();
         secondJoint = ArmSecondJoint.getInstance();
         gripper = Gripper.getInstance();
+//        DriveTankWithPID drive = new DriveTankWithPID(drivetrain, drivetrain.getLeftPIDSettings(), drivetrain.getRightPIDSettings(),
+//                setpoint, setpoint, drivetrain::getLeftPosition, drivetrain::getRightPosition);
+//        xbox.getYellowButton().onTrue(drive);
+        xbox.getBlueButton().onTrue(new InstantCommand(drivetrain::resetEncoders));
 //        ps.getCircleButton().whileTrue(new SetSparkMax(new CANSparkMax(1, CANSparkMaxLowLevel.MotorType.kBrushless), speed));
 //        ps.getCrossButton().whileTrue(new SetSparkMax(new CANSparkMax(2, CANSparkMaxLowLevel.MotorType.kBrushless), speed));
 //        ps.getSquareButton().whileTrue(new SetSparkMax(new CANSparkMax(3, CANSparkMaxLowLevel.MotorType.kBrushless), speed));
