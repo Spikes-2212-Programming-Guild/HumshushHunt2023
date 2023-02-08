@@ -9,6 +9,7 @@ import com.spikes2212.control.FeedForwardSettings;
 import com.spikes2212.control.PIDSettings;
 import com.spikes2212.control.TrapezoidProfileSettings;
 import com.spikes2212.dashboard.Namespace;
+import com.spikes2212.util.UnifiedControlMode;
 import edu.wpi.first.math.controller.RamseteController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
@@ -144,6 +145,11 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
 
     public void resetGyro() {
         gyro.reset();
+    }
+
+    public void setMetersPerSecond(double leftMS, double rightMS, PIDSettings leftPIDSettings, PIDSettings rightPIDSettings,
+                                   FeedForwardSettings feedForwardSettings) {
+        pidSet(UnifiedControlMode.VELOCITY, leftMS, rightMS, leftPIDSettings, rightPIDSettings, feedForwardSettings);
     }
 
     public double getLeftPosition() {
