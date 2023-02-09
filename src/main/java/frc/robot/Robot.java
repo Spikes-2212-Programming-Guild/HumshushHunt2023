@@ -16,10 +16,8 @@ import com.spikes2212.util.XboxControllerWrapper;
 import edu.wpi.first.wpilibj.*;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
-import frc.robot.commands.Climb;
-import frc.robot.commands.CloseGripper;
-import frc.robot.commands.OpenGripper;
-import frc.robot.commands.SetSparkMax;
+import frc.robot.commands.*;
+import frc.robot.services.VisionService;
 import frc.robot.subsystems.ArmFirstJoint;
 import frc.robot.subsystems.ArmSecondJoint;
 import frc.robot.subsystems.Drivetrain;
@@ -42,7 +40,8 @@ public class Robot extends TimedRobot {
     @Override
     public void robotInit() {
         Compressor compressor = new Compressor(0, PneumaticsModuleType.CTREPCM);
-        compressor.disable();
+        namespace.putData("enable compressor", new InstantCommand(compressor::enableDigital));
+        namespace.putData("disable compressor", new InstantCommand(compressor::disable));
         drivetrain = Drivetrain.getInstance();
         firstJoint = ArmFirstJoint.getInstance();
         secondJoint = ArmSecondJoint.getInstance();
@@ -88,6 +87,9 @@ public class Robot extends TimedRobot {
         ps.getDownButton().onTrue(new CloseGripper(gripper));
         ps.getLeftButton().onTrue(new InstantCommand(() -> drivetrain.setMode(CANSparkMax.IdleMode.kCoast)));
         ps.getTriangleButton().onTrue(new Climb(drivetrain));
+        xbox.getRightButton().onTrue(new InstantCommand(() -> {
+        }, drivetrain));
+        xbox.getLeftButton().onTrue(new CenterOnRRT(drivetrain, VisionService.getInstance(), VisionService.LimelightPipeline.HIGH_RRT));
     }
 
     @Override
