@@ -20,7 +20,7 @@ public class SmashAndDash extends BasePathAuto {
     }
 
     public CommandBase getCommand() {
-        return followPath(PathPlanner.loadPath("Smash And Dash",
+        return fullAuto(PathPlanner.loadPath("Smash And Dash",
                 new PathConstraints(MAX_VELOCITY, MAX_ACCELERATION)));
     }
 

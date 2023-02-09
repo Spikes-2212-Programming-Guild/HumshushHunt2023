@@ -21,7 +21,7 @@ public class SplooshAndVamoose extends BasePathAuto {
     }
 
     public CommandBase getCommand() {
-        return followPath(PathPlanner.loadPath("Sploosh And Vamoose",
+        return fullAuto(PathPlanner.loadPath("Sploosh And Vamoose",
                 new PathConstraints(MAX_VELOCITY, MAX_ACCELERATION)));
     }
 
