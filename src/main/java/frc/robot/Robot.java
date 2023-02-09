@@ -86,7 +86,7 @@ public class Robot extends TimedRobot {
 //        ps.getL1Button().whileTrue(new SetSparkMax(new CANSparkMax(7, CANSparkMaxLowLevel.MotorType.kBrushless), -speed.get()));
         ps.getUpButton().onTrue(new OpenGripper(gripper));
         ps.getDownButton().onTrue(new CloseGripper(gripper));
-
+        ps.getLeftButton().onTrue(new InstantCommand(() -> drivetrain.setMode(CANSparkMax.IdleMode.kCoast)));
         ps.getTriangleButton().onTrue(new Climb(drivetrain));
     }
 
@@ -121,11 +121,13 @@ public class Robot extends TimedRobot {
     }
 
     private double getRightY() {
-        return xbox.getRightY();
+        double val = xbox.getRightY();
+        return Math.signum(val) * val * val;
     }
 
     private double getLeftX() {
-        return xbox.getLeftX();
+        double val = xbox.getLeftX();
+        return Math.signum(val) * val * val;
     }
 
     @Override

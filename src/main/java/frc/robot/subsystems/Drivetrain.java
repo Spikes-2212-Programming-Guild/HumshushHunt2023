@@ -23,7 +23,7 @@ import java.util.function.Supplier;
 public class Drivetrain extends SparkMaxTankDrivetrain {
 
     private static final double WHEEL_DIAMETER_IN_INCHES = 6;
-//    private static final double GEAR_RATIO = 1 / 12.755;
+    //    private static final double GEAR_RATIO = 1 / 12.755;
     private static final double GEAR_RATIO = 1 / 11.16;
     private static final double INCHES_TO_METERS = 0.0254;
     private static final double DISTANCE_PER_PULSE = WHEEL_DIAMETER_IN_INCHES * GEAR_RATIO * Math.PI * INCHES_TO_METERS;
@@ -141,6 +141,13 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
 
     public void resetOdometry(Pose2d pose2d) {
         odometry.resetPosition(gyro.getRotation2d(), getLeftPosition(), getRightPosition(), pose2d);
+    }
+
+    public void setMode(CANSparkMax.IdleMode mode) {
+        leftMaster.setIdleMode(mode);
+        leftSlaves.get(0).setIdleMode(mode);
+        rightMaster.setIdleMode(mode);
+        rightSlaves.get(0).setIdleMode(mode);
     }
 
     public void resetGyro() {
