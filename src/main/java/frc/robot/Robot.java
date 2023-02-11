@@ -4,38 +4,43 @@
 
 package frc.robot;
 
-import com.pathplanner.lib.PathConstraints;
-import com.pathplanner.lib.PathPlanner;
-import com.pathplanner.lib.PathPlannerTrajectory;
-import com.pathplanner.lib.auto.RamseteAutoBuilder;
-import com.pathplanner.lib.commands.PPRamseteCommand;
 import com.spikes2212.command.drivetrains.commands.DriveArcade;
+import com.spikes2212.command.drivetrains.commands.smartmotorcontrollerdrivetrain.MoveSmartMotorControllerTankDrivetrain;
+import com.spikes2212.dashboard.RootNamespace;
 import com.spikes2212.util.UnifiedControlMode;
 import com.spikes2212.util.XboxControllerWrapper;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.wpilibj.Compressor;
+import edu.wpi.first.wpilibj.PneumaticsModuleType;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import frc.robot.commands.autonomous.SmashAndDash;
 import frc.robot.subsystems.Drivetrain;
 
-import java.util.HashMap;
-
 public class Robot extends TimedRobot {
+
+    private final RootNamespace root = new RootNamespace("root");
 
     XboxControllerWrapper xbox = new XboxControllerWrapper(1);
 
     @Override
     public void robotInit() {
+        new Compressor(PneumaticsModuleType.CTREPCM).enableDigital();
         Drivetrain drivetrain = Drivetrain.getInstance();
-        PathPlannerTrajectory trajectory = PathPlanner.loadPath("move", new PathConstraints(1, 1));
-        RamseteAutoBuilder autoBuilder = new RamseteAutoBuilder(drivetrain::getPose2d, drivetrain::resetOdometry,
-                drivetrain.getRamseteController(), drivetrain.getKinematics(),
-                (leftSpeed, rightSpeed) -> drivetrain.pidSet(UnifiedControlMode.VELOCITY, leftSpeed, rightSpeed, drivetrain.getLeftPIDSettings(),
-                        drivetrain.getRightPIDSettings(), drivetrain.getFeedForwardSettings()), new HashMap<>(),
-                false, drivetrain);
-        CommandBase command = autoBuilder.followPath(trajectory);
+        CommandBase command = new SmashAndDash(drivetrain).getCommand();
+        CommandBase moveStraight = new MoveSmartMotorControllerTankDrivetrain(drivetrain, drivetrain.getLeftPIDSettings(),
+                drivetrain.getRightPIDSettings(), drivetrain.getFeedForwardSettings(), UnifiedControlMode.VELOCITY,
+                () -> 2.0, () -> 2.0) {
+            @Override
+            public boolean isFinished() {
+                return false;
+            }
+        };
+        root.putData("move straight", moveStraight);
+
 //        PathPlannerTrajectory trajectory = PathPlanner.loadPath("move", new PathConstraints(1, 0.5));
 //        PPRamseteCommand command = new PPRamseteCommand(trajectory, drivetrain::getPose2d,
 //                drivetrain.getRamseteController(), drivetrain.getKinematics(), (leftMS, rightMS) -> drivetrain.setMetersPerSecond(leftMS, rightMS,
@@ -45,11 +50,14 @@ public class Robot extends TimedRobot {
         xbox.getBlueButton().onTrue(new InstantCommand(drivetrain::resetEncoders));
         xbox.getGreenButton().onTrue(new InstantCommand(() -> drivetrain.resetOdometry(new Pose2d(0, 0, new Rotation2d()))));
         xbox.getRedButton().onTrue(new InstantCommand(drivetrain::resetGyro));
+        xbox.getButtonStart().onTrue(moveStraight);
+        xbox.getRTButton().onTrue(new InstantCommand(() -> {}, drivetrain));
     }
 
     @Override
     public void robotPeriodic() {
         CommandScheduler.getInstance().run();
+        root.update();
     }
 
     @Override

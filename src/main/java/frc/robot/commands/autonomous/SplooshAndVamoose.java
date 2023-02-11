@@ -2,9 +2,7 @@ package frc.robot.commands.autonomous;
 
 import com.pathplanner.lib.PathConstraints;
 import com.pathplanner.lib.PathPlanner;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.CommandBase;
-import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
+import edu.wpi.first.wpilibj2.command.*;
 import frc.robot.commands.Climb;
 import frc.robot.subsystems.Drivetrain;
 
@@ -13,8 +11,8 @@ import java.util.Map;
 
 public class SplooshAndVamoose extends BasePathAuto {
 
-    private static final double MAX_VELOCITY = 4;
-    private static final double MAX_ACCELERATION = 3;
+    private static final double MAX_VELOCITY = 1;
+    private static final double MAX_ACCELERATION = 1;
 
     public SplooshAndVamoose(Drivetrain drivetrain) {
         super(drivetrain, getEventMap());
@@ -29,10 +27,10 @@ public class SplooshAndVamoose extends BasePathAuto {
         Drivetrain drivetrain = Drivetrain.getInstance();
         HashMap<String, Command> eventMap = new HashMap<>();
         eventMap.put("putGP", new SequentialCommandGroup(
-
+            new PrintCommand("put gp"), new WaitCommand(1)
         ));
         eventMap.put("takeGP", new SequentialCommandGroup(
-
+            new PrintCommand("take gp"), new WaitCommand(1)
         ));
         eventMap.put("climb", new Climb(drivetrain));
         return eventMap;
