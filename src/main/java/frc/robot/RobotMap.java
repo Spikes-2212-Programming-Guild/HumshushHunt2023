@@ -12,6 +12,7 @@ public class RobotMap {
     
     public interface PWM {
 
+        int LED_PORT = -1;
     }
     
     public interface AIN {
