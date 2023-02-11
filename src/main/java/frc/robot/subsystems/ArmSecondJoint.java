@@ -3,11 +3,13 @@ package frc.robot.subsystems;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMaxLowLevel;
 import com.revrobotics.RelativeEncoder;
+import com.revrobotics.SparkMaxPIDController;
 import com.spikes2212.command.genericsubsystem.smartmotorcontrollersubsystem.SparkMaxGenericSubsystem;
 import com.spikes2212.control.FeedForwardSettings;
 import com.spikes2212.control.PIDSettings;
 import com.spikes2212.control.TrapezoidProfileSettings;
 import com.spikes2212.dashboard.Namespace;
+import com.spikes2212.util.UnifiedControlMode;
 import edu.wpi.first.wpilibj.DutyCycleEncoder;
 import frc.robot.RobotMap;
 
@@ -15,9 +17,12 @@ import java.util.function.Supplier;
 
 public class ArmSecondJoint extends SparkMaxGenericSubsystem {
 
-    public static final double DISTANCE_PER_PULSE = -1;
+    public static final double DEGREES_PER_ROTATION = 360;
+    public static final double GEAR_RATIO = 1 / 58.33;
 
     public static final int SECONDS_IN_MINUTE = 60;
+
+    private static final double ABSOLUTE_ENCODER_OFFSET = 0.25;
 
     private static ArmSecondJoint instance;
 
@@ -61,7 +66,7 @@ public class ArmSecondJoint extends SparkMaxGenericSubsystem {
 
     private ArmSecondJoint(String namespaceName, CANSparkMax master) {
         super(namespaceName, master);
-        master.setIdleMode(CANSparkMax.IdleMode.kBrake);
+//        master.setIdleMode(CANSparkMax.IdleMode.kBrake);
         sparkMaxEncoder = master.getEncoder();
         absoluteEncoder = new DutyCycleEncoder(RobotMap.DIO.ARM_SECOND_JOINT_ABSOLUTE_ENCODER);
         configureEncoders();
@@ -76,6 +81,22 @@ public class ArmSecondJoint extends SparkMaxGenericSubsystem {
                               TrapezoidProfileSettings trapezoidProfileSettings) {
         super.configureLoop(pidSettings, feedForwardSettings, trapezoidProfileSettings);
         configureEncoders();
+    }
+
+    @Override
+    public void pidSet(UnifiedControlMode controlMode, double setpoint, PIDSettings pidSettings, FeedForwardSettings feedForwardSettings, TrapezoidProfileSettings trapezoidProfileSettings) {
+        configPIDF(pidSettings, feedForwardSettings);
+        configureTrapezoid(trapezoidProfileSettings);
+        master.getPIDController().setReference(setpoint, controlMode.getSparkMaxControlType(), 0,
+                feedForwardSettings.getkG() * Math.cos(Math.toRadians(this.getAbsolutePosition())), SparkMaxPIDController.ArbFFUnits.kVoltage);
+    }
+
+    public void setVoltage(double voltage) {
+        master.setVoltage(voltage);
+    }
+
+    public void setIdleMode(CANSparkMax.IdleMode idleMode) {
+        master.setIdleMode(idleMode);
     }
 
     public double getRelativePosition() {
@@ -103,10 +124,10 @@ public class ArmSecondJoint extends SparkMaxGenericSubsystem {
     }
 
     private void configureEncoders() {
-        sparkMaxEncoder.setPositionConversionFactor(DISTANCE_PER_PULSE);
-        sparkMaxEncoder.setVelocityConversionFactor(DISTANCE_PER_PULSE / SECONDS_IN_MINUTE);
-        //maybe need to divide by 4 the distance per rotation
-        absoluteEncoder.setDistancePerRotation(DISTANCE_PER_PULSE / sparkMaxEncoder.getCountsPerRevolution());
+        sparkMaxEncoder.setPositionConversionFactor(DEGREES_PER_ROTATION * GEAR_RATIO);
+        sparkMaxEncoder.setVelocityConversionFactor((DEGREES_PER_ROTATION * GEAR_RATIO) / SECONDS_IN_MINUTE);
+        absoluteEncoder.setDistancePerRotation(DEGREES_PER_ROTATION);
+        absoluteEncoder.setPositionOffset(ABSOLUTE_ENCODER_OFFSET);
         sparkMaxEncoder.setPosition(absoluteEncoder.getDistance());
     }
 

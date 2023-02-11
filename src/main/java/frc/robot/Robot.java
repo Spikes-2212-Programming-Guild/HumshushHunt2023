@@ -16,6 +16,8 @@ import com.spikes2212.util.XboxControllerWrapper;
 import edu.wpi.first.wpilibj.*;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.RepeatCommand;
+import edu.wpi.first.wpilibj2.command.RunCommand;
 import frc.robot.commands.*;
 import frc.robot.services.VisionService;
 import frc.robot.subsystems.ArmFirstJoint;
@@ -30,12 +32,15 @@ public class Robot extends TimedRobot {
     RootNamespace namespace = new RootNamespace("testing");
     Supplier<Double> speed = namespace.addConstantDouble("speed1", 0.2);
     Supplier<Double> setpoint = namespace.addConstantDouble("setpoint", 0);
+    Supplier<Double> voltage = namespace.addConstantDouble("voltage", 0);
     PlaystationControllerWrapper ps = new PlaystationControllerWrapper(0);
     XboxControllerWrapper xbox = new XboxControllerWrapper(1);
     Drivetrain drivetrain;
-    ArmFirstJoint firstJoint;
-    ArmSecondJoint secondJoint;
+    ArmFirstJoint firstJoint = ArmFirstJoint.getInstance();
+    ArmSecondJoint secondJoint = ArmSecondJoint.getInstance();
     Gripper gripper;
+    RunCommand runCommand = new RunCommand(() -> secondJoint.setVoltage(voltage.get() * Math.cos(Math.toRadians(secondJoint.getAbsolutePosition()))));
+    RunCommand runCommand1 = new RunCommand(() -> firstJoint.setVoltage(voltage.get()));
 
     @Override
     public void robotInit() {
@@ -43,8 +48,8 @@ public class Robot extends TimedRobot {
         namespace.putData("enable compressor", new InstantCommand(compressor::enableDigital));
         namespace.putData("disable compressor", new InstantCommand(compressor::disable));
         drivetrain = Drivetrain.getInstance();
-        firstJoint = ArmFirstJoint.getInstance();
-        secondJoint = ArmSecondJoint.getInstance();
+//        firstJoint = ArmFirstJoint.getInstance();
+//        secondJoint = ArmSecondJoint.getInstance();
         gripper = Gripper.getInstance();
 //        DriveTankWithPID drive = new DriveTankWithPID(drivetrain, drivetrain.getLeftPIDSettings(), drivetrain.getRightPIDSettings(),
 //                setpoint, setpoint, drivetrain::getLeftPosition, drivetrain::getRightPosition);
@@ -89,7 +94,15 @@ public class Robot extends TimedRobot {
         ps.getTriangleButton().onTrue(new Climb(drivetrain));
         xbox.getRightButton().onTrue(new InstantCommand(() -> {
         }, drivetrain));
+        xbox.getButtonStart().onTrue(new InstantCommand(() -> drivetrain.setMode(CANSparkMax.IdleMode.kCoast)));
+        xbox.getButtonBack().onTrue(new InstantCommand(() -> drivetrain.setMode(CANSparkMax.IdleMode.kBrake)));
         xbox.getLeftButton().onTrue(new CenterOnRRT(drivetrain, VisionService.getInstance(), VisionService.LimelightPipeline.HIGH_RRT));
+        namespace.putRunnable("coast arm", () -> {
+            firstJoint.setIdleMode(CANSparkMax.IdleMode.kCoast);
+            secondJoint.setIdleMode(CANSparkMax.IdleMode.kCoast);
+        });
+        xbox.getRightButton().whileTrue(runCommand);
+        xbox.getUpButton().whileTrue(runCommand1);
     }
 
     @Override
@@ -104,7 +117,8 @@ public class Robot extends TimedRobot {
 
     @Override
     public void disabledInit() {
-
+        runCommand.cancel();
+        runCommand1.cancel();
     }
 
     @Override

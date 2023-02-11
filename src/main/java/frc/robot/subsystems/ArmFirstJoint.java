@@ -3,11 +3,13 @@ package frc.robot.subsystems;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMaxLowLevel;
 import com.revrobotics.RelativeEncoder;
+import com.revrobotics.SparkMaxPIDController;
 import com.spikes2212.command.genericsubsystem.smartmotorcontrollersubsystem.SparkMaxGenericSubsystem;
 import com.spikes2212.control.FeedForwardSettings;
 import com.spikes2212.control.PIDSettings;
 import com.spikes2212.control.TrapezoidProfileSettings;
 import com.spikes2212.dashboard.Namespace;
+import com.spikes2212.util.UnifiedControlMode;
 import edu.wpi.first.wpilibj.DutyCycleEncoder;
 import frc.robot.RobotMap;
 
@@ -15,9 +17,18 @@ import java.util.function.Supplier;
 
 public class ArmFirstJoint extends SparkMaxGenericSubsystem {
 
-    public static final double DISTANCE_PER_PULSE = -1;
+    //    public static final double DISTANCE_PER_PULSE = (1 / 114.3) / 360;
+    public static final double DEGREES_PER_ROTATION = 360;
+
+    /**
+     * Ofek said.
+     */
+    private static final double GEAR_RATIO_MOTOR_TO_ABSOLUTE_ENCODER = 1 / ((60.0 / 15) * (50.0 / 14) * (48 / 14.0));
+    private static final double GEAR_RATIO_ABSOLUTE_ENCODER_TO_ARM = 12 / 28.0;
 
     public static final int SECONDS_IN_MINUTE = 60;
+
+    private static final double ABSOLUTE_ENCODER_OFFSET = 18 / 360.0;
 
     private static ArmFirstJoint instance;
 
@@ -62,8 +73,8 @@ public class ArmFirstJoint extends SparkMaxGenericSubsystem {
 
     private ArmFirstJoint(String namespaceName, CANSparkMax master, CANSparkMax slave) {
         super(namespaceName, master, slave);
-        master.setIdleMode(CANSparkMax.IdleMode.kBrake);
-        slave.setIdleMode(CANSparkMax.IdleMode.kBrake);
+//        master.setIdleMode(CANSparkMax.IdleMode.kBrake);
+//        slave.setIdleMode(CANSparkMax.IdleMode.kBrake);
         sparkMaxEncoder = master.getEncoder();
         absoluteEncoder = new DutyCycleEncoder(RobotMap.DIO.ARM_FIRST_JOINT_ABSOLUTE_ENCODER);
         configureEncoders();
@@ -79,6 +90,23 @@ public class ArmFirstJoint extends SparkMaxGenericSubsystem {
                               TrapezoidProfileSettings trapezoidProfileSettings) {
         super.configureLoop(pidSettings, feedForwardSettings, trapezoidProfileSettings);
         configureEncoders();
+    }
+
+    @Override
+    public void pidSet(UnifiedControlMode controlMode, double setpoint, PIDSettings pidSettings, FeedForwardSettings feedForwardSettings, TrapezoidProfileSettings trapezoidProfileSettings) {
+        configPIDF(pidSettings, feedForwardSettings);
+        configureTrapezoid(trapezoidProfileSettings);
+        master.getPIDController().setReference(setpoint, controlMode.getSparkMaxControlType(), 0,
+                feedForwardSettings.getkG() * Math.cos(Math.toRadians(this.getAbsolutePosition())), SparkMaxPIDController.ArbFFUnits.kVoltage);
+    }
+
+    public void setIdleMode(CANSparkMax.IdleMode idleMode) {
+        master.setIdleMode(idleMode);
+        slaves.get(0).setIdleMode(idleMode);
+    }
+
+    public void setVoltage(double voltage) {
+        master.setVoltage(voltage);
     }
 
     public double getRelativePosition() {
@@ -106,10 +134,12 @@ public class ArmFirstJoint extends SparkMaxGenericSubsystem {
     }
 
     private void configureEncoders() {
-        sparkMaxEncoder.setPositionConversionFactor(DISTANCE_PER_PULSE);
-        sparkMaxEncoder.setVelocityConversionFactor(DISTANCE_PER_PULSE / SECONDS_IN_MINUTE);
-        //maybe need to divide by 4 the distance per rotation
-        absoluteEncoder.setDistancePerRotation(DISTANCE_PER_PULSE / sparkMaxEncoder.getCountsPerRevolution());
+        sparkMaxEncoder.setPositionConversionFactor(DEGREES_PER_ROTATION * GEAR_RATIO_ABSOLUTE_ENCODER_TO_ARM
+                * GEAR_RATIO_MOTOR_TO_ABSOLUTE_ENCODER);
+        sparkMaxEncoder.setVelocityConversionFactor(DEGREES_PER_ROTATION * GEAR_RATIO_ABSOLUTE_ENCODER_TO_ARM
+                * GEAR_RATIO_MOTOR_TO_ABSOLUTE_ENCODER / SECONDS_IN_MINUTE);
+        absoluteEncoder.setDistancePerRotation(DEGREES_PER_ROTATION * GEAR_RATIO_ABSOLUTE_ENCODER_TO_ARM);
+        absoluteEncoder.setPositionOffset(ABSOLUTE_ENCODER_OFFSET / GEAR_RATIO_ABSOLUTE_ENCODER_TO_ARM);
         sparkMaxEncoder.setPosition(absoluteEncoder.getDistance());
     }
 

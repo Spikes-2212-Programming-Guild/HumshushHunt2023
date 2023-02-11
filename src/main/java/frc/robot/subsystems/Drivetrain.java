@@ -61,16 +61,16 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
     private final PIDSettings rightPIDSettings;
 
     private final Namespace cameraPIDNamespace = namespace.addChild("camera pid");
-    private final Supplier<Double> kPCamera = cameraPIDNamespace.addConstantDouble("kP", 0);
-    private final Supplier<Double> kICamera = cameraPIDNamespace.addConstantDouble("kI", 0);
-    private final Supplier<Double> kDCamera = cameraPIDNamespace.addConstantDouble("kD", 0);
-    private final Supplier<Double> waitTimeCamera = cameraPIDNamespace.addConstantDouble("wait time", 0);
-    private final Supplier<Double> toleranceCamera = cameraPIDNamespace.addConstantDouble("tolerance", 0);
+    private final Supplier<Double> kPCamera = cameraPIDNamespace.addConstantDouble("kP", 0.04);
+    private final Supplier<Double> kICamera = cameraPIDNamespace.addConstantDouble("kI", 0.0001);
+    private final Supplier<Double> kDCamera = cameraPIDNamespace.addConstantDouble("kD", 0.005);
+    private final Supplier<Double> waitTimeCamera = cameraPIDNamespace.addConstantDouble("wait time", 0.5);
+    private final Supplier<Double> toleranceCamera = cameraPIDNamespace.addConstantDouble("tolerance", 1);
     private final PIDSettings cameraPIDSettings;
 
     private final Namespace feedForwardNamespace = namespace.addChild("feed forward");
     private final Supplier<Double> kS = feedForwardNamespace.addConstantDouble("kS", 0);
-    private final Supplier<Double> kV = feedForwardNamespace.addConstantDouble("kV", 0);
+    private final Supplier<Double> kV = feedForwardNamespace.addConstantDouble("kV", 0.28);
     private final Supplier<Double> kA = feedForwardNamespace.addConstantDouble("kA", 0);
     private final FeedForwardSettings feedForwardSettings;
 

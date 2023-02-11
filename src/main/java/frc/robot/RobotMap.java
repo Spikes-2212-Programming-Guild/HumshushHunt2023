@@ -16,7 +16,7 @@ public class RobotMap {
 
     public interface DIO {
 
-        int ARM_FIRST_JOINT_ABSOLUTE_ENCODER = 0;
+        int ARM_FIRST_JOINT_ABSOLUTE_ENCODER = 1;
         int ARM_SECOND_JOINT_ABSOLUTE_ENCODER = 2;
     }
 
