@@ -4,15 +4,10 @@
 
 package frc.robot;
 
-import edu.wpi.first.wpilibj.AddressableLED;
-import edu.wpi.first.wpilibj.AddressableLEDBuffer;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import frc.robot.subsystems.Leds;
 
 public class Robot extends TimedRobot {
-
-    Leds leds;
 
     @Override
     public void robotInit() {
@@ -46,18 +41,6 @@ public class Robot extends TimedRobot {
 
     @Override
     public void teleopInit() {
-        // leds = Leds.getInstance();
-        //   leds.startLed();
-        AddressableLED led = new AddressableLED(0);
-        AddressableLEDBuffer ledBuffer = new AddressableLEDBuffer(60);
-        led.setLength(ledBuffer.getLength());
-
-        led.start();
-        for (int i = 0; i < ledBuffer.getLength(); i++) {
-            ledBuffer.setRGB(i, 200, 0, 0);
-        }
-
-        led.setData(ledBuffer);
     }
 
     @Override
