@@ -9,16 +9,15 @@ import com.revrobotics.CANSparkMaxLowLevel;
 import com.spikes2212.command.drivetrains.commands.DriveArcade;
 import com.spikes2212.command.drivetrains.commands.DriveTankWithPID;
 import com.spikes2212.command.genericsubsystem.commands.smartmotorcontrollergenericsubsystem.MoveSmartMotorControllerGenericSubsystem;
+import com.spikes2212.control.FeedForwardSettings;
 import com.spikes2212.dashboard.RootNamespace;
 import com.spikes2212.util.PlaystationControllerWrapper;
 import com.spikes2212.util.UnifiedControlMode;
 import com.spikes2212.util.XboxControllerWrapper;
 import edu.wpi.first.wpilibj.*;
-import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.RepeatCommand;
-import edu.wpi.first.wpilibj2.command.RunCommand;
+import edu.wpi.first.wpilibj2.command.*;
 import frc.robot.commands.*;
+import frc.robot.services.ArmGravityCompensation;
 import frc.robot.services.VisionService;
 import frc.robot.subsystems.ArmFirstJoint;
 import frc.robot.subsystems.ArmSecondJoint;
@@ -41,6 +40,9 @@ public class Robot extends TimedRobot {
     Gripper gripper;
     RunCommand runCommand = new RunCommand(() -> secondJoint.setVoltage(voltage.get() * Math.cos(Math.toRadians(secondJoint.getAbsolutePosition()))));
     RunCommand runCommand1 = new RunCommand(() -> firstJoint.setVoltage(voltage.get()));
+    private final Supplier<Double> firstSetpoint = namespace.addConstantDouble("first setpoint", 0);
+    private final Supplier<Double> secondSetpoint = namespace.addConstantDouble("second setpoint", 0);
+
 
     @Override
     public void robotInit() {
@@ -103,6 +105,54 @@ public class Robot extends TimedRobot {
         });
         xbox.getRightButton().whileTrue(runCommand);
         xbox.getUpButton().whileTrue(runCommand1);
+        namespace.putData("keep arm stable", new KeepArmStable(firstJoint, secondJoint, ArmGravityCompensation.getInstance()));
+        xbox.getRedButton().whileTrue(new KeepArmStable(firstJoint, secondJoint, ArmGravityCompensation.getInstance()));
+//        namespace.putData("move first joint in speed", new MoveFirstJoint(firstJoint, secondJoint,
+//                ArmGravityCompensation.getInstance(), setpoint));
+//        namespace.putData("move second joint in speed", new MoveSecondJoint(firstJoint, secondJoint,
+//                ArmGravityCompensation.getInstance(), setpoint));
+        namespace.putData("move position", new MoveSmartMotorControllerGenericSubsystem(secondJoint,
+                        secondJoint.getPIDSettings(), FeedForwardSettings.EMPTY_FFSETTINGS,
+                UnifiedControlMode.POSITION, setpoint) {
+            @Override
+            public boolean isFinished() {
+                return false;
+            }
+        });
+        secondJoint.configureEncoders();
+        namespace.putData("increase voltage", new MoveSmartMotorControllerGenericSubsystem(firstJoint,
+                secondJoint.getPIDSettings(), secondJoint.getFeedForwardSettings(), UnifiedControlMode.VOLTAGE,
+                setpoint) {
+            @Override
+            public boolean isFinished() {
+                return false;
+            }
+        });
+        namespace.putData("move both", new ParallelCommandGroup(
+                new MoveSmartMotorControllerGenericSubsystem(secondJoint, secondJoint.getPIDSettings(),
+                        secondJoint.getFeedForwardSettings(), UnifiedControlMode.POSITION, secondSetpoint) {
+                    @Override
+                    public boolean isFinished() {
+                        return false;
+                    }
+                },
+                new MoveSmartMotorControllerGenericSubsystem(firstJoint, firstJoint.getPIDSettings(),
+                        firstJoint.getFeedForwardSettings(), UnifiedControlMode.POSITION, firstSetpoint) {
+                    @Override
+                    public boolean isFinished() {
+                        return false;
+                    }
+                }
+        ));
+        namespace.putData("move to state", new MoveArm(
+                firstJoint, secondJoint, MoveArm.ArmState.CONE_TOP
+        ));
+        namespace.putData("stop", new InstantCommand(() -> {}, firstJoint, secondJoint));
+        namespace.putData("move first joint", new MoveFirstJoint(firstJoint, firstSetpoint));
+        namespace.putData("fold second joint", new MoveSecondJoint(secondJoint, () ->
+                MoveArm.ArmState.FOLD_BELOW_180.secondJointPosition));
+        namespace.putData("move second joint", new MoveSecondJoint(secondJoint, secondSetpoint));
+
     }
 
     @Override

@@ -26,7 +26,7 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
     //    private static final double GEAR_RATIO = 1 / 12.755;
     private static final double GEAR_RATIO = 1 / 11.16;
     private static final double INCHES_TO_METERS = 0.0254;
-    private static final double DISTANCE_PER_PULSE = WHEEL_DIAMETER_IN_INCHES * GEAR_RATIO * Math.PI * INCHES_TO_METERS;
+    private static final double DISTANCE_PER_ROTATION = WHEEL_DIAMETER_IN_INCHES * GEAR_RATIO * Math.PI * INCHES_TO_METERS;
 
     private static final double TRACK_WIDTH = 0.57;
 
@@ -215,10 +215,10 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
     }
 
     private void configureEncoders() {
-        leftEncoder.setPositionConversionFactor(DISTANCE_PER_PULSE);
-        leftEncoder.setVelocityConversionFactor(DISTANCE_PER_PULSE / SECONDS_IN_MINUTE);
-        rightEncoder.setPositionConversionFactor(DISTANCE_PER_PULSE);
-        rightEncoder.setVelocityConversionFactor(DISTANCE_PER_PULSE / SECONDS_IN_MINUTE);
+        leftEncoder.setPositionConversionFactor(DISTANCE_PER_ROTATION);
+        leftEncoder.setVelocityConversionFactor(DISTANCE_PER_ROTATION / SECONDS_IN_MINUTE);
+        rightEncoder.setPositionConversionFactor(DISTANCE_PER_ROTATION);
+        rightEncoder.setVelocityConversionFactor(DISTANCE_PER_ROTATION / SECONDS_IN_MINUTE);
     }
 
     private double getPoseX() {
