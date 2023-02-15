@@ -1,117 +1,54 @@
 package frc.robot.commands;
 
-import com.spikes2212.command.genericsubsystem.commands.smartmotorcontrollergenericsubsystem.MoveSmartMotorControllerGenericSubsystem;
-import com.spikes2212.command.genericsubsystem.commands.smartmotorcontrollergenericsubsystem.MoveSmartMotorControllerSubsystemTrapezically;
-import com.spikes2212.util.UnifiedControlMode;
-import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
-import edu.wpi.first.wpilibj2.command.ParallelRaceGroup;
-import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
+import com.revrobotics.CANSparkMax;
+import edu.wpi.first.wpilibj2.command.*;
+import frc.robot.services.ArmGravityCompensation;
 import frc.robot.subsystems.ArmFirstJoint;
 import frc.robot.subsystems.ArmSecondJoint;
+import frc.robot.subsystems.Drivetrain;
+import frc.robot.subsystems.Gripper;
+
+import java.util.function.Supplier;
 
 public class MoveArm extends SequentialCommandGroup {
 
     public enum ArmState {
-        FOLD_BELOW_180(90, 35), FOLD_ABOVE_180(90, 325),
-        REST(0, 0), FLOOR_BACK(0, 0), FLOOR_FRONT(0, 0), DOUBLE_SUBSTATION(0, 0), BOTTOM(0, 0), CUBE_MID(0, 0),
-        CUBE_TOP(0, 0), CONE_MID(0, 0), CONE_TOP(6, 134);
+        FOLD_BELOW_180(90, 35, 0), FOLD_ABOVE_180(90, 325, 0),
+        REST(0, 0, 0), FLOOR_BACK(0, 0, 0),
+        FLOOR_FRONT(0, 0, 0), DOUBLE_SUBSTATION(0, 0, 0), BOTTOM(0, 0, 0),
+        CUBE_MID(0, 0, 0), CUBE_TOP(0, 0, 0), CONE_MID(49, 77, 0.5), CONE_TOP(3, 130, 1);
 
         public final double firstJointPosition;
         public final double secondJointPosition;
+        public final double moveDuration;
 
-        ArmState(double firstJointPosition, double secondJointPosition) {
+        ArmState(double firstJointPosition, double secondJointPosition, double moveDuration) {
             this.firstJointPosition = firstJointPosition;
             this.secondJointPosition = secondJointPosition;
+            this.moveDuration = moveDuration;
         }
     }
 
+    private static final Supplier<Double> WAIT_TIME = () ->  0.1;
+
     public MoveArm(ArmFirstJoint firstJoint, ArmSecondJoint secondJoint, ArmState state) {
-        boolean folded = false;
-        boolean firstReached = false;
-
-        if (secondJoint.getAbsolutePosition() < 180) {
-            addCommands(
-                    new MoveSmartMotorControllerGenericSubsystem(secondJoint, secondJoint.getPIDSettings(),
-                            secondJoint.getFeedForwardSettings(), UnifiedControlMode.POSITION,
-                            () -> ArmState.FOLD_BELOW_180.secondJointPosition) {
-                        @Override
-                        public boolean isFinished() {
-                            return secondJoint.getAbsolutePosition() <= ArmState.FOLD_BELOW_180.secondJointPosition;
-                        }
-
-                        @Override
-                        public void end(boolean interrupted) {}
-                    });
-        } else {
-            addCommands(new MoveSmartMotorControllerGenericSubsystem(
-                    secondJoint, secondJoint.getPIDSettings(),
-                    secondJoint.getFeedForwardSettings(), UnifiedControlMode.POSITION,
-                    () -> ArmState.FOLD_ABOVE_180.secondJointPosition) {
-                @Override
-                public boolean isFinished() {
-                    return secondJoint.getAbsolutePosition() >= ArmState.FOLD_ABOVE_180.secondJointPosition;
-                }
-
-                @Override
-                public void end(boolean interrupted) {}
-            });
-        }
-
-        ParallelRaceGroup raceGroup1 = new ParallelRaceGroup();
-        raceGroup1.addCommands(
-                new MoveSmartMotorControllerGenericSubsystem(firstJoint, firstJoint.getPIDSettings(),
-                        firstJoint.getFeedForwardSettings(), UnifiedControlMode.POSITION,
-                        () -> state.firstJointPosition) {
-                    @Override
-                    public boolean isFinished() {
-                        return firstJoint.onTarget(UnifiedControlMode.POSITION, 1, setpoint.get());
-                    }
-
-                    @Override
-                    public void end(boolean interrupted) {}
-                }
+        addCommands(
+                new InstantCommand(() -> Drivetrain.getInstance().setMode(CANSparkMax.IdleMode.kBrake)),
+                new MoveSecondJoint(secondJoint, () -> ArmState.FOLD_BELOW_180.secondJointPosition, WAIT_TIME,
+                        () -> state.moveDuration),
+                new MoveFirstJoint(firstJoint, () -> state.firstJointPosition, WAIT_TIME,
+                        () -> state.moveDuration),
+                new MoveSecondJoint(secondJoint, () -> state.secondJointPosition, WAIT_TIME,
+                        () -> state.moveDuration),
+                new WaitCommand(0.7),
+                new OpenGripper(Gripper.getInstance()),
+                new WaitCommand(0.5),
+                new MoveSecondJoint(secondJoint, () -> ArmState.FOLD_BELOW_180.secondJointPosition, WAIT_TIME,
+                        () -> state.moveDuration),
+                new CloseGripper(Gripper.getInstance()),
+                new MoveFirstJoint(firstJoint, () -> 90.0, WAIT_TIME, () -> state.moveDuration),
+                new InstantCommand(() -> Drivetrain.getInstance().setMode(CANSparkMax.IdleMode.kCoast)),
+                new KeepArmStable(firstJoint, secondJoint, ArmGravityCompensation.getInstance())
         );
-        if (secondJoint.getAbsolutePosition() < 180) {
-            raceGroup1.addCommands(
-                    new MoveSmartMotorControllerGenericSubsystem(secondJoint, secondJoint.getPIDSettings(),
-                            secondJoint.getFeedForwardSettings(), UnifiedControlMode.POSITION,
-                            () -> ArmState.FOLD_BELOW_180.secondJointPosition) {
-                        @Override
-                        public boolean isFinished() {
-                            return false;
-                        }
-                    });
-        } else {
-            raceGroup1.addCommands(new MoveSmartMotorControllerGenericSubsystem(
-                    secondJoint, secondJoint.getPIDSettings(),
-                    secondJoint.getFeedForwardSettings(), UnifiedControlMode.POSITION,
-                    () -> ArmState.FOLD_ABOVE_180.secondJointPosition) {
-                @Override
-                public boolean isFinished() {
-                    return false;
-                }
-            });
-        }
-
-        addCommands(raceGroup1);
-
-        ParallelCommandGroup parallelGroup = new ParallelCommandGroup(
-                new MoveSmartMotorControllerGenericSubsystem(secondJoint,
-                        secondJoint.getPIDSettings(), secondJoint.getFeedForwardSettings(), UnifiedControlMode.POSITION,
-                        () -> state.secondJointPosition) {
-                    @Override
-                    public boolean isFinished() {
-                        return false;
-                    }
-                },
-                new MoveSmartMotorControllerGenericSubsystem(firstJoint, firstJoint.getPIDSettings(),
-                        firstJoint.getFeedForwardSettings(), UnifiedControlMode.POSITION, () -> state.firstJointPosition) {
-                    @Override
-                    public boolean isFinished() {
-                        return false;
-                    }
-                }
-        );
-        addCommands(parallelGroup);
     }
 }

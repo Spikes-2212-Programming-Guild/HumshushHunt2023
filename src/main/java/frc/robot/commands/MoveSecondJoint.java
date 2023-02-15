@@ -14,17 +14,22 @@ import java.util.function.Supplier;
 public class MoveSecondJoint extends CommandBase {
 
     private final RootNamespace rootNamespace = new RootNamespace("move second joint namespace");
-    private final Supplier<Double> duration = rootNamespace.addConstantDouble("duration", 1);
+    private final Supplier<Double> duration;
 
     private MoveSmartMotorControllerGenericSubsystem move;
     private double startTime;
+    private double lastTimeNotOnTarget;
 
     private final ArmSecondJoint secondJoint;
     private final Supplier<Double> target;
+    private final Supplier<Double> waitTime;
 
-    public MoveSecondJoint(ArmSecondJoint secondJoint, Supplier<Double> target) {
+    public MoveSecondJoint(ArmSecondJoint secondJoint, Supplier<Double> target, Supplier<Double> waitTime,
+                           Supplier<Double> duration) {
         this.secondJoint = secondJoint;
         this.target = target;
+        this.waitTime = waitTime;
+        this.duration = duration;
         addRequirements(secondJoint);
     }
 
@@ -36,6 +41,7 @@ public class MoveSecondJoint extends CommandBase {
                 secondJoint.getFeedForwardSettings(), UnifiedControlMode.POSITION,
                 () -> startPosition + ((target.get() - startPosition) / duration.get())
                         * Math.min((Timer.getFPGATimestamp() - startTime), duration.get()));
+        lastTimeNotOnTarget = startTime;
     }
 
 
@@ -45,13 +51,14 @@ public class MoveSecondJoint extends CommandBase {
     }
 
     @Override
-    public void end(boolean interrupted) {
-        move.end(interrupted);
-    }
+    public void end(boolean interrupted) {}
 
 
     @Override
     public boolean isFinished() {
-        return false;
+        if (!secondJoint.onTarget(UnifiedControlMode.POSITION, secondJoint.getPIDSettings().getTolerance(), target.get())) {
+            lastTimeNotOnTarget = Timer.getFPGATimestamp();
+        }
+        return Timer.getFPGATimestamp() - lastTimeNotOnTarget >= waitTime.get();
     }
 }
