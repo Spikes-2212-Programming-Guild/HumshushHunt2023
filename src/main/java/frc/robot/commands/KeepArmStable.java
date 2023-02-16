@@ -15,10 +15,6 @@ public class KeepArmStable extends SequentialCommandGroup {
 
     private final RootNamespace rootNamespace = new RootNamespace("keep arm stable");
 
-    private static final double GRAVITY = 9.81;
-    private static final double STALL_TORQUE_TO_VOLTAGE = 4 / 1.41;
-    private static final int FIRST_JOINT_MOTORS = 2;
-
     private final ArmFirstJoint firstJoint;
     private final ArmSecondJoint secondJoint;
 

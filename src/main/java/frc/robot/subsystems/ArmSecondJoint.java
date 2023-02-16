@@ -22,8 +22,6 @@ public class ArmSecondJoint extends SparkMaxGenericSubsystem {
 
     public static final int SECONDS_IN_MINUTE = 60;
 
-    private static final double ABSOLUTE_ENCODER_OFFSET = 0;
-
     private static ArmSecondJoint instance;
 
     private final DutyCycleEncoder absoluteEncoder;
@@ -145,7 +143,6 @@ public class ArmSecondJoint extends SparkMaxGenericSubsystem {
         sparkMaxEncoder.setPositionConversionFactor(DEGREES_PER_ROTATION * GEAR_RATIO);
         sparkMaxEncoder.setVelocityConversionFactor((DEGREES_PER_ROTATION * GEAR_RATIO) / SECONDS_IN_MINUTE);
         absoluteEncoder.setDistancePerRotation(-DEGREES_PER_ROTATION);
-        absoluteEncoder.setPositionOffset(ABSOLUTE_ENCODER_OFFSET);
         sparkMaxEncoder.setPosition(getAbsolutePosition());
     }
 

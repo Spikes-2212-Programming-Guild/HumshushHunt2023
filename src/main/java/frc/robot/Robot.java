@@ -5,9 +5,7 @@
 package frc.robot;
 
 import com.revrobotics.CANSparkMax;
-import com.revrobotics.CANSparkMaxLowLevel;
 import com.spikes2212.command.drivetrains.commands.DriveArcade;
-import com.spikes2212.command.drivetrains.commands.DriveTankWithPID;
 import com.spikes2212.command.genericsubsystem.commands.smartmotorcontrollergenericsubsystem.MoveSmartMotorControllerGenericSubsystem;
 import com.spikes2212.control.FeedForwardSettings;
 import com.spikes2212.dashboard.RootNamespace;
@@ -42,6 +40,7 @@ public class Robot extends TimedRobot {
     RunCommand runCommand1 = new RunCommand(() -> firstJoint.setVoltage(voltage.get()));
     private final Supplier<Double> firstSetpoint = namespace.addConstantDouble("first setpoint", 0);
     private final Supplier<Double> secondSetpoint = namespace.addConstantDouble("second setpoint", 0);
+    private ArmGravityCompensation compensation;
 
 
     @Override
@@ -50,6 +49,7 @@ public class Robot extends TimedRobot {
         namespace.putData("enable compressor", new InstantCommand(compressor::enableDigital));
         namespace.putData("disable compressor", new InstantCommand(compressor::disable));
         drivetrain = Drivetrain.getInstance();
+        compensation = ArmGravityCompensation.getInstance();
 //        firstJoint = ArmFirstJoint.getInstance();
 //        secondJoint = ArmSecondJoint.getInstance();
         gripper = Gripper.getInstance();
@@ -112,7 +112,7 @@ public class Robot extends TimedRobot {
 //        namespace.putData("move second joint in speed", new MoveSecondJoint(firstJoint, secondJoint,
 //                ArmGravityCompensation.getInstance(), setpoint));
         namespace.putData("move position", new MoveSmartMotorControllerGenericSubsystem(secondJoint,
-                        secondJoint.getPIDSettings(), FeedForwardSettings.EMPTY_FFSETTINGS,
+                secondJoint.getPIDSettings(), FeedForwardSettings.EMPTY_FFSETTINGS,
                 UnifiedControlMode.POSITION, setpoint) {
             @Override
             public boolean isFinished() {
@@ -144,15 +144,13 @@ public class Robot extends TimedRobot {
                     }
                 }
         ));
-        namespace.putData("move to state", new MoveArm(
-                firstJoint, secondJoint, MoveArm.ArmState.CONE_TOP
-        ));
-        namespace.putData("stop", new InstantCommand(() -> {}, firstJoint, secondJoint));
-        namespace.putData("move first joint", new MoveFirstJoint(firstJoint, firstSetpoint));
-        namespace.putData("fold second joint", new MoveSecondJoint(secondJoint, () ->
-                MoveArm.ArmState.FOLD_BELOW_180.secondJointPosition));
-        namespace.putData("move second joint", new MoveSecondJoint(secondJoint, secondSetpoint));
-
+        namespace.putData("stop", new InstantCommand(() -> {
+        }, firstJoint, secondJoint));
+        namespace.putData("move arm", new PlaceGamePiece(firstJoint, secondJoint, PlaceGamePiece.ArmState.BACK_TOP));
+        namespace.putData("switch sides BACK", new SwitchSides(firstJoint, secondJoint, gripper, true));
+        namespace.putData("switch sides FRONT", new SwitchSides(firstJoint, secondJoint, gripper, false));
+        namespace.putData("floor back", new MoveArmToFloor(firstJoint, secondJoint, compensation, PlaceGamePiece.ArmState.FLOOR_BACK));
+        namespace.putData("floor front", new MoveArmToFloor(firstJoint, secondJoint, compensation, PlaceGamePiece.ArmState.FLOOR_FRONT));
     }
 
     @Override
@@ -167,8 +165,7 @@ public class Robot extends TimedRobot {
 
     @Override
     public void disabledInit() {
-        runCommand.cancel();
-        runCommand1.cancel();
+        new InstantCommand(() -> {}, firstJoint, secondJoint).ignoringDisable(true).schedule();
     }
 
     @Override
@@ -178,7 +175,8 @@ public class Robot extends TimedRobot {
 
     @Override
     public void autonomousInit() {
-
+        new InstantCommand(() -> {
+        }, firstJoint, secondJoint).schedule();
     }
 
     @Override
@@ -198,6 +196,8 @@ public class Robot extends TimedRobot {
 
     @Override
     public void teleopInit() {
+        new InstantCommand(() -> {
+        }, firstJoint, secondJoint).schedule();
         drivetrain.setDefaultCommand(new DriveArcade(drivetrain, this::getRightY, this::getLeftX));
     }
 

@@ -10,13 +10,18 @@ import frc.robot.subsystems.Gripper;
 
 import java.util.function.Supplier;
 
-public class MoveArm extends SequentialCommandGroup {
+public class PlaceGamePiece extends SequentialCommandGroup {
 
     public enum ArmState {
-        FOLD_BELOW_180(90, 35, 0), FOLD_ABOVE_180(90, 325, 0),
-        REST(0, 0, 0), FLOOR_BACK(0, 0, 0),
-        FLOOR_FRONT(0, 0, 0), DOUBLE_SUBSTATION(0, 0, 0), BOTTOM(0, 0, 0),
-        CUBE_MID(0, 0, 0), CUBE_TOP(0, 0, 0), CONE_MID(49, 77, 0.5), CONE_TOP(3, 130, 1);
+        FOLD_BELOW_180(90, 35, 0),
+        FOLD_ABOVE_180(90, 325, 0),
+        REST(0, 0, 0),
+        FLOOR_BACK(80, 103, 0.5),
+        FLOOR_FRONT(100, 255, 0),
+        DOUBLE_SUBSTATION(0, 0, 0),
+        BOTTOM(0, 0, 0),
+        BACK_MID(49, 77, 0.5),
+        BACK_TOP(3, 130, 0.7);
 
         public final double firstJointPosition;
         public final double secondJointPosition;
@@ -31,7 +36,7 @@ public class MoveArm extends SequentialCommandGroup {
 
     private static final Supplier<Double> WAIT_TIME = () ->  0.1;
 
-    public MoveArm(ArmFirstJoint firstJoint, ArmSecondJoint secondJoint, ArmState state) {
+    public PlaceGamePiece(ArmFirstJoint firstJoint, ArmSecondJoint secondJoint, ArmState state) {
         addCommands(
                 new InstantCommand(() -> Drivetrain.getInstance().setMode(CANSparkMax.IdleMode.kBrake)),
                 new MoveSecondJoint(secondJoint, () -> ArmState.FOLD_BELOW_180.secondJointPosition, WAIT_TIME,
