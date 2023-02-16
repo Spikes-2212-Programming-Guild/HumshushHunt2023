@@ -16,8 +16,8 @@ public class SwitchSides extends SequentialCommandGroup {
     private static final Supplier<Double> WAIT_TIME = () -> 0.005;
     private static final Supplier<Double> MOVE_DURATION = () -> 0.5;
 
-    public SwitchSides(ArmFirstJoint firstJoint, ArmSecondJoint secondJoint, Gripper gripper, boolean startsAtBack) {
-//        boolean startsAtBack = secondJoint.getAbsolutePosition() < 180;
+    public SwitchSides(ArmFirstJoint firstJoint, ArmSecondJoint secondJoint, Gripper gripper) {
+        boolean startsAtBack = secondJoint.getAbsolutePosition() < 180;
         if (startsAtBack) {
             addCommands(
                     new InstantCommand(() -> Drivetrain.getInstance().setMode(CANSparkMax.IdleMode.kBrake)),

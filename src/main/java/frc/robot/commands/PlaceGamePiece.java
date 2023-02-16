@@ -25,7 +25,7 @@ public class PlaceGamePiece extends SequentialCommandGroup {
                         () -> state.moveDuration),
                 new MoveSecondJoint(secondJoint, () -> state.secondJointPosition, WAIT_TIME,
                         () -> state.moveDuration),
-                new WaitCommand(2 * WAIT_PERIOD),
+//                new WaitCommand(2 * WAIT_PERIOD),
                 new OpenGripper(Gripper.getInstance()),
                 new WaitCommand(WAIT_PERIOD),
                 new MoveSecondJoint(secondJoint, () -> ArmState.FOLD_BELOW_180.secondJointPosition, WAIT_TIME,

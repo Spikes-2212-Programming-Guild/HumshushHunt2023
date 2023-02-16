@@ -56,10 +56,8 @@ public class OI /*GEVALD*/ {
         ps.getCrossButton().onTrue(new MoveArmToFloor(firstJoint, secondJoint, compensation, PlaceGamePiece.ArmState.FLOOR_FRONT));
         //Moves the arm to the floor (back)
         ps.getTriangleButton().onTrue(new MoveArmToFloor(firstJoint, secondJoint, compensation, PlaceGamePiece.ArmState.FLOOR_BACK));
-        //Switch sides of arm (back to front)
-        ps.getSquareButton().onTrue(new SwitchSides(firstJoint, secondJoint, gripper, true));
-        //Switch sides of arm (front to back)
-        ps.getCircleButton().onTrue(new SwitchSides(firstJoint, secondJoint, gripper, false));
+        //Switch sides of arm
+        ps.getSquareButton().onTrue(new SwitchSides(firstJoint, secondJoint, gripper));
         //Keeps the arm stable
         ps.getShareButton().whileTrue(new KeepArmStable(firstJoint, secondJoint, compensation));
         //Places cone at the top

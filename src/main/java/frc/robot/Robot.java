@@ -6,17 +6,12 @@ package frc.robot;
 
 import com.revrobotics.CANSparkMax;
 import com.spikes2212.command.drivetrains.commands.DriveArcade;
-import com.spikes2212.command.genericsubsystem.commands.smartmotorcontrollergenericsubsystem.MoveSmartMotorControllerGenericSubsystem;
-import com.spikes2212.control.FeedForwardSettings;
 import com.spikes2212.dashboard.RootNamespace;
-import com.spikes2212.util.UnifiedControlMode;
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.PneumaticsModuleType;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
-import edu.wpi.first.wpilibj2.command.RunCommand;
 import frc.robot.commands.KeepArmStable;
 import frc.robot.commands.MoveArmToFloor;
 import frc.robot.commands.PlaceGamePiece;
@@ -27,25 +22,15 @@ import frc.robot.subsystems.ArmSecondJoint;
 import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.Gripper;
 
-import java.util.function.Supplier;
-
 public class Robot extends TimedRobot {
 
-    RootNamespace namespace = new RootNamespace("testing");
-    Supplier<Double> speed = namespace.addConstantDouble("speed1", 0.2);
-    Supplier<Double> setpoint = namespace.addConstantDouble("setpoint", 0);
-    Supplier<Double> voltage = namespace.addConstantDouble("voltage", 0);
-    Drivetrain drivetrain;
-    ArmFirstJoint firstJoint = ArmFirstJoint.getInstance();
-    ArmSecondJoint secondJoint = ArmSecondJoint.getInstance();
-    Gripper gripper;
+    private final RootNamespace namespace = new RootNamespace("robot");
+    private Drivetrain drivetrain;
+    private ArmFirstJoint firstJoint = ArmFirstJoint.getInstance();
+    private ArmSecondJoint secondJoint = ArmSecondJoint.getInstance();
+    private Gripper gripper;
     private OI oi;
-    RunCommand runCommand = new RunCommand(() -> secondJoint.setVoltage(voltage.get() * Math.cos(Math.toRadians(secondJoint.getAbsolutePosition()))));
-    RunCommand runCommand1 = new RunCommand(() -> firstJoint.setVoltage(voltage.get()));
-    private final Supplier<Double> firstSetpoint = namespace.addConstantDouble("first setpoint", 0);
-    private final Supplier<Double> secondSetpoint = namespace.addConstantDouble("second setpoint", 0);
     private ArmGravityCompensation compensation;
-
 
     @Override
     public void robotInit() {
@@ -63,48 +48,10 @@ public class Robot extends TimedRobot {
             secondJoint.setIdleMode(CANSparkMax.IdleMode.kCoast);
         });
         namespace.putData("keep arm stable", new KeepArmStable(firstJoint, secondJoint, ArmGravityCompensation.getInstance()));
-//        namespace.putData("move first joint in speed", new MoveFirstJoint(firstJoint, secondJoint,
-//                ArmGravityCompensation.getInstance(), setpoint));
-//        namespace.putData("move second joint in speed", new MoveSecondJoint(firstJoint, secondJoint,
-//                ArmGravityCompensation.getInstance(), setpoint));
-        namespace.putData("move position", new MoveSmartMotorControllerGenericSubsystem(secondJoint,
-                secondJoint.getPIDSettings(), FeedForwardSettings.EMPTY_FFSETTINGS,
-                UnifiedControlMode.POSITION, setpoint) {
-            @Override
-            public boolean isFinished() {
-                return false;
-            }
-        });
-        secondJoint.configureEncoders();
-        namespace.putData("increase voltage", new MoveSmartMotorControllerGenericSubsystem(firstJoint,
-                secondJoint.getPIDSettings(), secondJoint.getFeedForwardSettings(), UnifiedControlMode.VOLTAGE,
-                setpoint) {
-            @Override
-            public boolean isFinished() {
-                return false;
-            }
-        });
-        namespace.putData("move both", new ParallelCommandGroup(
-                new MoveSmartMotorControllerGenericSubsystem(secondJoint, secondJoint.getPIDSettings(),
-                        secondJoint.getFeedForwardSettings(), UnifiedControlMode.POSITION, secondSetpoint) {
-                    @Override
-                    public boolean isFinished() {
-                        return false;
-                    }
-                },
-                new MoveSmartMotorControllerGenericSubsystem(firstJoint, firstJoint.getPIDSettings(),
-                        firstJoint.getFeedForwardSettings(), UnifiedControlMode.POSITION, firstSetpoint) {
-                    @Override
-                    public boolean isFinished() {
-                        return false;
-                    }
-                }
-        ));
         namespace.putData("stop", new InstantCommand(() -> {
         }, firstJoint, secondJoint));
         namespace.putData("move arm", new PlaceGamePiece(firstJoint, secondJoint, PlaceGamePiece.ArmState.BACK_TOP));
-        namespace.putData("switch sides BACK", new SwitchSides(firstJoint, secondJoint, gripper, true));
-        namespace.putData("switch sides FRONT", new SwitchSides(firstJoint, secondJoint, gripper, false));
+        namespace.putData("switch arm sides", new SwitchSides(firstJoint, secondJoint, gripper));
         namespace.putData("floor back", new MoveArmToFloor(firstJoint, secondJoint, compensation, PlaceGamePiece.ArmState.FLOOR_BACK));
         namespace.putData("floor front", new MoveArmToFloor(firstJoint, secondJoint, compensation, PlaceGamePiece.ArmState.FLOOR_FRONT));
     }
@@ -121,7 +68,8 @@ public class Robot extends TimedRobot {
 
     @Override
     public void disabledInit() {
-        new InstantCommand(() -> {}, firstJoint, secondJoint).ignoringDisable(true).schedule();
+        new InstantCommand(() -> {
+        }, firstJoint, secondJoint).ignoringDisable(true).schedule();
     }
 
     @Override
