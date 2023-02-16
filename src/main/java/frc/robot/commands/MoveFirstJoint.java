@@ -1,7 +1,6 @@
 package frc.robot.commands;
 
 import com.spikes2212.command.genericsubsystem.commands.smartmotorcontrollergenericsubsystem.MoveSmartMotorControllerGenericSubsystem;
-import com.spikes2212.dashboard.RootNamespace;
 import com.spikes2212.util.UnifiedControlMode;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.CommandBase;
@@ -11,7 +10,6 @@ import java.util.function.Supplier;
 
 public class MoveFirstJoint extends CommandBase {
 
-    private final RootNamespace rootNamespace = new RootNamespace("move first joint namespace");
     private final Supplier<Double> duration;
     private final Supplier<Double> waitTime;
 
@@ -42,15 +40,14 @@ public class MoveFirstJoint extends CommandBase {
         lastTimeNotOnTarget = startTime;
     }
 
-
     @Override
     public void execute() {
         move.execute();
     }
 
     @Override
-    public void end(boolean interrupted) {}
-
+    public void end(boolean interrupted) {
+    }
 
     @Override
     public boolean isFinished() {

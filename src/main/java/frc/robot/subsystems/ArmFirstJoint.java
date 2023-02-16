@@ -10,19 +10,14 @@ import com.spikes2212.control.FeedForwardSettings;
 import com.spikes2212.control.PIDSettings;
 import com.spikes2212.control.TrapezoidProfileSettings;
 import com.spikes2212.dashboard.Namespace;
-import com.spikes2212.dashboard.RootNamespace;
 import com.spikes2212.util.UnifiedControlMode;
 import edu.wpi.first.wpilibj.DutyCycleEncoder;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.RunCommand;
 import frc.robot.RobotMap;
 
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class ArmFirstJoint extends SparkMaxGenericSubsystem {
 
-    //    public static final double DISTANCE_PER_PULSE = (1 / 114.3) / 360;
     public static final double DEGREES_PER_ROTATION = 360;
 
     /**
@@ -95,8 +90,8 @@ public class ArmFirstJoint extends SparkMaxGenericSubsystem {
 
     private ArmFirstJoint(String namespaceName, CANSparkMax master, CANSparkMax slave) {
         super(namespaceName, master, slave);
-//        master.setIdleMode(CANSparkMax.IdleMode.kBrake);
-//        slave.setIdleMode(CANSparkMax.IdleMode.kBrake);
+        master.setIdleMode(CANSparkMax.IdleMode.kBrake);
+        slave.setIdleMode(CANSparkMax.IdleMode.kBrake);
         sparkMaxEncoder = master.getEncoder();
         absoluteEncoder = new DutyCycleEncoder(RobotMap.DIO.ARM_FIRST_JOINT_ABSOLUTE_ENCODER);
         configureEncoders();
