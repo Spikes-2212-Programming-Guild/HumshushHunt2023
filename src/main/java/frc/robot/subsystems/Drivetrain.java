@@ -239,14 +239,14 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
         rightEncoder.setVelocityConversionFactor(DISTANCE_PER_ROTATION / SECONDS_IN_MINUTE);
     }
 
-    private double getPoseX() {
-        return getPose2d().getX();
-    }
-
     private double getAcceleration() {
         double accel = gyro.getWorldLinearAccelZ();
         maxAcceleration = Math.max(accel, maxAcceleration);
         return accel;
+    }
+
+    private double getPoseX() {
+        return getPose2d().getX();
     }
 
     private double getPoseY() {
