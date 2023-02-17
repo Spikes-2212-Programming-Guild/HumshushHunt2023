@@ -4,65 +4,72 @@
 
 package frc.robot;
 
+import com.revrobotics.CANSparkMax;
 import com.spikes2212.command.drivetrains.commands.DriveArcade;
-import com.spikes2212.command.drivetrains.commands.smartmotorcontrollerdrivetrain.MoveSmartMotorControllerTankDrivetrain;
 import com.spikes2212.dashboard.RootNamespace;
-import com.spikes2212.util.UnifiedControlMode;
-import com.spikes2212.util.XboxControllerWrapper;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.PneumaticsModuleType;
 import edu.wpi.first.wpilibj.TimedRobot;
-import edu.wpi.first.wpilibj2.command.CommandBase;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
-import frc.robot.commands.autonomous.SmashAndDash;
+import frc.robot.commands.KeepArmStable;
+import frc.robot.commands.MoveArmToFloor;
+import frc.robot.commands.PlaceGamePiece;
+import frc.robot.commands.SwitchSides;
+import frc.robot.services.ArmGravityCompensation;
+import frc.robot.subsystems.ArmFirstJoint;
+import frc.robot.subsystems.ArmSecondJoint;
 import frc.robot.subsystems.Drivetrain;
+import frc.robot.subsystems.Gripper;
 
 public class Robot extends TimedRobot {
 
-    private final RootNamespace root = new RootNamespace("root");
-
-    XboxControllerWrapper xbox = new XboxControllerWrapper(1);
+    private final RootNamespace namespace = new RootNamespace("robot");
+    private Drivetrain drivetrain;
+    private ArmFirstJoint firstJoint = ArmFirstJoint.getInstance();
+    private ArmSecondJoint secondJoint = ArmSecondJoint.getInstance();
+    private Gripper gripper;
+    private OI oi;
+    private ArmGravityCompensation compensation;
 
     @Override
     public void robotInit() {
-        new Compressor(PneumaticsModuleType.CTREPCM).enableDigital();
-        Drivetrain drivetrain = Drivetrain.getInstance();
-        CommandBase command = new SmashAndDash(drivetrain).getCommand();
-        CommandBase moveStraight = new MoveSmartMotorControllerTankDrivetrain(drivetrain, drivetrain.getLeftPIDSettings(),
-                drivetrain.getRightPIDSettings(), drivetrain.getFeedForwardSettings(), UnifiedControlMode.VELOCITY,
-                () -> 2.0, () -> 2.0) {
-            @Override
-            public boolean isFinished() {
-                return false;
-            }
-        };
-        root.putData("move straight", moveStraight);
-
-//        PathPlannerTrajectory trajectory = PathPlanner.loadPath("move", new PathConstraints(1, 0.5));
-//        PPRamseteCommand command = new PPRamseteCommand(trajectory, drivetrain::getPose2d,
-//                drivetrain.getRamseteController(), drivetrain.getKinematics(), (leftMS, rightMS) -> drivetrain.setMetersPerSecond(leftMS, rightMS,
-//                drivetrain.getLeftPIDSettings(), drivetrain.getRightPIDSettings(),
-//                drivetrain.getFeedForwardSettings()), false, drivetrain);
-        xbox.getYellowButton().onTrue(command);
-        xbox.getBlueButton().onTrue(new InstantCommand(drivetrain::resetEncoders));
-        xbox.getGreenButton().onTrue(new InstantCommand(() -> drivetrain.resetOdometry(new Pose2d(0, 0, new Rotation2d()))));
-        xbox.getRedButton().onTrue(new InstantCommand(drivetrain::resetGyro));
-        xbox.getButtonStart().onTrue(moveStraight);
-        xbox.getRTButton().onTrue(new InstantCommand(() -> {}, drivetrain));
+        Compressor compressor = new Compressor(0, PneumaticsModuleType.CTREPCM);
+        namespace.putData("enable compressor", new InstantCommand(compressor::enableDigital));
+        namespace.putData("disable compressor", new InstantCommand(compressor::disable));
+        oi = OI.getInstance();
+        drivetrain = Drivetrain.getInstance();
+        compensation = ArmGravityCompensation.getInstance();
+        firstJoint = ArmFirstJoint.getInstance();
+        secondJoint = ArmSecondJoint.getInstance();
+        gripper = Gripper.getInstance();
+        namespace.putRunnable("coast arm", () -> {
+            firstJoint.setIdleMode(CANSparkMax.IdleMode.kCoast);
+            secondJoint.setIdleMode(CANSparkMax.IdleMode.kCoast);
+        });
+        namespace.putData("keep arm stable", new KeepArmStable(firstJoint, secondJoint, ArmGravityCompensation.getInstance()));
+        namespace.putData("stop", new InstantCommand(() -> {
+        }, firstJoint, secondJoint));
+        namespace.putData("move arm", new PlaceGamePiece(firstJoint, secondJoint, PlaceGamePiece.ArmState.BACK_TOP));
+        namespace.putData("switch arm sides", new SwitchSides(firstJoint, secondJoint, gripper));
+        namespace.putData("floor back", new MoveArmToFloor(firstJoint, secondJoint, compensation, PlaceGamePiece.ArmState.FLOOR_BACK));
+        namespace.putData("floor front", new MoveArmToFloor(firstJoint, secondJoint, compensation, PlaceGamePiece.ArmState.FLOOR_FRONT));
     }
 
     @Override
     public void robotPeriodic() {
         CommandScheduler.getInstance().run();
-        root.update();
+        namespace.update();
+        drivetrain.periodic();
+        firstJoint.periodic();
+        secondJoint.periodic();
+        gripper.periodic();
     }
 
     @Override
     public void disabledInit() {
-
+        new InstantCommand(() -> {
+        }, firstJoint, secondJoint).ignoringDisable(true).schedule();
     }
 
     @Override
@@ -72,7 +79,8 @@ public class Robot extends TimedRobot {
 
     @Override
     public void autonomousInit() {
-
+        new InstantCommand(() -> {
+        }, firstJoint, secondJoint).schedule();
     }
 
     @Override
@@ -82,22 +90,13 @@ public class Robot extends TimedRobot {
 
     @Override
     public void teleopInit() {
-        Drivetrain drivetrain = Drivetrain.getInstance();
-        drivetrain.setDefaultCommand(new DriveArcade(drivetrain, this::getRightY, this::getLeftX));
+        new InstantCommand(() -> {
+        }, firstJoint, secondJoint).schedule();
+        drivetrain.setDefaultCommand(new DriveArcade(drivetrain, oi::getRightY, oi::getLeftX));
     }
 
     @Override
     public void teleopPeriodic() {
-    }
-
-    private double getLeftX() {
-        double val = xbox.getLeftX();
-        return val * val * Math.signum(val);
-    }
-
-    private double getRightY() {
-        double val = xbox.getRightY();
-        return val * val * Math.signum(val);
     }
 
     @Override

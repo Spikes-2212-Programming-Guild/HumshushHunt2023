@@ -3,11 +3,13 @@ package frc.robot.subsystems;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMaxLowLevel;
 import com.revrobotics.RelativeEncoder;
+import com.revrobotics.SparkMaxPIDController;
 import com.spikes2212.command.genericsubsystem.smartmotorcontrollersubsystem.SparkMaxGenericSubsystem;
 import com.spikes2212.control.FeedForwardSettings;
 import com.spikes2212.control.PIDSettings;
 import com.spikes2212.control.TrapezoidProfileSettings;
 import com.spikes2212.dashboard.Namespace;
+import com.spikes2212.util.UnifiedControlMode;
 import edu.wpi.first.wpilibj.DutyCycleEncoder;
 import frc.robot.RobotMap;
 
@@ -15,7 +17,8 @@ import java.util.function.Supplier;
 
 public class ArmSecondJoint extends SparkMaxGenericSubsystem {
 
-    public static final double DISTANCE_PER_PULSE = -1;
+    public static final double DEGREES_PER_ROTATION = 360;
+    public static final double GEAR_RATIO = 1 / 58.33;
 
     public static final int SECONDS_IN_MINUTE = 60;
 
@@ -48,13 +51,24 @@ public class ArmSecondJoint extends SparkMaxGenericSubsystem {
             ("acceleration", 0);
     private final TrapezoidProfileSettings trapezoidProfileSettings;
 
+    private final Namespace keepStablePIDNamespace = namespace.addChild("keep stable pid");
+    private final Supplier<Double> keepStableKp = keepStablePIDNamespace.addConstantDouble("kP", 0);
+    private final Supplier<Double> keepStableKi = keepStablePIDNamespace.addConstantDouble("kI", 0);
+    private final Supplier<Double> keepStableKd = keepStablePIDNamespace.addConstantDouble("kD", 0);
+    private final Supplier<Double> keepStableTolerance = keepStablePIDNamespace.addConstantDouble("tolerance", 0);
+    private final Supplier<Double> keepStableWaitTime = keepStablePIDNamespace.addConstantDouble("wait time", 99999);
+    public final PIDSettings keepStablePIDSettings = new PIDSettings(keepStableKp,
+            keepStableKi, keepStableKd, keepStableTolerance, keepStableWaitTime);
+
+    private double arbitraryFeedForward;
+
     public static ArmSecondJoint getInstance() {
         if (instance == null) {
             instance = new ArmSecondJoint(
                     "arm second joint",
                     new CANSparkMax(RobotMap.CAN.ARM_SECOND_JOINT_SPARKMAX_MASTER,
                             CANSparkMaxLowLevel.MotorType.kBrushless));
-            return instance;
+            instance.configureEncoders();
         }
         return instance;
     }
@@ -63,6 +77,7 @@ public class ArmSecondJoint extends SparkMaxGenericSubsystem {
         super(namespaceName, master);
         master.setIdleMode(CANSparkMax.IdleMode.kBrake);
         sparkMaxEncoder = master.getEncoder();
+        master.setInverted(true);
         absoluteEncoder = new DutyCycleEncoder(RobotMap.DIO.ARM_SECOND_JOINT_ABSOLUTE_ENCODER);
         configureEncoders();
         pidSettings = new PIDSettings(kP, kI, kD, waitTime, tolerance);
@@ -75,7 +90,25 @@ public class ArmSecondJoint extends SparkMaxGenericSubsystem {
     public void configureLoop(PIDSettings pidSettings, FeedForwardSettings feedForwardSettings,
                               TrapezoidProfileSettings trapezoidProfileSettings) {
         super.configureLoop(pidSettings, feedForwardSettings, trapezoidProfileSettings);
+        master.setInverted(true);
         configureEncoders();
+    }
+
+    @Override
+    public void pidSet(UnifiedControlMode controlMode, double setpoint, PIDSettings pidSettings,
+                       FeedForwardSettings feedForwardSettings, TrapezoidProfileSettings trapezoidProfileSettings) {
+        configPIDF(pidSettings, feedForwardSettings);
+        configureTrapezoid(trapezoidProfileSettings);
+        master.getPIDController().setReference(setpoint, controlMode.getSparkMaxControlType(), 0,
+                arbitraryFeedForward, SparkMaxPIDController.ArbFFUnits.kVoltage);
+    }
+
+    public void setVoltage(double voltage) {
+        master.setVoltage(voltage);
+    }
+
+    public void setIdleMode(CANSparkMax.IdleMode idleMode) {
+        master.setIdleMode(idleMode);
     }
 
     public double getRelativePosition() {
@@ -83,7 +116,11 @@ public class ArmSecondJoint extends SparkMaxGenericSubsystem {
     }
 
     public double getAbsolutePosition() {
-        return absoluteEncoder.getDistance();
+        return (absoluteEncoder.getAbsolutePosition() * 360 + 90) % 360;
+    }
+
+    public double getCombinedAngle(ArmFirstJoint firstJoint) {
+        return getAbsolutePosition() + firstJoint.getAbsolutePosition();
     }
 
     public double getVelocity() {
@@ -102,12 +139,11 @@ public class ArmSecondJoint extends SparkMaxGenericSubsystem {
         return trapezoidProfileSettings;
     }
 
-    private void configureEncoders() {
-        sparkMaxEncoder.setPositionConversionFactor(DISTANCE_PER_PULSE);
-        sparkMaxEncoder.setVelocityConversionFactor(DISTANCE_PER_PULSE / SECONDS_IN_MINUTE);
-        //maybe need to divide by 4 the distance per rotation
-        absoluteEncoder.setDistancePerRotation(DISTANCE_PER_PULSE / sparkMaxEncoder.getCountsPerRevolution());
-        sparkMaxEncoder.setPosition(absoluteEncoder.getDistance());
+    public void configureEncoders() {
+        sparkMaxEncoder.setPositionConversionFactor(DEGREES_PER_ROTATION * GEAR_RATIO);
+        sparkMaxEncoder.setVelocityConversionFactor((DEGREES_PER_ROTATION * GEAR_RATIO) / SECONDS_IN_MINUTE);
+        absoluteEncoder.setDistancePerRotation(-DEGREES_PER_ROTATION);
+        sparkMaxEncoder.setPosition(getAbsolutePosition());
     }
 
     @Override
@@ -115,5 +151,12 @@ public class ArmSecondJoint extends SparkMaxGenericSubsystem {
         namespace.putNumber("absolute encoder position", this::getAbsolutePosition);
         namespace.putNumber("spark max encoder position", this::getRelativePosition);
         namespace.putNumber("velocity", this::getVelocity);
+        namespace.putNumber("angle sum", () -> getCombinedAngle(ArmFirstJoint.getInstance()));
+        namespace.putNumber("current", master::getOutputCurrent);
+        namespace.putNumber("encoder ticks", absoluteEncoder::getAbsolutePosition);
+    }
+
+    public void setArbitraryFeedForward(double arbitraryFeedForward) {
+        this.arbitraryFeedForward = arbitraryFeedForward;
     }
 }
