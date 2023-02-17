@@ -16,6 +16,7 @@ public class PlaceGamePiece extends SequentialCommandGroup {
 
     private static final Supplier<Double> WAIT_TIME = () -> 0.1;
     private static final double WAIT_PERIOD = 0.5;
+
     public PlaceGamePiece(ArmFirstJoint firstJoint, ArmSecondJoint secondJoint, ArmState state) {
         addCommands(
                 new InstantCommand(() -> Drivetrain.getInstance().setMode(CANSparkMax.IdleMode.kBrake)),
