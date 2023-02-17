@@ -3,9 +3,8 @@ package frc.robot.commands.autonomous;
 import com.pathplanner.lib.PathConstraints;
 import com.pathplanner.lib.PathPlanner;
 import edu.wpi.first.wpilibj2.command.*;
-import frc.robot.commands.CenterWithLimelight;
-import frc.robot.commands.CloseGripper;
-import frc.robot.commands.PlaceGamePiece;
+import frc.robot.commands.*;
+import frc.robot.services.ArmGravityCompensation;
 import frc.robot.services.VisionService;
 import frc.robot.subsystems.ArmFirstJoint;
 import frc.robot.subsystems.ArmSecondJoint;
@@ -34,6 +33,7 @@ public class SmashAndDash extends BasePathAuto {
         VisionService vision = VisionService.getInstance();
         ArmFirstJoint firstJoint = ArmFirstJoint.getInstance();
         ArmSecondJoint secondJoint = ArmSecondJoint.getInstance();
+        ArmGravityCompensation compensation = ArmGravityCompensation.getInstance();
         Gripper gripper = Gripper.getInstance();
         HashMap<String, Command> eventMap = new HashMap<>();
         eventMap.put("putGP", new SequentialCommandGroup(
@@ -48,6 +48,10 @@ public class SmashAndDash extends BasePathAuto {
                 new CenterWithLimelight(drivetrain, vision, VisionService.LimelightPipeline.APRIL_TAG).withTimeout(1),
                 new PlaceGamePiece(firstJoint, secondJoint, PlaceGamePiece.ArmState.BACK_TOP)
         ));
+        eventMap.put("switchSides", new SequentialCommandGroup(
+                new SwitchSides(firstJoint, secondJoint, gripper),
+                new MoveArmToFloor(firstJoint, secondJoint, compensation))
+        );
         return eventMap;
     }
 }
