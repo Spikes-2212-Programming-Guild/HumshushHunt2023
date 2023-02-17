@@ -119,6 +119,10 @@ public class ArmSecondJoint extends SparkMaxGenericSubsystem {
         return (absoluteEncoder.getAbsolutePosition() * 360 + 90) % 360;
     }
 
+    public boolean isBack(){
+        return getAbsolutePosition() < 180;
+    }
+
     public double getCombinedAngle(ArmFirstJoint firstJoint) {
         return getAbsolutePosition() + firstJoint.getAbsolutePosition();
     }
