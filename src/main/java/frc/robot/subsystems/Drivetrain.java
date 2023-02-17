@@ -9,6 +9,7 @@ import com.spikes2212.control.FeedForwardSettings;
 import com.spikes2212.control.PIDSettings;
 import com.spikes2212.control.TrapezoidProfileSettings;
 import com.spikes2212.dashboard.Namespace;
+import com.spikes2212.util.UnifiedControlMode;
 import edu.wpi.first.math.controller.RamseteController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
@@ -80,12 +81,19 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
             ("acceleration", 0);
     private final TrapezoidProfileSettings trapezoidProfileSettings;
 
+    private double maxAcceleration = 0;
+    private double maxLeftSpeed = 0;
+    private double maxRightSpeed = 0;
+
     private Drivetrain(String namespaceName, CANSparkMax leftMaster, CANSparkMax leftSlave,
                        CANSparkMax rightMaster, CANSparkMax rightSlave, AHRS gyro, double trackWidth) {
         super(
                 namespaceName, leftMaster, leftSlave, rightMaster, rightSlave);
         this.gyro = gyro;
         leftEncoder = leftMaster.getEncoder();
+        //yes i'm serious
+        rightController.setInverted(false);
+        rightMaster.setInverted(true);
         rightEncoder = rightMaster.getEncoder();
         configureEncoders();
         leftPIDSettings = new PIDSettings(kPLeft, kILeft, kDLeft, waitTimeLeft, toleranceLeft);
@@ -124,6 +132,7 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
                               TrapezoidProfileSettings trapezoidProfileSettings) {
         super.configureLoop(leftPIDSettings, rightPIDSettings, feedForwardSettings, trapezoidProfileSettings);
         configureEncoders();
+        rightMaster.setInverted(true);
     }
 
     @Override
@@ -154,6 +163,11 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
         gyro.reset();
     }
 
+    public void setMetersPerSecond(double leftMS, double rightMS, PIDSettings leftPIDSettings, PIDSettings rightPIDSettings,
+                                   FeedForwardSettings feedForwardSettings) {
+        pidSet(UnifiedControlMode.VELOCITY, leftMS, rightMS, leftPIDSettings, rightPIDSettings, feedForwardSettings);
+    }
+
     public double getLeftPosition() {
         return leftEncoder.getPosition();
     }
@@ -171,11 +185,15 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
     }
 
     public double getLeftSpeed() {
-        return leftEncoder.getVelocity();
+        double speed = leftEncoder.getVelocity();
+        maxLeftSpeed = Math.max(speed, maxLeftSpeed);
+        return speed;
     }
 
     public double getRightSpeed() {
-        return rightEncoder.getVelocity();
+        double speed = rightEncoder.getVelocity();
+        maxRightSpeed = Math.max(maxRightSpeed, speed);
+        return speed;
     }
 
     public Pose2d getPose2d() {
@@ -225,6 +243,12 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
         return getPose2d().getX();
     }
 
+    private double getAcceleration() {
+        double accel = gyro.getWorldLinearAccelZ();
+        maxAcceleration = Math.max(accel, maxAcceleration);
+        return accel;
+    }
+
     private double getPoseY() {
         return getPose2d().getY();
     }
@@ -242,5 +266,9 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
         namespace.putNumber("pitch", this::getPitch);
         namespace.putNumber("pose x", this::getPoseX);
         namespace.putNumber("pose y", this::getPoseY);
+        namespace.putNumber("accel", this::getAcceleration);
+        namespace.putNumber("max acceleration", () -> maxAcceleration);
+        namespace.putNumber("max left speed", () -> maxLeftSpeed);
+        namespace.putNumber("max right speed", () -> maxRightSpeed);
     }
 }
