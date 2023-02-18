@@ -40,7 +40,6 @@ public class Leds {
     }
 
     public static final int NUMBER_OF_LEDS = 60;
-    private static Leds instance;
 
     private final RootNamespace namespace = new RootNamespace("Leds");
 
@@ -48,6 +47,9 @@ public class Leds {
     private Supplier<Integer> red = colorNamespace.addConstantInt("red value", 0);
     private Supplier<Integer> green = colorNamespace.addConstantInt("green value", 0);
     private Supplier<Integer> blue = colorNamespace.addConstantInt("blue value", 0);
+
+    private static Leds instance;
+
     private final AddressableLED led;
     private final AddressableLEDBuffer ledBuffer;
 
@@ -61,8 +63,8 @@ public class Leds {
 
     private Leds(AddressableLED led, AddressableLEDBuffer ledBuffer) {
         this.led = led;
-        this.ledBuffer = new AddressableLEDBuffer(NUMBER_OF_LEDS);
-        led.setLength(NUMBER_OF_LEDS);
+        this.ledBuffer = ledBuffer;
+        led.setLength(ledBuffer.getLength());
         configureDashboard();
     }
 
