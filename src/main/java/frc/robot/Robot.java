@@ -6,16 +6,13 @@ package frc.robot;
 
 import com.revrobotics.CANSparkMax;
 import com.spikes2212.command.drivetrains.commands.DriveArcade;
-import com.spikes2212.command.genericsubsystem.commands.smartmotorcontrollergenericsubsystem.MoveSmartMotorControllerGenericSubsystem;
 import com.spikes2212.dashboard.RootNamespace;
-import com.spikes2212.util.UnifiedControlMode;
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.PneumaticsModuleType;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.RunCommand;
 import frc.robot.commands.KeepArmStable;
 import frc.robot.commands.MoveArmToFloor;
 import frc.robot.commands.PlaceGamePiece;
@@ -39,19 +36,12 @@ public class Robot extends TimedRobot {
     private double firstJointAngle;
     private double secondJointAngle;
 
-    private DigitalInput ls1;
-    private DigitalInput ls2;
-
     @Override
     public void robotInit() {
         getInstances();
         setCompressor();
         setDefaultJointsCommands();
         setNamespaceTestingCommands();
-        ls1 = new DigitalInput(3);
-        ls2 = new DigitalInput(4);
-        namespace.putBoolean("ls1", ls1::get);
-        namespace.putBoolean("ls2", ls2::get);
     }
 
     @Override
