@@ -39,7 +39,7 @@ public class Gripper extends DashboardedSubsystem {
         solenoid.set(DoubleSolenoid.Value.kReverse);
     }
 
-    public boolean sensorHasTarget() {
+    public boolean sensorHasGamePiece() {
         return lightSensor.get();
     }
 

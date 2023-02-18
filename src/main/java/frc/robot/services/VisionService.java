@@ -94,14 +94,14 @@ public class VisionService {
 
     public boolean limelightCentered() {
         if (limelightHasTarget()) {
-            return (Math.abs(limelight.getHorizontalOffsetFromTargetInDegrees()) < TOLERANCE);
+            return (Math.abs(limelight.getHorizontalOffsetFromTargetInDegrees()) <= TOLERANCE);
         }
         return false;
     }
 
     public boolean photonVisionCentered() {
         if (photonVisionHasTarget()) {
-            return (Math.abs(photonCamera.getLatestResult().getBestTarget().getYaw()) < TOLERANCE);
+            return (Math.abs(photonCamera.getLatestResult().getBestTarget().getYaw()) <= TOLERANCE);
         }
         return false;
     }
