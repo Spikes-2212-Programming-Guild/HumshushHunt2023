@@ -86,6 +86,10 @@ public class VisionService {
         return limelight.hasTarget();
     }
 
+    public boolean sensorHasTarget() { //@todo add sensor
+        return false;
+    }
+
     public void setPhotonVisionPipeline(PhotonVisionPipeline pipeline) {
         photonCamera.setPipelineIndex(pipeline.pipeline);
     }
