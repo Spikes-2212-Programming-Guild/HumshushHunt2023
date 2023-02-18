@@ -7,13 +7,8 @@ import frc.robot.subsystems.Gripper;
 
 public class LedsService {
 
-    private final Gripper gripper;
-
     private static final int NUMBER_OF_LEDS = 60;
 
-    private static LedsService instance;
-
-    private final VisionService vision;
     private LedsService(AddressableLED led, AddressableLEDBuffer ledBuffer, VisionService vision, Gripper gripper) {
         this.led = led;
         this.ledBuffer = ledBuffer;
@@ -22,6 +17,12 @@ public class LedsService {
         led.setLength(ledBuffer.getLength());
         led.start();
     }
+
+    private final Gripper gripper;
+
+    private static LedsService instance;
+
+    private final VisionService vision;
 
     private final AddressableLED led;
     private final AddressableLEDBuffer ledBuffer;
@@ -38,35 +39,34 @@ public class LedsService {
         boolean hasTarget = vision.limelightHasTarget();
         boolean holdingGamePiece = gripper.sensorHasTarget();
 
-        if (!hasTarget && !holdingGamePiece) {
-            for (int i = 0; i < ledBuffer.getLength(); i++) {
-                ledBuffer.setRGB(i, Mode.EMPTY_GRIPPER.red, Mode.EMPTY_GRIPPER.green, Mode.EMPTY_GRIPPER.blue);
+        if (hasTarget) {
+            if (holdingGamePiece) {
+                for (int i = 0; i < ledBuffer.getLength(); i++) {
+                    ledBuffer.setRGB(i, Mode.HAS_GAME_PIECE_AND_ALLIGNED.red, Mode.HAS_GAME_PIECE_AND_ALLIGNED.green,
+                            Mode.HAS_GAME_PIECE_AND_ALLIGNED.blue);
+                }
+            } else {
+                for (int i = 0; i < ledBuffer.getLength(); i++) {
+                    ledBuffer.setRGB(i, Mode.ALLIGNED_TO_GAME_PIECE.red, Mode.ALLIGNED_TO_GAME_PIECE.green,
+                            Mode.ALLIGNED_TO_GAME_PIECE.blue);
+                }
             }
-        }
-
-        if (hasTarget && !holdingGamePiece) {
-            for (int i = 0; i < ledBuffer.getLength(); i++) {
-                ledBuffer.setRGB(i, Mode.ALLIGNED.red, Mode.ALLIGNED.green, Mode.ALLIGNED.blue);
-            }
-        }
-
-        if (!hasTarget && holdingGamePiece) {
-            for (int i = 0; i < ledBuffer.getLength(); i++) {
-                ledBuffer.setRGB(i, Mode.HAS_GAME_PIECE.red, Mode.HAS_GAME_PIECE.green, Mode.HAS_GAME_PIECE.blue);
-            }
-        }
-
-        if (hasTarget && holdingGamePiece) {
-            for (int i = 0; i < ledBuffer.getLength(); i++) {
-                ledBuffer.setRGB(i, Mode.HAS_GAME_PIECE_AND_ALLIGNED.red, Mode.HAS_GAME_PIECE_AND_ALLIGNED.green,
-                        Mode.HAS_GAME_PIECE_AND_ALLIGNED.blue);
+        } else {
+            if (holdingGamePiece) {
+                for (int i = 0; i < ledBuffer.getLength(); i++) {
+                    ledBuffer.setRGB(i, Mode.HAS_GAME_PIECE.red, Mode.HAS_GAME_PIECE.green, Mode.HAS_GAME_PIECE.blue);
+                }
+            } else {
+                for (int i = 0; i < ledBuffer.getLength(); i++) {
+                    ledBuffer.setRGB(i, Mode.EMPTY_GRIPPER.red, Mode.EMPTY_GRIPPER.green, Mode.EMPTY_GRIPPER.blue);
+                }
             }
         }
     }
 
     public enum Mode {
 
-        EMPTY_GRIPPER(254, 0, 0), ALLIGNED(204, 0, 254), HAS_GAME_PIECE(0, 0, 254),
+        EMPTY_GRIPPER(254, 0, 0), ALLIGNED_TO_GAME_PIECE(204, 0, 254), HAS_GAME_PIECE(0, 0, 254),
         HAS_GAME_PIECE_AND_ALLIGNED(0, 254, 0);
 
         public final int red;
