@@ -4,6 +4,7 @@ import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMaxLowLevel;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.SparkMaxPIDController;
+import com.spikes2212.command.genericsubsystem.commands.smartmotorcontrollergenericsubsystem.MoveSmartMotorControllerGenericSubsystem;
 import com.spikes2212.command.genericsubsystem.smartmotorcontrollersubsystem.SparkMaxGenericSubsystem;
 import com.spikes2212.control.FeedForwardSettings;
 import com.spikes2212.control.PIDSettings;
@@ -17,14 +18,13 @@ import java.util.function.Supplier;
 
 public class ArmFirstJoint extends SparkMaxGenericSubsystem {
 
-    //    public static final double DISTANCE_PER_PULSE = (1 / 114.3) / 360;
     public static final double DEGREES_PER_ROTATION = 360;
 
     /**
      * Ofek said.
      */
-    private static final double GEAR_RATIO_MOTOR_TO_ABSOLUTE_ENCODER = 1 / ((60.0 / 15) * (50.0 / 14) * (48 / 14.0));
-    private static final double GEAR_RATIO_ABSOLUTE_ENCODER_TO_ARM = 12 / 28.0;
+    public static final double GEAR_RATIO_MOTOR_TO_ABSOLUTE_ENCODER = 1 / ((60.0 / 15) * (50.0 / 14) * (48 / 14.0));
+    public static final double GEAR_RATIO_ABSOLUTE_ENCODER_TO_ARM = 12 / 28.0;
 
     public static final int SECONDS_IN_MINUTE = 60;
 
@@ -59,6 +59,23 @@ public class ArmFirstJoint extends SparkMaxGenericSubsystem {
             ("acceleration", 0);
     private final TrapezoidProfileSettings trapezoidProfileSettings;
 
+    private final Namespace calibrations = namespace.addChild("calibrations");
+    public final Supplier<Double> lm1 = calibrations.addConstantDouble("lm1", 2.5);
+    public final Supplier<Double> l2 = calibrations.addConstantDouble("l2", 0.3);
+    public final Supplier<Double> m2 = calibrations.addConstantDouble("m2", 4);
+    public final Supplier<Double> lA = calibrations.addConstantDouble("la", 0.9);
+
+    private final Namespace keepStablePIDNamespace = namespace.addChild("keep stable pid");
+    private final Supplier<Double> keepStableKp = keepStablePIDNamespace.addConstantDouble("kP", 0);
+    private final Supplier<Double> keepStableKi = keepStablePIDNamespace.addConstantDouble("kI", 0);
+    private final Supplier<Double> keepStableKd = keepStablePIDNamespace.addConstantDouble("kD", 0);
+    private final Supplier<Double> keepStableTolerance = keepStablePIDNamespace.addConstantDouble("tolerance", 0);
+    private final Supplier<Double> keepStableWaitTime = keepStablePIDNamespace.addConstantDouble("wait time", 99999);
+    public final PIDSettings keepStablePIDSettings = new PIDSettings(keepStableKp, keepStableKi, keepStableKd,
+            keepStableTolerance, keepStableWaitTime);
+
+    private double arbitraryFeedForward;
+
     public static ArmFirstJoint getInstance() {
         if (instance == null) {
             instance = new ArmFirstJoint("arm first joint",
@@ -73,8 +90,8 @@ public class ArmFirstJoint extends SparkMaxGenericSubsystem {
 
     private ArmFirstJoint(String namespaceName, CANSparkMax master, CANSparkMax slave) {
         super(namespaceName, master, slave);
-//        master.setIdleMode(CANSparkMax.IdleMode.kBrake);
-//        slave.setIdleMode(CANSparkMax.IdleMode.kBrake);
+        master.setIdleMode(CANSparkMax.IdleMode.kBrake);
+        slave.setIdleMode(CANSparkMax.IdleMode.kBrake);
         sparkMaxEncoder = master.getEncoder();
         absoluteEncoder = new DutyCycleEncoder(RobotMap.DIO.ARM_FIRST_JOINT_ABSOLUTE_ENCODER);
         configureEncoders();
@@ -93,11 +110,12 @@ public class ArmFirstJoint extends SparkMaxGenericSubsystem {
     }
 
     @Override
-    public void pidSet(UnifiedControlMode controlMode, double setpoint, PIDSettings pidSettings, FeedForwardSettings feedForwardSettings, TrapezoidProfileSettings trapezoidProfileSettings) {
+    public void pidSet(UnifiedControlMode controlMode, double setpoint, PIDSettings pidSettings,
+                       FeedForwardSettings feedForwardSettings, TrapezoidProfileSettings trapezoidProfileSettings) {
         configPIDF(pidSettings, feedForwardSettings);
         configureTrapezoid(trapezoidProfileSettings);
         master.getPIDController().setReference(setpoint, controlMode.getSparkMaxControlType(), 0,
-                feedForwardSettings.getkG() * Math.cos(Math.toRadians(this.getAbsolutePosition())), SparkMaxPIDController.ArbFFUnits.kVoltage);
+                arbitraryFeedForward, SparkMaxPIDController.ArbFFUnits.kVoltage);
     }
 
     public void setIdleMode(CANSparkMax.IdleMode idleMode) {
@@ -148,5 +166,13 @@ public class ArmFirstJoint extends SparkMaxGenericSubsystem {
         namespace.putNumber("absolute encoder position", this::getAbsolutePosition);
         namespace.putNumber("spark max encoder position", this::getRelativePosition);
         namespace.putNumber("velocity", this::getVelocity);
+        namespace.putData("test", new MoveSmartMotorControllerGenericSubsystem(this,
+                pidSettings, feedForwardSettings, UnifiedControlMode.VELOCITY, () -> 0.0));
+        namespace.putNumber("voltage", () -> master.getBusVoltage() * master.getAppliedOutput());
+        namespace.putNumber("current", master::getOutputCurrent);
+    }
+
+    public void setArbitraryFeedForward(double arbitraryFeedForward) {
+        this.arbitraryFeedForward = arbitraryFeedForward;
     }
 }

@@ -22,8 +22,6 @@ public class ArmSecondJoint extends SparkMaxGenericSubsystem {
 
     public static final int SECONDS_IN_MINUTE = 60;
 
-    private static final double ABSOLUTE_ENCODER_OFFSET = 0.25;
-
     private static ArmSecondJoint instance;
 
     private final DutyCycleEncoder absoluteEncoder;
@@ -53,21 +51,33 @@ public class ArmSecondJoint extends SparkMaxGenericSubsystem {
             ("acceleration", 0);
     private final TrapezoidProfileSettings trapezoidProfileSettings;
 
+    private final Namespace keepStablePIDNamespace = namespace.addChild("keep stable pid");
+    private final Supplier<Double> keepStableKp = keepStablePIDNamespace.addConstantDouble("kP", 0);
+    private final Supplier<Double> keepStableKi = keepStablePIDNamespace.addConstantDouble("kI", 0);
+    private final Supplier<Double> keepStableKd = keepStablePIDNamespace.addConstantDouble("kD", 0);
+    private final Supplier<Double> keepStableTolerance = keepStablePIDNamespace.addConstantDouble("tolerance", 0);
+    private final Supplier<Double> keepStableWaitTime = keepStablePIDNamespace.addConstantDouble("wait time", 99999);
+    public final PIDSettings keepStablePIDSettings = new PIDSettings(keepStableKp,
+            keepStableKi, keepStableKd, keepStableTolerance, keepStableWaitTime);
+
+    private double arbitraryFeedForward;
+
     public static ArmSecondJoint getInstance() {
         if (instance == null) {
             instance = new ArmSecondJoint(
                     "arm second joint",
                     new CANSparkMax(RobotMap.CAN.ARM_SECOND_JOINT_SPARKMAX_MASTER,
                             CANSparkMaxLowLevel.MotorType.kBrushless));
-            return instance;
+            instance.configureEncoders();
         }
         return instance;
     }
 
     private ArmSecondJoint(String namespaceName, CANSparkMax master) {
         super(namespaceName, master);
-//        master.setIdleMode(CANSparkMax.IdleMode.kBrake);
+        master.setIdleMode(CANSparkMax.IdleMode.kBrake);
         sparkMaxEncoder = master.getEncoder();
+        master.setInverted(true);
         absoluteEncoder = new DutyCycleEncoder(RobotMap.DIO.ARM_SECOND_JOINT_ABSOLUTE_ENCODER);
         configureEncoders();
         pidSettings = new PIDSettings(kP, kI, kD, waitTime, tolerance);
@@ -80,15 +90,17 @@ public class ArmSecondJoint extends SparkMaxGenericSubsystem {
     public void configureLoop(PIDSettings pidSettings, FeedForwardSettings feedForwardSettings,
                               TrapezoidProfileSettings trapezoidProfileSettings) {
         super.configureLoop(pidSettings, feedForwardSettings, trapezoidProfileSettings);
+        master.setInverted(true);
         configureEncoders();
     }
 
     @Override
-    public void pidSet(UnifiedControlMode controlMode, double setpoint, PIDSettings pidSettings, FeedForwardSettings feedForwardSettings, TrapezoidProfileSettings trapezoidProfileSettings) {
+    public void pidSet(UnifiedControlMode controlMode, double setpoint, PIDSettings pidSettings,
+                       FeedForwardSettings feedForwardSettings, TrapezoidProfileSettings trapezoidProfileSettings) {
         configPIDF(pidSettings, feedForwardSettings);
         configureTrapezoid(trapezoidProfileSettings);
         master.getPIDController().setReference(setpoint, controlMode.getSparkMaxControlType(), 0,
-                feedForwardSettings.getkG() * Math.cos(Math.toRadians(this.getAbsolutePosition())), SparkMaxPIDController.ArbFFUnits.kVoltage);
+                arbitraryFeedForward, SparkMaxPIDController.ArbFFUnits.kVoltage);
     }
 
     public void setVoltage(double voltage) {
@@ -104,7 +116,15 @@ public class ArmSecondJoint extends SparkMaxGenericSubsystem {
     }
 
     public double getAbsolutePosition() {
-        return absoluteEncoder.getDistance();
+        return (absoluteEncoder.getAbsolutePosition() * 360 + 90) % 360;
+    }
+
+    public boolean isBack(){
+        return getAbsolutePosition() < 180;
+    }
+
+    public double getCombinedAngle(ArmFirstJoint firstJoint) {
+        return getAbsolutePosition() + firstJoint.getAbsolutePosition();
     }
 
     public double getVelocity() {
@@ -123,12 +143,11 @@ public class ArmSecondJoint extends SparkMaxGenericSubsystem {
         return trapezoidProfileSettings;
     }
 
-    private void configureEncoders() {
+    public void configureEncoders() {
         sparkMaxEncoder.setPositionConversionFactor(DEGREES_PER_ROTATION * GEAR_RATIO);
         sparkMaxEncoder.setVelocityConversionFactor((DEGREES_PER_ROTATION * GEAR_RATIO) / SECONDS_IN_MINUTE);
-        absoluteEncoder.setDistancePerRotation(DEGREES_PER_ROTATION);
-        absoluteEncoder.setPositionOffset(ABSOLUTE_ENCODER_OFFSET);
-        sparkMaxEncoder.setPosition(absoluteEncoder.getDistance());
+        absoluteEncoder.setDistancePerRotation(-DEGREES_PER_ROTATION);
+        sparkMaxEncoder.setPosition(getAbsolutePosition());
     }
 
     @Override
@@ -136,5 +155,12 @@ public class ArmSecondJoint extends SparkMaxGenericSubsystem {
         namespace.putNumber("absolute encoder position", this::getAbsolutePosition);
         namespace.putNumber("spark max encoder position", this::getRelativePosition);
         namespace.putNumber("velocity", this::getVelocity);
+        namespace.putNumber("angle sum", () -> getCombinedAngle(ArmFirstJoint.getInstance()));
+        namespace.putNumber("current", master::getOutputCurrent);
+        namespace.putNumber("encoder ticks", absoluteEncoder::getAbsolutePosition);
+    }
+
+    public void setArbitraryFeedForward(double arbitraryFeedForward) {
+        this.arbitraryFeedForward = arbitraryFeedForward;
     }
 }

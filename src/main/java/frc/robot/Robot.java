@@ -5,104 +5,45 @@
 package frc.robot;
 
 import com.revrobotics.CANSparkMax;
-import com.revrobotics.CANSparkMaxLowLevel;
 import com.spikes2212.command.drivetrains.commands.DriveArcade;
-import com.spikes2212.command.drivetrains.commands.DriveTankWithPID;
 import com.spikes2212.command.genericsubsystem.commands.smartmotorcontrollergenericsubsystem.MoveSmartMotorControllerGenericSubsystem;
 import com.spikes2212.dashboard.RootNamespace;
-import com.spikes2212.util.PlaystationControllerWrapper;
 import com.spikes2212.util.UnifiedControlMode;
-import com.spikes2212.util.XboxControllerWrapper;
-import edu.wpi.first.wpilibj.*;
+import edu.wpi.first.wpilibj.Compressor;
+import edu.wpi.first.wpilibj.PneumaticsModuleType;
+import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.RepeatCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
-import frc.robot.commands.*;
-import frc.robot.services.VisionService;
+import frc.robot.commands.KeepArmStable;
+import frc.robot.commands.MoveArmToFloor;
+import frc.robot.commands.PlaceGamePiece;
+import frc.robot.commands.SwitchSides;
+import frc.robot.services.ArmGravityCompensation;
 import frc.robot.subsystems.ArmFirstJoint;
 import frc.robot.subsystems.ArmSecondJoint;
 import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.Gripper;
 
-import java.util.function.Supplier;
-
 public class Robot extends TimedRobot {
 
-    RootNamespace namespace = new RootNamespace("testing");
-    Supplier<Double> speed = namespace.addConstantDouble("speed1", 0.2);
-    Supplier<Double> setpoint = namespace.addConstantDouble("setpoint", 0);
-    Supplier<Double> voltage = namespace.addConstantDouble("voltage", 0);
-    PlaystationControllerWrapper ps = new PlaystationControllerWrapper(0);
-    XboxControllerWrapper xbox = new XboxControllerWrapper(1);
-    Drivetrain drivetrain;
-    ArmFirstJoint firstJoint = ArmFirstJoint.getInstance();
-    ArmSecondJoint secondJoint = ArmSecondJoint.getInstance();
-    Gripper gripper;
-    RunCommand runCommand = new RunCommand(() -> secondJoint.setVoltage(voltage.get() * Math.cos(Math.toRadians(secondJoint.getAbsolutePosition()))));
-    RunCommand runCommand1 = new RunCommand(() -> firstJoint.setVoltage(voltage.get()));
+    private final RootNamespace namespace = new RootNamespace("robot");
+    private Drivetrain drivetrain;
+    private ArmFirstJoint firstJoint = ArmFirstJoint.getInstance();
+    private ArmSecondJoint secondJoint = ArmSecondJoint.getInstance();
+    private Gripper gripper;
+    private OI oi;
+    private ArmGravityCompensation compensation;
+
+    private double firstJointAngle;
+    private double secondJointAngle;
 
     @Override
     public void robotInit() {
-        Compressor compressor = new Compressor(0, PneumaticsModuleType.CTREPCM);
-        namespace.putData("enable compressor", new InstantCommand(compressor::enableDigital));
-        namespace.putData("disable compressor", new InstantCommand(compressor::disable));
-        drivetrain = Drivetrain.getInstance();
-//        firstJoint = ArmFirstJoint.getInstance();
-//        secondJoint = ArmSecondJoint.getInstance();
-        gripper = Gripper.getInstance();
-//        DriveTankWithPID drive = new DriveTankWithPID(drivetrain, drivetrain.getLeftPIDSettings(), drivetrain.getRightPIDSettings(),
-//                setpoint, setpoint, drivetrain::getLeftPosition, drivetrain::getRightPosition);
-//        xbox.getYellowButton().onTrue(drive);
-        xbox.getBlueButton().onTrue(new InstantCommand(drivetrain::resetEncoders));
-//        ps.getCircleButton().whileTrue(new SetSparkMax(new CANSparkMax(1, CANSparkMaxLowLevel.MotorType.kBrushless), speed));
-//        ps.getCrossButton().whileTrue(new SetSparkMax(new CANSparkMax(2, CANSparkMaxLowLevel.MotorType.kBrushless), speed));
-//        ps.getSquareButton().whileTrue(new SetSparkMax(new CANSparkMax(3, CANSparkMaxLowLevel.MotorType.kBrushless), speed));
-//        ps.getTriangleButton().whileTrue(new SetSparkMax(new CANSparkMax(4, CANSparkMaxLowLevel.MotorType.kBrushless), speed));
-        ps.getR1Button().whileTrue(new MoveSmartMotorControllerGenericSubsystem(firstJoint, firstJoint.getPIDSettings(), firstJoint.getFeedForwardSettings(), UnifiedControlMode.PERCENT_OUTPUT, firstJoint.forwardSpeed) {
-            @Override
-            public boolean isFinished() {
-                return false;
-            }
-        });
-        ps.getR2Button().whileTrue(new MoveSmartMotorControllerGenericSubsystem(firstJoint, firstJoint.getPIDSettings(), firstJoint.getFeedForwardSettings(), UnifiedControlMode.PERCENT_OUTPUT, firstJoint.backwardsSpeed) {
-            @Override
-            public boolean isFinished() {
-                return false;
-            }
-        });
-        ps.getL2Button().whileTrue(new MoveSmartMotorControllerGenericSubsystem(secondJoint, secondJoint.getPIDSettings(), secondJoint.getFeedForwardSettings(), UnifiedControlMode.PERCENT_OUTPUT, secondJoint.backwardsSpeed) {
-            @Override
-            public boolean isFinished() {
-                return false;
-            }
-        });
-        ps.getL1Button().whileTrue(new MoveSmartMotorControllerGenericSubsystem(secondJoint, secondJoint.getPIDSettings(), secondJoint.getFeedForwardSettings(), UnifiedControlMode.PERCENT_OUTPUT, secondJoint.forwardSpeed) {
-            @Override
-            public boolean isFinished() {
-                return false;
-            }
-        });
-//        CANSparkMax sparkMax = new CANSparkMax(6, CANSparkMaxLowLevel.MotorType.kBrushless);
-//        sparkMax.setInverted(true);x
-//        ps.getR2Button().whileTrue(new SetSparkMax(new CANSparkMax(5, CANSparkMaxLowLevel.MotorType.kBrushless), speed));
-//        ps.getR1Button().whileTrue(new SetSparkMax(sparkMax, speed));
-//        ps.getL1Button().whileTrue(new SetSparkMax(new CANSparkMax(7, CANSparkMaxLowLevel.MotorType.kBrushless), -speed.get()));
-        ps.getUpButton().onTrue(new OpenGripper(gripper));
-        ps.getDownButton().onTrue(new CloseGripper(gripper));
-        ps.getLeftButton().onTrue(new InstantCommand(() -> drivetrain.setMode(CANSparkMax.IdleMode.kCoast)));
-        ps.getTriangleButton().onTrue(new Climb(drivetrain));
-        xbox.getRightButton().onTrue(new InstantCommand(() -> {
-        }, drivetrain));
-        xbox.getButtonStart().onTrue(new InstantCommand(() -> drivetrain.setMode(CANSparkMax.IdleMode.kCoast)));
-        xbox.getButtonBack().onTrue(new InstantCommand(() -> drivetrain.setMode(CANSparkMax.IdleMode.kBrake)));
-        xbox.getLeftButton().onTrue(new CenterOnRRT(drivetrain, VisionService.getInstance(), VisionService.LimelightPipeline.HIGH_RRT));
-        namespace.putRunnable("coast arm", () -> {
-            firstJoint.setIdleMode(CANSparkMax.IdleMode.kCoast);
-            secondJoint.setIdleMode(CANSparkMax.IdleMode.kCoast);
-        });
-        xbox.getRightButton().whileTrue(runCommand);
-        xbox.getUpButton().whileTrue(runCommand1);
+        getInstances();
+        setCompressor();
+        setDefaultJointsCommands();
+        setNamespaceTestingCommands();
     }
 
     @Override
@@ -113,12 +54,14 @@ public class Robot extends TimedRobot {
         firstJoint.periodic();
         secondJoint.periodic();
         gripper.periodic();
+        firstJointAngle = firstJoint.getAbsolutePosition();
+        secondJointAngle = secondJoint.getAbsolutePosition();
     }
 
     @Override
     public void disabledInit() {
-        runCommand.cancel();
-        runCommand1.cancel();
+        new InstantCommand(() -> {
+        }, firstJoint, secondJoint).ignoringDisable(true).schedule();
     }
 
     @Override
@@ -128,7 +71,10 @@ public class Robot extends TimedRobot {
 
     @Override
     public void autonomousInit() {
-
+        firstJoint.runOnce(() -> {
+        });
+        secondJoint.runOnce(() -> {
+        });
     }
 
     @Override
@@ -136,19 +82,13 @@ public class Robot extends TimedRobot {
 
     }
 
-    private double getRightY() {
-        double val = xbox.getRightY();
-        return Math.signum(val) * val * val;
-    }
-
-    private double getLeftX() {
-        double val = xbox.getLeftX();
-        return Math.signum(val) * val * val;
-    }
-
     @Override
     public void teleopInit() {
-        drivetrain.setDefaultCommand(new DriveArcade(drivetrain, this::getRightY, this::getLeftX));
+        firstJoint.runOnce(() -> {
+        });
+        secondJoint.runOnce(() -> {
+        });
+        drivetrain.setDefaultCommand(new DriveArcade(drivetrain, oi::getRightY, oi::getLeftX));
     }
 
     @Override
@@ -173,5 +113,57 @@ public class Robot extends TimedRobot {
     @Override
     public void simulationPeriodic() {
 
+    }
+
+    private void getInstances() {
+        oi = OI.getInstance();
+        drivetrain = Drivetrain.getInstance();
+        compensation = ArmGravityCompensation.getInstance();
+        firstJoint = ArmFirstJoint.getInstance();
+        secondJoint = ArmSecondJoint.getInstance();
+        gripper = Gripper.getInstance();
+        firstJointAngle = firstJoint.getAbsolutePosition();
+        secondJointAngle = secondJoint.getAbsolutePosition();
+    }
+
+    private void setCompressor() {
+        Compressor compressor = new Compressor(0, PneumaticsModuleType.CTREPCM);
+        namespace.putData("enable compressor", new InstantCommand(compressor::enableDigital));
+        namespace.putData("disable compressor", new InstantCommand(compressor::disable));
+    }
+
+    private void setDefaultJointsCommands() {
+        firstJointAngle = firstJoint.getAbsolutePosition();
+        secondJointAngle = secondJoint.getAbsolutePosition();
+
+        firstJoint.setDefaultCommand(new MoveSmartMotorControllerGenericSubsystem(firstJoint, firstJoint.keepStablePIDSettings,
+                firstJoint.getFeedForwardSettings(), UnifiedControlMode.POSITION, () -> firstJointAngle) {
+            @Override
+            public boolean isFinished() {
+                return false;
+            }
+        }.alongWith(new RunCommand(() -> compensation.configureFirstJointG(firstJointAngle, secondJointAngle))));
+
+        secondJoint.setDefaultCommand(new MoveSmartMotorControllerGenericSubsystem(secondJoint, secondJoint.keepStablePIDSettings,
+                secondJoint.getFeedForwardSettings(), UnifiedControlMode.POSITION, () -> secondJointAngle) {
+            @Override
+            public boolean isFinished() {
+                return false;
+            }
+        }.alongWith(new RunCommand(() -> compensation.configureSecondJointG(firstJointAngle, secondJointAngle))));
+    }
+
+    private void setNamespaceTestingCommands() {
+        namespace.putRunnable("coast arm", () -> {
+            firstJoint.setIdleMode(CANSparkMax.IdleMode.kCoast);
+            secondJoint.setIdleMode(CANSparkMax.IdleMode.kCoast);
+        });
+        namespace.putData("keep arm stable", new KeepArmStable(firstJoint, secondJoint, ArmGravityCompensation.getInstance()));
+        namespace.putData("stop", new InstantCommand(() -> {
+        }, firstJoint, secondJoint));
+        namespace.putData("move arm", new PlaceGamePiece(firstJoint, secondJoint, PlaceGamePiece.ArmState.BACK_TOP));
+        namespace.putData("switch arm sides", new SwitchSides(firstJoint, secondJoint, gripper));
+        namespace.putData("floor back", new MoveArmToFloor(firstJoint, secondJoint, compensation, PlaceGamePiece.ArmState.FLOOR_BACK));
+        namespace.putData("floor front", new MoveArmToFloor(firstJoint, secondJoint, compensation, PlaceGamePiece.ArmState.FLOOR_FRONT));
     }
 }
