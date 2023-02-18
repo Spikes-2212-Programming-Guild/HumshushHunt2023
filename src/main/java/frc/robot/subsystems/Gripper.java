@@ -34,6 +34,10 @@ public class Gripper extends DashboardedSubsystem {
         solenoid.set(DoubleSolenoid.Value.kReverse);
     }
 
+    public boolean sensorHasTarget() { //@todo add sensor
+        return false;
+    }
+
     @Override
     public void configureDashboard() {
         namespace.putRunnable("open gripper", this::openGripper);
