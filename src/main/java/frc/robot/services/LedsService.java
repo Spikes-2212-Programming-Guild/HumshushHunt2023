@@ -7,18 +7,9 @@ import frc.robot.subsystems.Gripper;
 
 public class LedsService {
 
-    private static LedsService instance;
-
     private static final int NUMBER_OF_LEDS = 60;
 
-    private LedsService(AddressableLED led, AddressableLEDBuffer ledBuffer, VisionService vision, Gripper gripper) {
-        this.led = led;
-        this.ledBuffer = ledBuffer;
-        this.vision = vision;
-        this.gripper = gripper;
-        led.setLength(ledBuffer.getLength());
-        led.start();
-    }
+    private static LedsService instance;
 
     private final Gripper gripper;
 
@@ -33,6 +24,15 @@ public class LedsService {
                     new AddressableLEDBuffer(NUMBER_OF_LEDS), VisionService.getInstance(), Gripper.getInstance());
         }
         return instance;
+    }
+
+    private LedsService(AddressableLED led, AddressableLEDBuffer ledBuffer, VisionService vision, Gripper gripper) {
+        this.led = led;
+        this.ledBuffer = ledBuffer;
+        this.vision = vision;
+        this.gripper = gripper;
+        led.setLength(ledBuffer.getLength());
+        led.start();
     }
 
     public void periodic() {
