@@ -65,18 +65,13 @@ public class Leds {
         this.led = led;
         this.ledBuffer = ledBuffer;
         led.setLength(ledBuffer.getLength());
+        led.start();
         configureDashboard();
     }
 
     private void updateData() {
-        int rotateValue = 0; // here in case i decide to work on it
-
-        for (int i = rotateValue; i < ledBuffer.getLength() + rotateValue; i++) {
-            if (i % 12 == 3 || i % 12 == 6 || i % 12 == 8 || i % 12 == 11 || i % 12 == 0) {
-                ledBuffer.setRGB(i % 60, 0, 0, 0);
-            } else {
-                ledBuffer.setRGB(i, red.get(), green.get(), blue.get());
-            }
+        for (int i = 0; i < ledBuffer.getLength(); i++) {
+            ledBuffer.setRGB(i, red.get(), green.get(), blue.get());
         }
         led.setData(ledBuffer);
     }
@@ -86,6 +81,10 @@ public class Leds {
             ledBuffer.setRGB(i, 0, 0, 0);
         }
         led.setData(ledBuffer);
+    }
+
+    public void periodic() {
+        namespace.update();
     }
 
     public void configureDashboard() {
