@@ -18,6 +18,8 @@ public class RobotMap {
 
         int ARM_FIRST_JOINT_ABSOLUTE_ENCODER = 1;
         int ARM_SECOND_JOINT_ABSOLUTE_ENCODER = 2;
+
+        int GRIPPER_LIGHT_SENSOR = 3;
     }
 
     public interface PWM {

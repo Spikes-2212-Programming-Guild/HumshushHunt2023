@@ -1,6 +1,7 @@
 package frc.robot.subsystems;
 
 import com.spikes2212.command.DashboardedSubsystem;
+import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.PneumaticsModuleType;
 import frc.robot.RobotMap;
@@ -11,19 +12,23 @@ public class Gripper extends DashboardedSubsystem {
 
     private final DoubleSolenoid solenoid;
 
+    private final DigitalInput lightSensor;
+
+    private Gripper(String namespaceName, DoubleSolenoid solenoid, DigitalInput lightSensor) {
+        super(namespaceName);
+        this.solenoid = solenoid;
+        this.lightSensor = lightSensor;
+        configureDashboard();
+    }
+
     public static Gripper getInstance() {
         if (instance == null) {
             instance = new Gripper("gripper", new DoubleSolenoid(PneumaticsModuleType.CTREPCM,
-                    RobotMap.PCM.GRIPPER_SOLENOID_FORWARD, RobotMap.PCM.GRIPPER_SOLENOID_REVERSE));
+                    RobotMap.PCM.GRIPPER_SOLENOID_FORWARD, RobotMap.PCM.GRIPPER_SOLENOID_REVERSE),
+                    new DigitalInput(RobotMap.DIO.GRIPPER_LIGHT_SENSOR));
             return instance;
         }
         return instance;
-    }
-
-    private Gripper(String namespaceName, DoubleSolenoid solenoid) {
-        super(namespaceName);
-        this.solenoid = solenoid;
-        configureDashboard();
     }
 
     public void openGripper() {
@@ -34,8 +39,8 @@ public class Gripper extends DashboardedSubsystem {
         solenoid.set(DoubleSolenoid.Value.kReverse);
     }
 
-    public boolean sensorHasTarget() { //@todo add sensor
-        return false;
+    public boolean sensorHasTarget() {
+        return lightSensor.get();
     }
 
     @Override

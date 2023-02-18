@@ -36,10 +36,10 @@ public class LedsService {
     }
 
     public void periodic() {
-        boolean hasTarget = vision.limelightHasTarget();
+        boolean isCentered = vision.limelightCentered();
         boolean holdingGamePiece = gripper.sensorHasTarget();
 
-        if (hasTarget) {
+        if (isCentered) {
             if (holdingGamePiece) {
                 for (int i = 0; i < ledBuffer.getLength(); i++) {
                     ledBuffer.setRGB(i, Mode.HAS_GAME_PIECE_AND_ALLIGNED.red, Mode.HAS_GAME_PIECE_AND_ALLIGNED.green,

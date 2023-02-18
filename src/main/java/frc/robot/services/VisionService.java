@@ -33,6 +33,8 @@ public class VisionService {
 
     private static final String PHOTON_VISION_CAMERA_NAME = "photonvision";
 
+    private static final int TOLERANCE = 1;
+
     private static VisionService instance;
 
     private final RootNamespace namespace;
@@ -84,6 +86,24 @@ public class VisionService {
 
     public boolean limelightHasTarget() {
         return limelight.hasTarget();
+    }
+
+    public boolean photonVisionHasTarget() {
+        return photonCamera.getLatestResult().hasTargets();
+    }
+
+    public boolean limelightCentered() {
+        if (limelightHasTarget()) {
+            return (Math.abs(limelight.getHorizontalOffsetFromTargetInDegrees()) < TOLERANCE);
+        }
+        return false;
+    }
+
+    public boolean photonVisionCentered() {
+        if (photonVisionHasTarget()) {
+            return (Math.abs(photonCamera.getLatestResult().getBestTarget().getYaw()) < TOLERANCE);
+        }
+        return false;
     }
 
     public void setPhotonVisionPipeline(PhotonVisionPipeline pipeline) {
