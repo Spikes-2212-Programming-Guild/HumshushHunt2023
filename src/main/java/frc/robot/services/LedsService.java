@@ -7,6 +7,22 @@ import frc.robot.subsystems.Gripper;
 
 public class LedsService {
 
+    public enum Mode {
+
+        EMPTY_GRIPPER(254, 0, 0), ALLIGNED_TO_GAME_PIECE(204, 0, 254), HAS_GAME_PIECE(0, 0, 254),
+        HAS_GAME_PIECE_AND_ALLIGNED(0, 254, 0);
+
+        public final int red;
+        public final int green;
+        public final int blue;
+
+        Mode(int red, int green, int blue) {
+            this.red = red;
+            this.green = green;
+            this.blue = blue;
+        }
+    }
+
     private static final int NUMBER_OF_LEDS = 60;
 
     private static LedsService instance;
@@ -55,24 +71,7 @@ public class LedsService {
         }
     }
 
-    public enum Mode {
-
-        EMPTY_GRIPPER(254, 0, 0), ALLIGNED_TO_GAME_PIECE(204, 0, 254), HAS_GAME_PIECE(0, 0, 254),
-        HAS_GAME_PIECE_AND_ALLIGNED(0, 254, 0);
-
-        public final int red;
-        public final int green;
-        public final int blue;
-
-        Mode(int red, int green, int blue) {
-            this.red = red;
-            this.green = green;
-            this.blue = blue;
-        }
-
-    }
-
-    private void turnOff() {
+    public void turnOff() {
         for (int i = 0; i < ledBuffer.getLength(); i++) {
             ledBuffer.setRGB(i, 0, 0, 0);
         }
