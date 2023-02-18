@@ -75,7 +75,7 @@ public class ArmSecondJoint extends SparkMaxGenericSubsystem {
 
     private ArmSecondJoint(String namespaceName, CANSparkMax master) {
         super(namespaceName, master);
-        master.setIdleMode(CANSparkMax.IdleMode.kBrake);
+        setIdleMode(CANSparkMax.IdleMode.kCoast);
         sparkMaxEncoder = master.getEncoder();
         master.setInverted(true);
         absoluteEncoder = new DutyCycleEncoder(RobotMap.DIO.ARM_SECOND_JOINT_ABSOLUTE_ENCODER);
