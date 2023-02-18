@@ -64,8 +64,8 @@ public class Robot extends TimedRobot {
         }, firstJoint, secondJoint).ignoringDisable(true).schedule();
     }
 
-  @Override
-  public void disabledPeriodic() {
+    @Override
+    public void disabledPeriodic() {
 
     }
 
@@ -163,7 +163,7 @@ public class Robot extends TimedRobot {
         }, firstJoint, secondJoint));
         namespace.putData("move arm", new PlaceGamePiece(firstJoint, secondJoint, PlaceGamePiece.ArmState.BACK_TOP));
         namespace.putData("switch arm sides", new SwitchSides(firstJoint, secondJoint, gripper));
-        namespace.putData("floor back", new MoveArmToFloor(firstJoint, secondJoint, compensation, PlaceGamePiece.ArmState.FLOOR_BACK));
-        namespace.putData("floor front", new MoveArmToFloor(firstJoint, secondJoint, compensation, PlaceGamePiece.ArmState.FLOOR_FRONT));
+        namespace.putData("floor back", new MoveArmToFloor(firstJoint, secondJoint, compensation));
+        namespace.putData("floor front", new MoveArmToFloor(firstJoint, secondJoint, compensation));
     }
 }
