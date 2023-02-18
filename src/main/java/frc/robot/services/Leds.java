@@ -1,14 +1,16 @@
-package frc.robot.subsystems;
+package frc.robot.services;
 
-import com.spikes2212.command.DashboardedSubsystem;
 import com.spikes2212.dashboard.Namespace;
+import com.spikes2212.dashboard.RootNamespace;
 import edu.wpi.first.wpilibj.AddressableLED;
 import edu.wpi.first.wpilibj.AddressableLEDBuffer;
 import frc.robot.RobotMap;
 
 import java.util.function.Supplier;
 
-public class Leds extends DashboardedSubsystem {
+public class Leds {
+
+    private final RootNamespace namespace = new RootNamespace("Leds");
 
     private final Namespace colorNamespace = namespace.addChild("led colors");
 
@@ -17,12 +19,11 @@ public class Leds extends DashboardedSubsystem {
     private Supplier<Integer> green = colorNamespace.addConstantInt("green value", 0);
     private Supplier<Integer> blue = colorNamespace.addConstantInt("blue value", 0);
 
-    public static Leds getInstance() {
-        if (instance == null) {
-            instance = new Leds("led", new AddressableLED(RobotMap.PWM.LED_PORT),
-                    new AddressableLEDBuffer(NUMBER_OF_LEDS));
-        }
-        return instance;
+    private Leds(AddressableLED led, AddressableLEDBuffer ledBuffer) {
+        this.led = led;
+        this.ledBuffer = new AddressableLEDBuffer(NUMBER_OF_LEDS);
+        led.setLength(NUMBER_OF_LEDS);
+        configureDashboard();
     }
 
     public static Leds instance;
@@ -43,12 +44,12 @@ public class Leds extends DashboardedSubsystem {
         led.setData(ledBuffer);
     }
 
-    private Leds(String namespaceName, AddressableLED led, AddressableLEDBuffer ledBuffer) {
-        super("led");
-        this.led = led;
-        this.ledBuffer = new AddressableLEDBuffer(NUMBER_OF_LEDS);
-        led.setLength(NUMBER_OF_LEDS);
-        configureDashboard();
+    public static Leds getInstance() {
+        if (instance == null) {
+            instance = new Leds(new AddressableLED(RobotMap.PWM.LED_PORT),
+                    new AddressableLEDBuffer(NUMBER_OF_LEDS));
+        }
+        return instance;
     }
 
     private enum colorPipeline {
@@ -76,7 +77,6 @@ public class Leds extends DashboardedSubsystem {
         led.setData(ledBuffer);
     }
 
-    @Override
     public void configureDashboard() {
         namespace.putRunnable("update color", this::updateData);
         namespace.putRunnable("turn off", this::turnOff);
