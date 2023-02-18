@@ -10,6 +10,35 @@ import java.util.function.Supplier;
 
 public class Leds {
 
+    public enum mode {
+
+        EMPTY_GRIPPER(254, 0, 0), ALLIGNED(204, 0, 254), HAS_GAME_PIECE(0, 0, 254),
+        HAS_GAME_PIECE_AND_ALLIGNED(0, 254, 0);
+
+        final int red;
+        final int green;
+        final int blue;
+        private int pipeline;
+
+        mode(int red, int green, int blue) {
+            this.red = red;
+            this.green = green;
+            this.blue = blue;
+        }
+
+        int getRed() {
+            return this.red;
+        }
+
+        int getGreen() {
+            return this.green;
+        }
+
+        int getBlue() {
+            return this.blue;
+        }
+    }
+
     public static final int NUMBER_OF_LEDS = 60;
     private static Leds instance;
 
@@ -28,24 +57,6 @@ public class Leds {
                     new AddressableLEDBuffer(NUMBER_OF_LEDS));
         }
         return instance;
-    }
-
-    public enum mode {
-
-        OFF(0, 0, 0, 0), CONE(1, 248, 255, 14), CUBE(2, 175, 14, 255);
-
-        private int pipeline;
-
-        private int red;
-        private int green;
-        private int blue;
-
-        mode(int pipeline, int red, int green, int blue) {
-            this.pipeline = pipeline;
-            this.red = red;
-            this.green = green;
-            this.blue = blue;
-        }
     }
 
     private Leds(AddressableLED led, AddressableLEDBuffer ledBuffer) {
