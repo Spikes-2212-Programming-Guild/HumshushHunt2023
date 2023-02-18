@@ -1,5 +1,6 @@
 package frc.robot.commands;
 
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import frc.robot.services.ArmGravityCompensation;
@@ -13,19 +14,18 @@ public class MoveArmToFloor extends SequentialCommandGroup {
     private static final Supplier<Double> WAIT_TIME = () -> 0.005;
     private static final Supplier<Double> MOVE_DURATION = () -> 0.5;
 
-//    private PlaceGamePiece.ArmState state;
+    private PlaceGamePiece.ArmState state;
 
-    public MoveArmToFloor(ArmFirstJoint firstJoint, ArmSecondJoint secondJoint, ArmGravityCompensation compensation,
-                          PlaceGamePiece.ArmState state) {
+    public MoveArmToFloor(ArmFirstJoint firstJoint, ArmSecondJoint secondJoint, ArmGravityCompensation compensation) {
         addCommands(
-//                new InstantCommand(()->{
-//                    if(secondJoint.getAbsolutePosition() < 180){
-//                        state = PlaceGamePiece.ArmState.FLOOR_BACK;
-//                    }
-//                    else{
-//                        state = PlaceGamePiece.ArmState.FLOOR_FRONT;
-//                    }
-//                }),
+                new InstantCommand(()->{
+                    if(secondJoint.isBack()){
+                        state = PlaceGamePiece.ArmState.FLOOR_BACK;
+                    }
+                    else{
+                        state = PlaceGamePiece.ArmState.FLOOR_FRONT;
+                    }
+                }),
                 new ParallelCommandGroup(
                         new MoveFirstJoint(firstJoint, () -> state.firstJointPosition, WAIT_TIME, MOVE_DURATION),
                         new MoveSecondJoint(secondJoint, () -> state.secondJointPosition, WAIT_TIME, MOVE_DURATION)

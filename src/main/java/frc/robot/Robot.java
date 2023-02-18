@@ -6,12 +6,15 @@ package frc.robot;
 
 import com.revrobotics.CANSparkMax;
 import com.spikes2212.command.drivetrains.commands.DriveArcade;
+import com.spikes2212.command.genericsubsystem.commands.smartmotorcontrollergenericsubsystem.MoveSmartMotorControllerGenericSubsystem;
 import com.spikes2212.dashboard.RootNamespace;
+import com.spikes2212.util.UnifiedControlMode;
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.PneumaticsModuleType;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.RunCommand;
 import frc.robot.commands.KeepArmStable;
 import frc.robot.commands.MoveArmToFloor;
 import frc.robot.commands.PlaceGamePiece;
@@ -32,28 +35,15 @@ public class Robot extends TimedRobot {
     private OI oi;
     private ArmGravityCompensation compensation;
 
+    private double firstJointAngle;
+    private double secondJointAngle;
+
     @Override
     public void robotInit() {
-        Compressor compressor = new Compressor(0, PneumaticsModuleType.CTREPCM);
-        namespace.putData("enable compressor", new InstantCommand(compressor::enableDigital));
-        namespace.putData("disable compressor", new InstantCommand(compressor::disable));
-        oi = OI.getInstance();
-        drivetrain = Drivetrain.getInstance();
-        compensation = ArmGravityCompensation.getInstance();
-        firstJoint = ArmFirstJoint.getInstance();
-        secondJoint = ArmSecondJoint.getInstance();
-        gripper = Gripper.getInstance();
-        namespace.putRunnable("coast arm", () -> {
-            firstJoint.setIdleMode(CANSparkMax.IdleMode.kCoast);
-            secondJoint.setIdleMode(CANSparkMax.IdleMode.kCoast);
-        });
-        namespace.putData("keep arm stable", new KeepArmStable(firstJoint, secondJoint, ArmGravityCompensation.getInstance()));
-        namespace.putData("stop", new InstantCommand(() -> {
-        }, firstJoint, secondJoint));
-        namespace.putData("move arm", new PlaceGamePiece(firstJoint, secondJoint, PlaceGamePiece.ArmState.BACK_TOP));
-        namespace.putData("switch arm sides", new SwitchSides(firstJoint, secondJoint, gripper));
-        namespace.putData("floor back", new MoveArmToFloor(firstJoint, secondJoint, compensation, PlaceGamePiece.ArmState.FLOOR_BACK));
-        namespace.putData("floor front", new MoveArmToFloor(firstJoint, secondJoint, compensation, PlaceGamePiece.ArmState.FLOOR_FRONT));
+        getInstances();
+        setCompressor();
+        setDefaultJointsCommands();
+        setNamespaceTestingCommands();
     }
 
     @Override
@@ -64,6 +54,8 @@ public class Robot extends TimedRobot {
         firstJoint.periodic();
         secondJoint.periodic();
         gripper.periodic();
+        firstJointAngle = firstJoint.getAbsolutePosition();
+        secondJointAngle = secondJoint.getAbsolutePosition();
     }
 
     @Override
@@ -79,8 +71,10 @@ public class Robot extends TimedRobot {
 
     @Override
     public void autonomousInit() {
-        new InstantCommand(() -> {
-        }, firstJoint, secondJoint).schedule();
+        firstJoint.runOnce(() -> {
+        });
+        secondJoint.runOnce(() -> {
+        });
     }
 
     @Override
@@ -90,8 +84,10 @@ public class Robot extends TimedRobot {
 
     @Override
     public void teleopInit() {
-        new InstantCommand(() -> {
-        }, firstJoint, secondJoint).schedule();
+        firstJoint.runOnce(() -> {
+        });
+        secondJoint.runOnce(() -> {
+        });
         drivetrain.setDefaultCommand(new DriveArcade(drivetrain, oi::getRightY, oi::getLeftX));
     }
 
@@ -117,5 +113,57 @@ public class Robot extends TimedRobot {
     @Override
     public void simulationPeriodic() {
 
+    }
+
+    private void getInstances() {
+        oi = OI.getInstance();
+        drivetrain = Drivetrain.getInstance();
+        compensation = ArmGravityCompensation.getInstance();
+        firstJoint = ArmFirstJoint.getInstance();
+        secondJoint = ArmSecondJoint.getInstance();
+        gripper = Gripper.getInstance();
+        firstJointAngle = firstJoint.getAbsolutePosition();
+        secondJointAngle = secondJoint.getAbsolutePosition();
+    }
+
+    private void setCompressor() {
+        Compressor compressor = new Compressor(0, PneumaticsModuleType.CTREPCM);
+        namespace.putData("enable compressor", new InstantCommand(compressor::enableDigital));
+        namespace.putData("disable compressor", new InstantCommand(compressor::disable));
+    }
+
+    private void setDefaultJointsCommands() {
+        firstJointAngle = firstJoint.getAbsolutePosition();
+        secondJointAngle = secondJoint.getAbsolutePosition();
+
+        firstJoint.setDefaultCommand(new MoveSmartMotorControllerGenericSubsystem(firstJoint, firstJoint.keepStablePIDSettings,
+                firstJoint.getFeedForwardSettings(), UnifiedControlMode.POSITION, () -> firstJointAngle) {
+            @Override
+            public boolean isFinished() {
+                return false;
+            }
+        }.alongWith(new RunCommand(() -> compensation.configureFirstJointG(firstJointAngle, secondJointAngle))));
+
+        secondJoint.setDefaultCommand(new MoveSmartMotorControllerGenericSubsystem(secondJoint, secondJoint.keepStablePIDSettings,
+                secondJoint.getFeedForwardSettings(), UnifiedControlMode.POSITION, () -> secondJointAngle) {
+            @Override
+            public boolean isFinished() {
+                return false;
+            }
+        }.alongWith(new RunCommand(() -> compensation.configureSecondJointG(firstJointAngle, secondJointAngle))));
+    }
+
+    private void setNamespaceTestingCommands() {
+        namespace.putRunnable("coast arm", () -> {
+            firstJoint.setIdleMode(CANSparkMax.IdleMode.kCoast);
+            secondJoint.setIdleMode(CANSparkMax.IdleMode.kCoast);
+        });
+        namespace.putData("keep arm stable", new KeepArmStable(firstJoint, secondJoint, ArmGravityCompensation.getInstance()));
+        namespace.putData("stop", new InstantCommand(() -> {
+        }, firstJoint, secondJoint));
+        namespace.putData("move arm", new PlaceGamePiece(firstJoint, secondJoint, PlaceGamePiece.ArmState.BACK_TOP));
+        namespace.putData("switch arm sides", new SwitchSides(firstJoint, secondJoint, gripper));
+        namespace.putData("floor back", new MoveArmToFloor(firstJoint, secondJoint, compensation, PlaceGamePiece.ArmState.FLOOR_BACK));
+        namespace.putData("floor front", new MoveArmToFloor(firstJoint, secondJoint, compensation, PlaceGamePiece.ArmState.FLOOR_FRONT));
     }
 }
