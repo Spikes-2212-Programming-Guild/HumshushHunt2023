@@ -14,13 +14,6 @@ public class Gripper extends DashboardedSubsystem {
 
     private final DigitalInput lightSensor;
 
-    private Gripper(String namespaceName, DoubleSolenoid solenoid, DigitalInput lightSensor) {
-        super(namespaceName);
-        this.solenoid = solenoid;
-        this.lightSensor = lightSensor;
-        configureDashboard();
-    }
-
     public static Gripper getInstance() {
         if (instance == null) {
             instance = new Gripper("gripper", new DoubleSolenoid(PneumaticsModuleType.CTREPCM,
@@ -29,6 +22,13 @@ public class Gripper extends DashboardedSubsystem {
             return instance;
         }
         return instance;
+    }
+
+    private Gripper(String namespaceName, DoubleSolenoid solenoid, DigitalInput lightSensor) {
+        super(namespaceName);
+        this.solenoid = solenoid;
+        this.lightSensor = lightSensor;
+        configureDashboard();
     }
 
     public void openGripper() {
