@@ -7,6 +7,8 @@ import frc.robot.subsystems.Gripper;
 
 public class LedsService {
 
+    private static LedsService instance;
+
     private static final int NUMBER_OF_LEDS = 60;
 
     private LedsService(AddressableLED led, AddressableLEDBuffer ledBuffer, VisionService vision, Gripper gripper) {
@@ -19,8 +21,6 @@ public class LedsService {
     }
 
     private final Gripper gripper;
-
-    private static LedsService instance;
 
     private final VisionService vision;
 
@@ -36,31 +36,22 @@ public class LedsService {
     }
 
     public void periodic() {
-        boolean isCentered = vision.limelightCentered();
-        boolean holdingGamePiece = gripper.sensorHasTarget();
-
-        if (isCentered) {
-            if (holdingGamePiece) {
-                for (int i = 0; i < ledBuffer.getLength(); i++) {
-                    ledBuffer.setRGB(i, Mode.HAS_GAME_PIECE_AND_ALLIGNED.red, Mode.HAS_GAME_PIECE_AND_ALLIGNED.green,
-                            Mode.HAS_GAME_PIECE_AND_ALLIGNED.blue);
-                }
+        Mode mode;
+        if (gripper.sensorHasTarget()) {
+            if (vision.limelightCentered()) {
+                mode = Mode.HAS_GAME_PIECE_AND_ALLIGNED;
             } else {
-                for (int i = 0; i < ledBuffer.getLength(); i++) {
-                    ledBuffer.setRGB(i, Mode.ALLIGNED_TO_GAME_PIECE.red, Mode.ALLIGNED_TO_GAME_PIECE.green,
-                            Mode.ALLIGNED_TO_GAME_PIECE.blue);
-                }
+                mode = Mode.HAS_GAME_PIECE;
             }
         } else {
-            if (holdingGamePiece) {
-                for (int i = 0; i < ledBuffer.getLength(); i++) {
-                    ledBuffer.setRGB(i, Mode.HAS_GAME_PIECE.red, Mode.HAS_GAME_PIECE.green, Mode.HAS_GAME_PIECE.blue);
-                }
+            if (vision.photonVisionCentered()) {
+                mode = Mode.ALLIGNED_TO_GAME_PIECE;
             } else {
-                for (int i = 0; i < ledBuffer.getLength(); i++) {
-                    ledBuffer.setRGB(i, Mode.EMPTY_GRIPPER.red, Mode.EMPTY_GRIPPER.green, Mode.EMPTY_GRIPPER.blue);
-                }
+                mode = Mode.EMPTY_GRIPPER;
             }
+        }
+        for (int i = 0; i < ledBuffer.getLength(); i++) {
+            ledBuffer.setRGB(i, mode.red, mode.green, mode.blue);
         }
     }
 
@@ -78,6 +69,7 @@ public class LedsService {
             this.green = green;
             this.blue = blue;
         }
+
     }
 
     private void turnOff() {
