@@ -9,7 +9,7 @@ public class LedsService {
 
     public enum Mode {
 
-        EMPTY_GRIPPER(254, 0, 0), ALLIGNED_TO_GAME_PIECE(204, 0, 254), HAS_GAME_PIECE(0, 0, 254),
+        OFF(0, 0, 0), EMPTY_GRIPPER(254, 0, 0), ALLIGNED_TO_GAME_PIECE(204, 0, 254), HAS_GAME_PIECE(0, 0, 254),
         HAS_GAME_PIECE_AND_ALLIGNED(0, 254, 0);
 
         public final int red;
@@ -66,14 +66,16 @@ public class LedsService {
                 mode = Mode.EMPTY_GRIPPER;
             }
         }
-        for (int i = 0; i < ledBuffer.getLength(); i++) {
-            ledBuffer.setRGB(i, mode.red, mode.green, mode.blue);
-        }
+        setMode(mode);
     }
 
     public void turnOff() {
+        setMode(Mode.OFF);
+    }
+
+    private void setMode(Mode mode) {
         for (int i = 0; i < ledBuffer.getLength(); i++) {
-            ledBuffer.setRGB(i, 0, 0, 0);
+            ledBuffer.setRGB(i, mode.red, mode.green, mode.blue);
         }
         led.setData(ledBuffer);
     }
