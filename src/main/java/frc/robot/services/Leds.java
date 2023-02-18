@@ -10,14 +10,43 @@ import java.util.function.Supplier;
 
 public class Leds {
 
+    public static final int NUMBER_OF_LEDS = 60;
+    private static Leds instance;
+
     private final RootNamespace namespace = new RootNamespace("Leds");
 
     private final Namespace colorNamespace = namespace.addChild("led colors");
-
-    public static final int NUMBER_OF_LEDS = 60;
     private Supplier<Integer> red = colorNamespace.addConstantInt("red value", 0);
     private Supplier<Integer> green = colorNamespace.addConstantInt("green value", 0);
     private Supplier<Integer> blue = colorNamespace.addConstantInt("blue value", 0);
+    private final AddressableLED led;
+    private final AddressableLEDBuffer ledBuffer;
+
+    public static Leds getInstance() {
+        if (instance == null) {
+            instance = new Leds(new AddressableLED(RobotMap.PWM.LED_PORT),
+                    new AddressableLEDBuffer(NUMBER_OF_LEDS));
+        }
+        return instance;
+    }
+
+    public enum mode {
+
+        OFF(0, 0, 0, 0), CONE(1, 248, 255, 14), CUBE(2, 175, 14, 255);
+
+        private int pipeline;
+
+        private int red;
+        private int green;
+        private int blue;
+
+        mode(int pipeline, int red, int green, int blue) {
+            this.pipeline = pipeline;
+            this.red = red;
+            this.green = green;
+            this.blue = blue;
+        }
+    }
 
     private Leds(AddressableLED led, AddressableLEDBuffer ledBuffer) {
         this.led = led;
@@ -25,11 +54,6 @@ public class Leds {
         led.setLength(NUMBER_OF_LEDS);
         configureDashboard();
     }
-
-    public static Leds instance;
-
-    private final AddressableLED led;
-    private final AddressableLEDBuffer ledBuffer;
 
     private void updateData() {
         int rotateValue = 0; // here in case i decide to work on it
@@ -42,32 +66,6 @@ public class Leds {
             }
         }
         led.setData(ledBuffer);
-    }
-
-    public static Leds getInstance() {
-        if (instance == null) {
-            instance = new Leds(new AddressableLED(RobotMap.PWM.LED_PORT),
-                    new AddressableLEDBuffer(NUMBER_OF_LEDS));
-        }
-        return instance;
-    }
-
-    private enum colorPipeline {
-
-        OFF(0, 0, 0, 0), CONE(1, 248, 255, 14), CUBE(2, 175, 14, 255);
-
-        private int pipeline;
-
-        private int red;
-        private int green;
-        private int blue;
-
-        colorPipeline(int pipeline, int red, int green, int blue) {
-            this.pipeline = pipeline;
-            this.red = red;
-            this.green = green;
-            this.blue = blue;
-        }
     }
 
     private void turnOff() {
