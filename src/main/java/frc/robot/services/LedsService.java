@@ -6,28 +6,45 @@ import frc.robot.RobotMap;
 
 public class LedsService {
 
+    private static final int NUMBER_OF_LEDS = 60;
+
+    private LedsService(AddressableLED led, AddressableLEDBuffer ledBuffer, VisionService vision) {
+        this.led = led;
+        this.ledBuffer = ledBuffer;
+        this.vision = vision;
+        led.setLength(ledBuffer.getLength());
+        led.start();
+    }
+
     private static LedsService instance;
 
-    public static final int NUMBER_OF_LEDS = 60;
     private final VisionService vision;
 
     private final AddressableLED led;
     private final AddressableLEDBuffer ledBuffer;
 
-    private LedsService(AddressableLED led, AddressableLEDBuffer ledBuffer) {
-        this.led = led;
-        this.ledBuffer = ledBuffer;
-        this.vision = VisionService.getInstance();
-        led.setLength(ledBuffer.getLength());
-        led.start();
-    }
-
     public static LedsService getInstance() {
         if (instance == null) {
             instance = new LedsService(new AddressableLED(RobotMap.PWM.LED_PORT),
-                    new AddressableLEDBuffer(NUMBER_OF_LEDS));
+                    new AddressableLEDBuffer(NUMBER_OF_LEDS), VisionService.getInstance());
         }
         return instance;
+    }
+
+    public enum Mode {
+
+        EMPTY_GRIPPER(254, 0, 0), ALLIGNED(204, 0, 254), HAS_GAME_PIECE(0, 0, 254),
+        HAS_GAME_PIECE_AND_ALLIGNED(0, 254, 0);
+
+        public final int red;
+        public final int green;
+        public final int blue;
+
+        Mode(int red, int green, int blue) {
+            this.red = red;
+            this.green = green;
+            this.blue = blue;
+        }
     }
 
     public void periodic() {
@@ -57,22 +74,6 @@ public class LedsService {
                 ledBuffer.setRGB(i, Mode.HAS_GAME_PIECE_AND_ALLIGNED.red, Mode.HAS_GAME_PIECE_AND_ALLIGNED.green,
                         Mode.HAS_GAME_PIECE_AND_ALLIGNED.blue);
             }
-        }
-    }
-
-    public enum Mode {
-
-        EMPTY_GRIPPER(254, 0, 0), ALLIGNED(204, 0, 254), HAS_GAME_PIECE(0, 0, 254),
-        HAS_GAME_PIECE_AND_ALLIGNED(0, 254, 0);
-
-        public final int red;
-        public final int green;
-        public final int blue;
-
-        Mode(int red, int green, int blue) {
-            this.red = red;
-            this.green = green;
-            this.blue = blue;
         }
     }
 
