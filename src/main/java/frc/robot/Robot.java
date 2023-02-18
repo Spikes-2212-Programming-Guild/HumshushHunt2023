@@ -10,6 +10,7 @@ import com.spikes2212.command.genericsubsystem.commands.smartmotorcontrollergene
 import com.spikes2212.dashboard.RootNamespace;
 import com.spikes2212.util.UnifiedControlMode;
 import edu.wpi.first.wpilibj.Compressor;
+import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.PneumaticsModuleType;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
@@ -38,12 +39,19 @@ public class Robot extends TimedRobot {
     private double firstJointAngle;
     private double secondJointAngle;
 
+    private DigitalInput ls1;
+    private DigitalInput ls2;
+
     @Override
     public void robotInit() {
         getInstances();
         setCompressor();
         setDefaultJointsCommands();
         setNamespaceTestingCommands();
+        ls1 = new DigitalInput(3);
+        ls2 = new DigitalInput(4);
+        namespace.putBoolean("ls1", ls1::get);
+        namespace.putBoolean("ls2", ls2::get);
     }
 
     @Override
@@ -62,6 +70,10 @@ public class Robot extends TimedRobot {
     public void disabledInit() {
         new InstantCommand(() -> {
         }, firstJoint, secondJoint).ignoringDisable(true).schedule();
+//        new InstantCommand(() -> {
+//            firstJoint.setIdleMode(CANSparkMax.IdleMode.kCoast);
+//            secondJoint.setIdleMode(CANSparkMax.IdleMode.kCoast);
+//        }).ignoringDisable(true).schedule();
     }
 
     @Override
@@ -75,6 +87,10 @@ public class Robot extends TimedRobot {
         });
         secondJoint.runOnce(() -> {
         });
+        new InstantCommand(() -> {
+            firstJoint.setIdleMode(CANSparkMax.IdleMode.kBrake);
+            secondJoint.setIdleMode(CANSparkMax.IdleMode.kBrake);
+        });
     }
 
     @Override
@@ -85,9 +101,14 @@ public class Robot extends TimedRobot {
     @Override
     public void teleopInit() {
         firstJoint.runOnce(() -> {
-        });
+        }).schedule();
         secondJoint.runOnce(() -> {
-        });
+        }).schedule();
+        new InstantCommand(() -> {
+            firstJoint.setIdleMode(CANSparkMax.IdleMode.kBrake);
+
+            secondJoint.setIdleMode(CANSparkMax.IdleMode.kBrake);
+        }, firstJoint, secondJoint).schedule();
         drivetrain.setDefaultCommand(new DriveArcade(drivetrain, oi::getRightY, oi::getLeftX));
     }
 
@@ -135,22 +156,22 @@ public class Robot extends TimedRobot {
     private void setDefaultJointsCommands() {
         firstJointAngle = firstJoint.getAbsolutePosition();
         secondJointAngle = secondJoint.getAbsolutePosition();
-
-        firstJoint.setDefaultCommand(new MoveSmartMotorControllerGenericSubsystem(firstJoint, firstJoint.keepStablePIDSettings,
-                firstJoint.getFeedForwardSettings(), UnifiedControlMode.POSITION, () -> firstJointAngle) {
-            @Override
-            public boolean isFinished() {
-                return false;
-            }
-        }.alongWith(new RunCommand(() -> compensation.configureFirstJointG(firstJointAngle, secondJointAngle))));
-
-        secondJoint.setDefaultCommand(new MoveSmartMotorControllerGenericSubsystem(secondJoint, secondJoint.keepStablePIDSettings,
-                secondJoint.getFeedForwardSettings(), UnifiedControlMode.POSITION, () -> secondJointAngle) {
-            @Override
-            public boolean isFinished() {
-                return false;
-            }
-        }.alongWith(new RunCommand(() -> compensation.configureSecondJointG(firstJointAngle, secondJointAngle))));
+//
+//        firstJoint.setDefaultCommand(new InstantCommand(() -> compensation.configureFirstJointG(firstJointAngle, secondJointAngle)).andThen(new MoveSmartMotorControllerGenericSubsystem(firstJoint, firstJoint.keepStablePIDSettings,
+//                firstJoint.getFeedForwardSettings(), UnifiedControlMode.POSITION, () -> firstJointAngle) {
+//            @Override
+//            public boolean isFinished() {
+//                return false;
+//            }
+//        }.alongWith(new RunCommand(() -> compensation.configureFirstJointG(firstJointAngle, secondJointAngle)))));
+//
+//        secondJoint.setDefaultCommand(new InstantCommand(() -> compensation.configureFirstJointG(firstJointAngle, secondJointAngle)).andThen(new MoveSmartMotorControllerGenericSubsystem(secondJoint, secondJoint.keepStablePIDSettings,
+//                secondJoint.getFeedForwardSettings(), UnifiedControlMode.POSITION, () -> secondJointAngle) {
+//            @Override
+//            public boolean isFinished() {
+//                return false;
+//            }
+//        }.alongWith(new RunCommand(() -> compensation.configureSecondJointG(firstJointAngle, secondJointAngle)))));
     }
 
     private void setNamespaceTestingCommands() {

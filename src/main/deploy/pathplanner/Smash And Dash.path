@@ -79,5 +79,12 @@
   "maxVelocity": null,
   "maxAcceleration": null,
   "isReversed": false,
-  "markers": []
+  "markers": [
+    {
+      "position": 0.15,
+      "names": [
+        "switchSides"
+      ]
+    }
+  ]
 }

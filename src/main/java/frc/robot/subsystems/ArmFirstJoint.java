@@ -90,8 +90,7 @@ public class ArmFirstJoint extends SparkMaxGenericSubsystem {
 
     private ArmFirstJoint(String namespaceName, CANSparkMax master, CANSparkMax slave) {
         super(namespaceName, master, slave);
-        master.setIdleMode(CANSparkMax.IdleMode.kBrake);
-        slave.setIdleMode(CANSparkMax.IdleMode.kBrake);
+        setIdleMode(CANSparkMax.IdleMode.kCoast);
         sparkMaxEncoder = master.getEncoder();
         absoluteEncoder = new DutyCycleEncoder(RobotMap.DIO.ARM_FIRST_JOINT_ABSOLUTE_ENCODER);
         configureEncoders();
