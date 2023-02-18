@@ -39,7 +39,7 @@ public class Gripper extends DashboardedSubsystem {
         solenoid.set(DoubleSolenoid.Value.kReverse);
     }
 
-    public boolean sensorHasGamePiece() {
+    public boolean hasGamePiece() {
         return lightSensor.get();
     }
 
@@ -47,5 +47,6 @@ public class Gripper extends DashboardedSubsystem {
     public void configureDashboard() {
         namespace.putRunnable("open gripper", this::openGripper);
         namespace.putRunnable("close gripper", this::closeGripper);
+        namespace.putBoolean("has game piece", this::hasGamePiece);
     }
 }

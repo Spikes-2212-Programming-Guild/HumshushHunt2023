@@ -88,10 +88,6 @@ public class VisionService {
         return limelight.hasTarget();
     }
 
-    public boolean photonVisionHasTarget() {
-        return photonCamera.getLatestResult().hasTargets();
-    }
-
     public boolean limelightCentered() {
         if (limelightHasTarget()) {
             return (Math.abs(limelight.getHorizontalOffsetFromTargetInDegrees()) <= TOLERANCE);
@@ -100,8 +96,9 @@ public class VisionService {
     }
 
     public boolean photonVisionCentered() {
-        if (photonVisionHasTarget()) {
-            return (Math.abs(photonCamera.getLatestResult().getBestTarget().getYaw()) <= TOLERANCE);
+        PhotonPipelineResult result = photonCamera.getLatestResult();
+        if (result.hasTargets()) {
+            return (Math.abs(result.getBestTarget().getYaw()) <= TOLERANCE);
         }
         return false;
     }

@@ -53,7 +53,7 @@ public class LedsService {
 
     public void periodic() {
         Mode mode;
-        if (gripper.sensorHasGamePiece()) {
+        if (gripper.hasGamePiece()) {
             if (vision.limelightCentered()) {
                 mode = Mode.HAS_GAME_PIECE_AND_ALLIGNED;
             } else {
