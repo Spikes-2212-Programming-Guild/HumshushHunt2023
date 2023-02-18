@@ -85,6 +85,12 @@
       "names": [
         "switchSides"
       ]
+    },
+    {
+      "position": 1.149090909090793,
+      "names": [
+        "event"
+      ]
     }
   ]
 }

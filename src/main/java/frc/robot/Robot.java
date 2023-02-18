@@ -17,6 +17,7 @@ import frc.robot.commands.KeepArmStable;
 import frc.robot.commands.MoveArmToFloor;
 import frc.robot.commands.PlaceGamePiece;
 import frc.robot.commands.SwitchSides;
+import frc.robot.commands.autonomous.SmashAndDash;
 import frc.robot.services.ArmGravityCompensation;
 import frc.robot.subsystems.ArmFirstJoint;
 import frc.robot.subsystems.ArmSecondJoint;
@@ -81,6 +82,7 @@ public class Robot extends TimedRobot {
             firstJoint.setIdleMode(CANSparkMax.IdleMode.kBrake);
             secondJoint.setIdleMode(CANSparkMax.IdleMode.kBrake);
         });
+        new SmashAndDash(drivetrain).getCommand().schedule();
     }
 
     @Override
@@ -173,7 +175,7 @@ public class Robot extends TimedRobot {
         namespace.putData("stop", new InstantCommand(() -> {
         }, firstJoint, secondJoint));
         namespace.putData("move arm", new PlaceGamePiece(firstJoint, secondJoint, PlaceGamePiece.ArmState.BACK_TOP));
-        namespace.putData("switch arm sides", new SwitchSides(firstJoint, secondJoint, gripper));
+
         namespace.putData("floor back", new MoveArmToFloor(firstJoint, secondJoint, compensation));
         namespace.putData("floor front", new MoveArmToFloor(firstJoint, secondJoint, compensation));
     }

@@ -119,7 +119,7 @@ public class ArmSecondJoint extends SparkMaxGenericSubsystem {
         return (absoluteEncoder.getAbsolutePosition() * 360 + 90) % 360;
     }
 
-    public boolean isBack(){
+    public boolean isBack() {
         return getAbsolutePosition() < 180;
     }
 
@@ -157,6 +157,7 @@ public class ArmSecondJoint extends SparkMaxGenericSubsystem {
         namespace.putNumber("velocity", this::getVelocity);
         namespace.putNumber("angle sum", () -> getCombinedAngle(ArmFirstJoint.getInstance()));
         namespace.putNumber("current", master::getOutputCurrent);
+        namespace.putBoolean("is back", this::isBack);
         namespace.putNumber("encoder ticks", absoluteEncoder::getAbsolutePosition);
     }
 

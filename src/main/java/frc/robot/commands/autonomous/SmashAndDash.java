@@ -16,8 +16,8 @@ import java.util.Map;
 
 public class SmashAndDash extends BasePathAuto {
 
-    private static final double MAX_VELOCITY = 2.7;
-    private static final double MAX_ACCELERATION = 3;
+    private static final double MAX_VELOCITY = 1.5;
+    private static final double MAX_ACCELERATION = 1.5;
 
     public SmashAndDash(Drivetrain drivetrain) {
         super(drivetrain, getEventMap());
@@ -37,21 +37,28 @@ public class SmashAndDash extends BasePathAuto {
         Gripper gripper = Gripper.getInstance();
         HashMap<String, Command> eventMap = new HashMap<>();
         eventMap.put("putGP", new SequentialCommandGroup(
-                new CenterWithLimelight(drivetrain, vision, VisionService.LimelightPipeline.HIGH_RRT).withTimeout(1),
-                new PlaceGamePiece(firstJoint, secondJoint, PlaceGamePiece.ArmState.BACK_TOP)
+                new CenterWithLimelight(drivetrain, vision, VisionService.LimelightPipeline.APRIL_TAG).withTimeout(1),
+                new PlaceGamePiece(firstJoint, secondJoint, PlaceGamePiece.ArmState.BACK_TOP).withTimeout(5)
         ));
         eventMap.put("takeGP", new SequentialCommandGroup(
-                new WaitCommand(2),
+                new OpenGripper(gripper),
+                new WaitCommand(10),
                 new CloseGripper(gripper)
         ));
         eventMap.put("putGP2", new SequentialCommandGroup(
-                new CenterWithLimelight(drivetrain, vision, VisionService.LimelightPipeline.APRIL_TAG).withTimeout(1),
+                new CenterWithLimelight(drivetrain, vision, VisionService.LimelightPipeline.HIGH_RRT).withTimeout(1),
                 new PlaceGamePiece(firstJoint, secondJoint, PlaceGamePiece.ArmState.BACK_TOP)
         ));
         eventMap.put("switchSides", new SequentialCommandGroup(
-                new SwitchSides(firstJoint, secondJoint, gripper),
-                new MoveArmToFloor(firstJoint, secondJoint, compensation))
-        );
+                new InstantCommand(() -> {
+                    if (secondJoint.isBack()) {
+                        new SwitchSides(firstJoint, secondJoint, gripper, true).withTimeout(3).andThen(new MoveArmToFloor(firstJoint, secondJoint, compensation).withTimeout(2)).schedule();
+                    } else {
+                        new SwitchSides(firstJoint, secondJoint, gripper, false).withTimeout(3).andThen(new MoveArmToFloor(firstJoint, secondJoint, compensation).withTimeout(2)).schedule();
+
+                    }
+                })
+        ));
         return eventMap;
     }
 }
