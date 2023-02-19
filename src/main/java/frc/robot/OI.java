@@ -29,42 +29,43 @@ public class OI /*GEVALD*/ {
             public boolean isFinished() {
                 return false;
             }
-        });
+        }.andThen(new KeepArmStable(firstJoint, secondJoint, compensation)));
         //Moves the first joint backwards
         ps.getR2Button().whileTrue(new MoveSmartMotorControllerGenericSubsystem(firstJoint, firstJoint.getPIDSettings(), firstJoint.getFeedForwardSettings(), UnifiedControlMode.PERCENT_OUTPUT, firstJoint.backwardsSpeed) {
             @Override
             public boolean isFinished() {
                 return false;
             }
-        });
+        }.andThen(new KeepArmStable(firstJoint, secondJoint, compensation)));
         //Moves the second joint forward
         ps.getL1Button().whileTrue(new MoveSmartMotorControllerGenericSubsystem(secondJoint, secondJoint.getPIDSettings(), secondJoint.getFeedForwardSettings(), UnifiedControlMode.PERCENT_OUTPUT, secondJoint.forwardSpeed) {
             @Override
             public boolean isFinished() {
                 return false;
             }
-        });
+        }.andThen(new KeepArmStable(firstJoint, secondJoint, compensation)));
         //Moves the second joint backwards
         ps.getL2Button().whileTrue(new MoveSmartMotorControllerGenericSubsystem(secondJoint, secondJoint.getPIDSettings(), secondJoint.getFeedForwardSettings(), UnifiedControlMode.PERCENT_OUTPUT, secondJoint.backwardsSpeed) {
             @Override
             public boolean isFinished() {
                 return false;
             }
-        });
+        }.andThen(new KeepArmStable(firstJoint, secondJoint, compensation)));
 
         //Moves the arm to the floor
         ps.getCrossButton().onTrue(new MoveArmToFloor(firstJoint, secondJoint, compensation));
         //Places game piece in the middle
         ps.getTriangleButton().onTrue(new PlaceGamePiece(firstJoint, secondJoint, PlaceGamePiece.ArmState.BACK_MID));
         //Switch sides of arm
-        ps.getSquareButton().onTrue(new InstantCommand(() -> {
-            if (secondJoint.isBack()) {
-                new SwitchSides(firstJoint, secondJoint, gripper, true).schedule();
-            } else {
-                new SwitchSides(firstJoint, secondJoint, gripper, false).schedule();
-
-            }
-        }));
+        ps.getSquareButton().onTrue(new SwitchSides(firstJoint, secondJoint, gripper));
+//        ps.getSquareButton().onTrue(new InstantCommand(() -> {
+//            if (secondJoint.isBack()) {
+//                new SwitchSides(firstJoint, secondJoint, gripper, true).schedule();
+//            } else {
+//                new SwitchSides(firstJoint, secondJoint, gripper, false).schedule();
+//
+//            }
+//        }));
         //Keeps the arm stable
         ps.getShareButton().whileTrue(new KeepArmStable(firstJoint, secondJoint, compensation));
         //Places game piece at the top
