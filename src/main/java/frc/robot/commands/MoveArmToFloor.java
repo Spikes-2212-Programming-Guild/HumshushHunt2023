@@ -1,6 +1,5 @@
 package frc.robot.commands;
 
-import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import frc.robot.services.ArmGravityCompensation;
@@ -16,21 +15,30 @@ public class MoveArmToFloor extends SequentialCommandGroup {
 
     private PlaceGamePiece.ArmState state;
 
-    public MoveArmToFloor(ArmFirstJoint firstJoint, ArmSecondJoint secondJoint, ArmGravityCompensation compensation) {
-        addCommands(
-                new InstantCommand(()->{
-                    if(secondJoint.isBack()){
-                        state = PlaceGamePiece.ArmState.FLOOR_BACK;
-                    }
-                    else{
-                        state = PlaceGamePiece.ArmState.FLOOR_FRONT;
-                    }
-                }),
-                new ParallelCommandGroup(
-                        new MoveFirstJoint(firstJoint, () -> state.firstJointPosition, WAIT_TIME, MOVE_DURATION),
-                        new MoveSecondJoint(secondJoint, () -> state.secondJointPosition, WAIT_TIME, MOVE_DURATION)
-                ),
-                new KeepArmStable(firstJoint, secondJoint, compensation)
-        );
+    public MoveArmToFloor(ArmFirstJoint firstJoint, ArmSecondJoint secondJoint, ArmGravityCompensation compensation,
+                          boolean isBack) {
+        if (isBack) {
+            state = PlaceGamePiece.ArmState.FLOOR_BACK;
+            addCommands(
+                    new MoveSecondJoint(secondJoint, () -> PlaceGamePiece.ArmState.FOLD_BELOW_180.secondJointPosition, WAIT_TIME,
+                            () -> state.moveDuration),
+                    new ParallelCommandGroup(
+                            new MoveFirstJoint(firstJoint, () -> state.firstJointPosition, WAIT_TIME, MOVE_DURATION),
+                            new MoveSecondJoint(secondJoint, () -> state.secondJointPosition, WAIT_TIME, MOVE_DURATION)
+                    ),
+                    new KeepArmStable(firstJoint, secondJoint, compensation)
+            );
+        } else {
+            state = PlaceGamePiece.ArmState.FLOOR_FRONT;
+            addCommands(
+                    new MoveSecondJoint(secondJoint, () -> PlaceGamePiece.ArmState.FOLD_ABOVE_180.secondJointPosition, WAIT_TIME,
+                            () -> state.moveDuration),
+                    new ParallelCommandGroup(
+                            new MoveFirstJoint(firstJoint, () -> state.firstJointPosition, WAIT_TIME, MOVE_DURATION),
+                            new MoveSecondJoint(secondJoint, () -> state.secondJointPosition, WAIT_TIME, MOVE_DURATION)
+                    ),
+                    new KeepArmStable(firstJoint, secondJoint, compensation)
+            );
+        }
     }
 }

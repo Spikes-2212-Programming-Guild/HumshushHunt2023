@@ -6,6 +6,8 @@ package frc.robot;
 
 import com.revrobotics.CANSparkMax;
 import com.spikes2212.command.drivetrains.commands.DriveArcade;
+import com.spikes2212.command.drivetrains.commands.DriveTank;
+import com.spikes2212.command.drivetrains.commands.DriveTankWithPID;
 import com.spikes2212.dashboard.RootNamespace;
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.DigitalInput;
@@ -19,6 +21,7 @@ import frc.robot.commands.PlaceGamePiece;
 import frc.robot.commands.SwitchSides;
 import frc.robot.commands.autonomous.SmashAndDash;
 import frc.robot.services.ArmGravityCompensation;
+import frc.robot.services.VisionService;
 import frc.robot.subsystems.ArmFirstJoint;
 import frc.robot.subsystems.ArmSecondJoint;
 import frc.robot.subsystems.Drivetrain;
@@ -54,6 +57,7 @@ public class Robot extends TimedRobot {
         firstJoint.periodic();
         secondJoint.periodic();
         gripper.periodic();
+        VisionService.getInstance().periodic();
         firstJointAngle = firstJoint.getAbsolutePosition();
         secondJointAngle = secondJoint.getAbsolutePosition();
     }
@@ -169,19 +173,18 @@ public class Robot extends TimedRobot {
     }
 
     private void setNamespaceTestingCommands() {
-        namespace.putRunnable("coast arm", () -> {
+        namespace.putData("coast arm", new InstantCommand(() -> {
             firstJoint.setIdleMode(CANSparkMax.IdleMode.kCoast);
             secondJoint.setIdleMode(CANSparkMax.IdleMode.kCoast);
-        });
+        }).ignoringDisable(true));
         namespace.putData("keep arm stable", new KeepArmStable(firstJoint, secondJoint, ArmGravityCompensation.getInstance()));
         namespace.putData("stop", new InstantCommand(() -> {
         }, firstJoint, secondJoint));
         namespace.putData("move arm", new PlaceGamePiece(firstJoint, secondJoint, PlaceGamePiece.ArmState.BACK_TOP));
 
-        namespace.putData("floor back", new MoveArmToFloor(firstJoint, secondJoint, compensation));
-        namespace.putData("floor front", new MoveArmToFloor(firstJoint, secondJoint, compensation));
+        namespace.putData("floor back", new MoveArmToFloor(firstJoint, secondJoint, compensation, true));
+        namespace.putData("floor front", new MoveArmToFloor(firstJoint, secondJoint, compensation, false));
         namespace.putData("switch sides back", new SwitchSides(firstJoint, secondJoint, gripper, true));
         namespace.putData("switch sides front", new SwitchSides(firstJoint, secondJoint, gripper, false));
-
     }
 }

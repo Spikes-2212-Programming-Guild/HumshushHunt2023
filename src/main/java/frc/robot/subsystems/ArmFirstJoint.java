@@ -131,7 +131,8 @@ public class ArmFirstJoint extends SparkMaxGenericSubsystem {
     }
 
     public double getAbsolutePosition() {
-        return absoluteEncoder.getDistance() + 180;
+//        return absoluteEncoder.getDistance() + 180;
+        return absoluteEncoder.getAbsolutePosition();
     }
 
     public double getVelocity() {

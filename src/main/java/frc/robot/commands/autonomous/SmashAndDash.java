@@ -52,9 +52,9 @@ public class SmashAndDash extends BasePathAuto {
         eventMap.put("switchSides", new SequentialCommandGroup(
                 new InstantCommand(() -> {
                     if (secondJoint.isBack()) {
-                        new SwitchSides(firstJoint, secondJoint, gripper, true).withTimeout(3).andThen(new MoveArmToFloor(firstJoint, secondJoint, compensation).withTimeout(2)).schedule();
+                        new SwitchSides(firstJoint, secondJoint, gripper, true).withTimeout(3).andThen(new MoveArmToFloor(firstJoint, secondJoint, compensation, true).withTimeout(2)).schedule();
                     } else {
-                        new SwitchSides(firstJoint, secondJoint, gripper, false).withTimeout(3).andThen(new MoveArmToFloor(firstJoint, secondJoint, compensation).withTimeout(2)).schedule();
+                        new SwitchSides(firstJoint, secondJoint, gripper, false).withTimeout(3).andThen(new MoveArmToFloor(firstJoint, secondJoint, compensation, false).withTimeout(2)).schedule();
 
                     }
                 })

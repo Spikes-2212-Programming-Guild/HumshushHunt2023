@@ -53,7 +53,7 @@ public class OI /*GEVALD*/ {
         }.andThen(new KeepArmStable(firstJoint, secondJoint, compensation)));
 
         //Moves the arm to the floor
-        ps.getCrossButton().onTrue(new MoveArmToFloor(firstJoint, secondJoint, compensation));
+        ps.getCrossButton().onTrue(new MoveArmToFloor(firstJoint, secondJoint, compensation, false));
         //Places game piece in the middle
         ps.getTriangleButton().onTrue(new PlaceGamePiece(firstJoint, secondJoint, PlaceGamePiece.ArmState.BACK_MID));
         //Switch sides of arm
@@ -79,6 +79,8 @@ public class OI /*GEVALD*/ {
         ps.getUpButton().onTrue(new OpenGripper(gripper));
         //Closes the gripper
         ps.getDownButton().onTrue(new CloseGripper(gripper));
+        ps.getLeftButton().onTrue(new PlaceGamePiece(firstJoint,secondJoint,PlaceGamePiece.ArmState.FRONT_TOP));
+        ps.getRightButton().onTrue(new PlaceGamePiece(firstJoint,secondJoint,PlaceGamePiece.ArmState.FRONT_MID));
 
         xbox.getLeftStickButton().onTrue(new InstantCommand(() -> drivetrain.setMode(CANSparkMax.IdleMode.kCoast)));
         xbox.getRightStickButton().onTrue(new InstantCommand(() -> drivetrain.setMode(CANSparkMax.IdleMode.kBrake)));

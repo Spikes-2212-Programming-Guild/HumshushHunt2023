@@ -4,6 +4,7 @@ import com.kauailabs.navx.frc.AHRS;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMaxLowLevel;
 import com.revrobotics.RelativeEncoder;
+import com.spikes2212.command.drivetrains.commands.DriveTank;
 import com.spikes2212.command.drivetrains.smartmotorcontrollerdrivetrain.SparkMaxTankDrivetrain;
 import com.spikes2212.control.FeedForwardSettings;
 import com.spikes2212.control.PIDSettings;
@@ -69,9 +70,10 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
     private final PIDSettings cameraPIDSettings;
 
     private final Namespace feedForwardNamespace = namespace.addChild("feed forward");
-    private final Supplier<Double> kS = feedForwardNamespace.addConstantDouble("kS", 0);
+    private final Supplier<Double> kS = feedForwardNamespace.addConstantDouble("kS", 0.14);
     private final Supplier<Double> kV = feedForwardNamespace.addConstantDouble("kV", 0.28);
     private final Supplier<Double> kA = feedForwardNamespace.addConstantDouble("kA", 0);
+    private final Supplier<Double> limelightkS = feedForwardNamespace.addConstantDouble("limelight kS", 0.14);
     private final FeedForwardSettings feedForwardSettings;
 
     private final Namespace trapezoidProfileNamespace = namespace.addChild("trapezoid profile settings");
@@ -269,5 +271,7 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
         namespace.putNumber("max acceleration", () -> maxAcceleration);
         namespace.putNumber("max left speed", () -> maxLeftSpeed);
         namespace.putNumber("max right speed", () -> maxRightSpeed);
+        Supplier<Double> val = namespace.addConstantDouble("ks value", 0);
+        namespace.putData("test ks", new DriveTank(this, val, val));
     }
 }

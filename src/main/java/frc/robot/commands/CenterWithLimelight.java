@@ -11,13 +11,15 @@ public class CenterWithLimelight extends DriveArcadeWithPID {
     private final LimelightPipeline pipeline;
 
     public CenterWithLimelight(Drivetrain drivetrain, VisionService vision, LimelightPipeline pipeline) {
-        super(drivetrain, vision::getLimelightYaw, 0, 0, drivetrain.getCameraPIDSettings());
+        super(drivetrain, vision::getLimelightYaw, 0, 0, drivetrain.getCameraPIDSettings(),
+                drivetrain.getFeedForwardSettings());
         this.vision = vision;
         this.pipeline = pipeline;
     }
 
     @Override
     public void initialize() {
+        feedForwardSettings.setkG(() -> feedForwardSettings.getkS() * -Math.signum(vision.getLimelightYaw()));
         vision.setLimelightPipeline(pipeline);
     }
 }
