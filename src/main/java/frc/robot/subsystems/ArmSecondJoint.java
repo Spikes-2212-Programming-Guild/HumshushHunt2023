@@ -80,7 +80,7 @@ public class ArmSecondJoint extends SparkMaxGenericSubsystem {
         master.setInverted(true);
         absoluteEncoder = new DutyCycleEncoder(RobotMap.DIO.ARM_SECOND_JOINT_ABSOLUTE_ENCODER);
         configureEncoders();
-        pidSettings = new PIDSettings(kP, kI, kD, waitTime, tolerance);
+        pidSettings = new PIDSettings(kP, kI, kD, tolerance, waitTime);
         feedForwardSettings = new FeedForwardSettings(kS, kV, kA, kG);
         trapezoidProfileSettings = new TrapezoidProfileSettings(maxVelocity, trapezoidAcceleration);
         configureDashboard();

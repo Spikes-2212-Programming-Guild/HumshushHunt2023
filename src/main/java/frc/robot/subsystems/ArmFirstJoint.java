@@ -28,7 +28,7 @@ public class ArmFirstJoint extends SparkMaxGenericSubsystem {
 
     public static final int SECONDS_IN_MINUTE = 60;
 
-    private static final double ABSOLUTE_ENCODER_OFFSET = 18 / 360.0;
+    private static final double ABSOLUTE_ENCODER_OFFSET = 130 / 360.0;
 
     private static ArmFirstJoint instance;
 
@@ -95,7 +95,7 @@ public class ArmFirstJoint extends SparkMaxGenericSubsystem {
         absoluteEncoder = new DutyCycleEncoder(RobotMap.DIO.ARM_FIRST_JOINT_ABSOLUTE_ENCODER);
         configureEncoders();
         slave.follow(master, true);
-        pidSettings = new PIDSettings(kP, kI, kD, waitTime, tolerance);
+        pidSettings = new PIDSettings(kP, kI, kD, tolerance, waitTime);
         feedForwardSettings = new FeedForwardSettings(kS, kV, kA, kG);
         trapezoidProfileSettings = new TrapezoidProfileSettings(maxVelocity, trapezoidAcceleration);
         configureDashboard();
@@ -131,7 +131,7 @@ public class ArmFirstJoint extends SparkMaxGenericSubsystem {
     }
 
     public double getAbsolutePosition() {
-        return absoluteEncoder.getDistance();
+        return absoluteEncoder.getDistance() + 180;
     }
 
     public double getVelocity() {
@@ -150,14 +150,14 @@ public class ArmFirstJoint extends SparkMaxGenericSubsystem {
         return trapezoidProfileSettings;
     }
 
-    private void configureEncoders() {
+    public void configureEncoders() {
         sparkMaxEncoder.setPositionConversionFactor(DEGREES_PER_ROTATION * GEAR_RATIO_ABSOLUTE_ENCODER_TO_ARM
                 * GEAR_RATIO_MOTOR_TO_ABSOLUTE_ENCODER);
         sparkMaxEncoder.setVelocityConversionFactor(DEGREES_PER_ROTATION * GEAR_RATIO_ABSOLUTE_ENCODER_TO_ARM
                 * GEAR_RATIO_MOTOR_TO_ABSOLUTE_ENCODER / SECONDS_IN_MINUTE);
         absoluteEncoder.setDistancePerRotation(DEGREES_PER_ROTATION * GEAR_RATIO_ABSOLUTE_ENCODER_TO_ARM);
         absoluteEncoder.setPositionOffset(ABSOLUTE_ENCODER_OFFSET / GEAR_RATIO_ABSOLUTE_ENCODER_TO_ARM);
-        sparkMaxEncoder.setPosition(absoluteEncoder.getDistance());
+        sparkMaxEncoder.setPosition(getAbsolutePosition());
     }
 
     @Override

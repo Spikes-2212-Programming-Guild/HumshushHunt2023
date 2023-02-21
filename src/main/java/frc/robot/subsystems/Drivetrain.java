@@ -95,9 +95,9 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
         rightMaster.setInverted(true);
         rightEncoder = rightMaster.getEncoder();
         configureEncoders();
-        leftPIDSettings = new PIDSettings(kPLeft, kILeft, kDLeft, waitTimeLeft, toleranceLeft);
-        rightPIDSettings = new PIDSettings(kPRight, kIRight, kDRight, waitTimeRight, toleranceRight);
-        cameraPIDSettings = new PIDSettings(kPCamera, kICamera, kDCamera, waitTimeCamera, toleranceCamera);
+        leftPIDSettings = new PIDSettings(kPLeft, kILeft, kDLeft, toleranceLeft, waitTimeLeft);
+        rightPIDSettings = new PIDSettings(kPRight, kIRight, kDRight, toleranceRight, waitTimeRight);
+        cameraPIDSettings = new PIDSettings(kPCamera, kICamera, kDCamera, toleranceCamera, waitTimeCamera);
         trapezoidProfileSettings = new TrapezoidProfileSettings(maxVelocity, trapezoidAcceleration);
         feedForwardSettings = new FeedForwardSettings(kS, kV, kA);
         odometry = new DifferentialDriveOdometry(gyro.getRotation2d(), getLeftPosition(), getRightPosition());

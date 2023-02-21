@@ -43,6 +43,7 @@ public class Robot extends TimedRobot {
         setCompressor();
         setDefaultJointsCommands();
         setNamespaceTestingCommands();
+        firstJoint.configureEncoders();
     }
 
     @Override
@@ -59,8 +60,9 @@ public class Robot extends TimedRobot {
 
     @Override
     public void disabledInit() {
-        new InstantCommand(() -> {
-        }, firstJoint, secondJoint).ignoringDisable(true).schedule();
+        CommandScheduler.getInstance().cancelAll();
+        firstJoint.finish();
+        secondJoint.finish();
 //        new InstantCommand(() -> {
 //            firstJoint.setIdleMode(CANSparkMax.IdleMode.kCoast);
 //            secondJoint.setIdleMode(CANSparkMax.IdleMode.kCoast);
@@ -178,5 +180,8 @@ public class Robot extends TimedRobot {
 
         namespace.putData("floor back", new MoveArmToFloor(firstJoint, secondJoint, compensation));
         namespace.putData("floor front", new MoveArmToFloor(firstJoint, secondJoint, compensation));
+        namespace.putData("switch sides back", new SwitchSides(firstJoint, secondJoint, gripper, true));
+        namespace.putData("switch sides front", new SwitchSides(firstJoint, secondJoint, gripper, false));
+
     }
 }

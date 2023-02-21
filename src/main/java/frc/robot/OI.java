@@ -57,7 +57,7 @@ public class OI /*GEVALD*/ {
         //Places game piece in the middle
         ps.getTriangleButton().onTrue(new PlaceGamePiece(firstJoint, secondJoint, PlaceGamePiece.ArmState.BACK_MID));
         //Switch sides of arm
-        ps.getSquareButton().onTrue(new SwitchSides(firstJoint, secondJoint, gripper));
+//        ps.getSquareButton().onTrue(new SwitchSides(firstJoint, secondJoint, gripper));
 //        ps.getSquareButton().onTrue(new InstantCommand(() -> {
 //            if (secondJoint.isBack()) {
 //                new SwitchSides(firstJoint, secondJoint, gripper, true).schedule();
@@ -66,6 +66,8 @@ public class OI /*GEVALD*/ {
 //
 //            }
 //        }));
+        ps.getSquareButton().onTrue(new SwitchSides(firstJoint, secondJoint, gripper, true));
+        ps.getCircleButton().onTrue(new SwitchSides(firstJoint, secondJoint, gripper, false));
         //Keeps the arm stable
         ps.getShareButton().whileTrue(new KeepArmStable(firstJoint, secondJoint, compensation));
         //Places game piece at the top
