@@ -34,8 +34,11 @@ public class Climb extends CommandBase {
 
     @Override
     public void initialize() {
+        drivetrain.resetGyro();
         lastTimeNotOnTarget = Timer.getFPGATimestamp();
         doneBrake = false;
+        startedClimbing = false;
+        drivetrain.setMode(CANSparkMax.IdleMode.kCoast);
     }
 
     @Override
@@ -49,7 +52,7 @@ public class Climb extends CommandBase {
         } else {
             if (Math.abs(pitch) <= MID_CLIMB_TOLERANCE.get()) {
                 if (!doneBrake) {
-                    drivetrain.setMode(CANSparkMax.IdleMode.kBrake);
+//                    drivetrain.setMode(CANSparkMax.IdleMode.kBrake);
                     doneBrake = true;
                 }
                 if (Math.abs(drivetrain.getYaw()) <= YAW_SETPOINT.get()) {
@@ -57,7 +60,8 @@ public class Climb extends CommandBase {
                     lastTimeNotOnTarget = Timer.getFPGATimestamp();
                 }
             } else {
-                drivetrain.arcadeDrive(Math.signum(pitch) * MID_CLIMB_SPEED.get() * Math.sqrt((ENCODERS_SETPOINT.get() - Math.abs(drivetrain.getLeftPosition()))), 0);
+                drivetrain.arcadeDrive(Math.signum(pitch) * MID_CLIMB_SPEED.get() *
+                        Math.sqrt((ENCODERS_SETPOINT.get() - Math.abs(drivetrain.getLeftPosition()))), 0);
                 lastTimeNotOnTarget = Timer.getFPGATimestamp();
             }
         }

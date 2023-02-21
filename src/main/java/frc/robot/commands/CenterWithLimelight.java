@@ -1,6 +1,8 @@
 package frc.robot.commands;
 
 import com.spikes2212.command.drivetrains.commands.DriveArcadeWithPID;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.RobotController;
 import frc.robot.services.VisionService;
 import frc.robot.services.VisionService.LimelightPipeline;
 import frc.robot.subsystems.Drivetrain;
@@ -19,7 +21,7 @@ public class CenterWithLimelight extends DriveArcadeWithPID {
 
     @Override
     public void initialize() {
-        feedForwardSettings.setkG(() -> feedForwardSettings.getkS() * -Math.signum(vision.getLimelightYaw()));
+        feedForwardSettings.setkG(() -> (feedForwardSettings.getkS() / RobotController.getBatteryVoltage()) * -Math.signum(vision.getLimelightYaw()));
         vision.setLimelightPipeline(pipeline);
     }
 }

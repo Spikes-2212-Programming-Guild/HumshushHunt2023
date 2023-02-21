@@ -5,10 +5,7 @@ import edu.wpi.first.wpilibj2.command.CommandBase;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import frc.robot.services.ArmGravityCompensation;
-import frc.robot.subsystems.ArmFirstJoint;
-import frc.robot.subsystems.ArmSecondJoint;
-import frc.robot.subsystems.Drivetrain;
-import frc.robot.subsystems.Gripper;
+import frc.robot.subsystems.*;
 
 import java.util.function.Supplier;
 
@@ -36,6 +33,7 @@ public class SwitchSides extends SequentialCommandGroup {
         this.firstJoint = firstJoint;
         this.secondJoint = secondJoint;
         this.gripper = gripper;
+        addRequirements(firstJoint, secondJoint, FakeArm.getInstance());
         if (isBack) {
             addCommands(
                     new InstantCommand(() -> Drivetrain.getInstance().setMode(CANSparkMax.IdleMode.kBrake)),

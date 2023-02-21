@@ -273,5 +273,7 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
         namespace.putNumber("max right speed", () -> maxRightSpeed);
         Supplier<Double> val = namespace.addConstantDouble("ks value", 0);
         namespace.putData("test ks", new DriveTank(this, val, val));
+        namespace.putNumber("left output", leftMaster::getAppliedOutput);
+        namespace.putNumber("right output", rightMaster::getAppliedOutput);
     }
 }

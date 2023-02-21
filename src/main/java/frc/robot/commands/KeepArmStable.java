@@ -10,6 +10,7 @@ import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import frc.robot.services.ArmGravityCompensation;
 import frc.robot.subsystems.ArmFirstJoint;
 import frc.robot.subsystems.ArmSecondJoint;
+import frc.robot.subsystems.FakeArm;
 
 public class KeepArmStable extends SequentialCommandGroup {
 
@@ -27,6 +28,7 @@ public class KeepArmStable extends SequentialCommandGroup {
         this.secondJoint = secondJoint;
         this.firstJointAngle = firstJoint.getAbsolutePosition();
         this.combinedAngle = secondJoint.getCombinedAngle(firstJoint);
+        addRequirements(firstJoint, secondJoint, FakeArm.getInstance());
         addCommands(
                 new InstantCommand(this::setAngles),
                 new InstantCommand(() -> compensation.configureFirstJointG(firstJointAngle, secondJointAngle)),

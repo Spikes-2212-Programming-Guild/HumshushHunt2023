@@ -6,19 +6,13 @@ package frc.robot;
 
 import com.revrobotics.CANSparkMax;
 import com.spikes2212.command.drivetrains.commands.DriveArcade;
-import com.spikes2212.command.drivetrains.commands.DriveTank;
-import com.spikes2212.command.drivetrains.commands.DriveTankWithPID;
 import com.spikes2212.dashboard.RootNamespace;
 import edu.wpi.first.wpilibj.Compressor;
-import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.PneumaticsModuleType;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
-import frc.robot.commands.KeepArmStable;
-import frc.robot.commands.MoveArmToFloor;
-import frc.robot.commands.PlaceGamePiece;
-import frc.robot.commands.SwitchSides;
+import frc.robot.commands.*;
 import frc.robot.commands.autonomous.SmashAndDash;
 import frc.robot.services.ArmGravityCompensation;
 import frc.robot.services.VisionService;
@@ -36,9 +30,8 @@ public class Robot extends TimedRobot {
     private Gripper gripper;
     private OI oi;
     private ArmGravityCompensation compensation;
+    private VisionService vision;
 
-    private double firstJointAngle;
-    private double secondJointAngle;
 
     @Override
     public void robotInit() {
@@ -46,7 +39,7 @@ public class Robot extends TimedRobot {
         setCompressor();
         setDefaultJointsCommands();
         setNamespaceTestingCommands();
-        firstJoint.configureEncoders();
+        firstJoint.initializeEncoder();
     }
 
     @Override
@@ -57,9 +50,7 @@ public class Robot extends TimedRobot {
         firstJoint.periodic();
         secondJoint.periodic();
         gripper.periodic();
-        VisionService.getInstance().periodic();
-        firstJointAngle = firstJoint.getAbsolutePosition();
-        secondJointAngle = secondJoint.getAbsolutePosition();
+        vision.periodic();
     }
 
     @Override
@@ -80,15 +71,12 @@ public class Robot extends TimedRobot {
 
     @Override
     public void autonomousInit() {
-        firstJoint.runOnce(() -> {
-        });
-        secondJoint.runOnce(() -> {
-        });
         new InstantCommand(() -> {
             firstJoint.setIdleMode(CANSparkMax.IdleMode.kBrake);
             secondJoint.setIdleMode(CANSparkMax.IdleMode.kBrake);
         });
-        new SmashAndDash(drivetrain).getCommand().schedule();
+//        new SmashAndDash(drivetrain).getCommand().schedule();
+        firstJoint.initializeEncoder();
     }
 
     @Override
@@ -98,13 +86,8 @@ public class Robot extends TimedRobot {
 
     @Override
     public void teleopInit() {
-        firstJoint.runOnce(() -> {
-        }).schedule();
-        secondJoint.runOnce(() -> {
-        }).schedule();
         new InstantCommand(() -> {
             firstJoint.setIdleMode(CANSparkMax.IdleMode.kBrake);
-
             secondJoint.setIdleMode(CANSparkMax.IdleMode.kBrake);
         }, firstJoint, secondJoint).schedule();
         drivetrain.setDefaultCommand(new DriveArcade(drivetrain, oi::getRightY, oi::getLeftX));
@@ -141,8 +124,7 @@ public class Robot extends TimedRobot {
         firstJoint = ArmFirstJoint.getInstance();
         secondJoint = ArmSecondJoint.getInstance();
         gripper = Gripper.getInstance();
-        firstJointAngle = firstJoint.getAbsolutePosition();
-        secondJointAngle = secondJoint.getAbsolutePosition();
+        vision = VisionService.getInstance();
     }
 
     private void setCompressor() {
@@ -152,10 +134,13 @@ public class Robot extends TimedRobot {
     }
 
     private void setDefaultJointsCommands() {
-        firstJointAngle = firstJoint.getAbsolutePosition();
-        secondJointAngle = secondJoint.getAbsolutePosition();
-//
-//        firstJoint.setDefaultCommand(new InstantCommand(() -> compensation.configureFirstJointG(firstJointAngle, secondJointAngle)).andThen(new MoveSmartMotorControllerGenericSubsystem(firstJoint, firstJoint.keepStablePIDSettings,
+        firstJoint.setDefaultCommand(new KeepFirstJointStable(firstJoint, secondJoint, compensation));
+        secondJoint.setDefaultCommand(new KeepSecondJointAngle(firstJoint, secondJoint, compensation));
+
+//        FakeArm.getInstance().setDefaultCommand(new KeepArmStable(firstJoint, secondJoint, compensation));
+
+//        firstJoint.setDefaultCommand(new InstantCommand(() -> compensation.configureFirstJointG(firstJointAngle, secondJointAngle)).
+//                andThen(new MoveSmartMotorControllerGenericSubsystem(firstJoint, firstJoint.keepStablePIDSettings,
 //                firstJoint.getFeedForwardSettings(), UnifiedControlMode.POSITION, () -> firstJointAngle) {
 //            @Override
 //            public boolean isFinished() {
@@ -186,5 +171,7 @@ public class Robot extends TimedRobot {
         namespace.putData("floor front", new MoveArmToFloor(firstJoint, secondJoint, compensation, false));
         namespace.putData("switch sides back", new SwitchSides(firstJoint, secondJoint, gripper, true));
         namespace.putData("switch sides front", new SwitchSides(firstJoint, secondJoint, gripper, false));
+        namespace.putData("limelight center", new CenterWithLimelight(drivetrain, VisionService.getInstance(), VisionService.LimelightPipeline.HIGH_RRT));
+        namespace.putData("climb", new Climb(drivetrain));
     }
 }

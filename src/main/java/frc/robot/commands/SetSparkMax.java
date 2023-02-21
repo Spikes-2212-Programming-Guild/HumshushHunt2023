@@ -23,7 +23,7 @@ public class SetSparkMax extends CommandBase {
 
     @Override
     public void execute() {
-        sparkMax.set(speed);
+        sparkMax.setVoltage(speed);
     }
 
     @Override

@@ -132,7 +132,8 @@ public class ArmFirstJoint extends SparkMaxGenericSubsystem {
 
     public double getAbsolutePosition() {
 //        return absoluteEncoder.getDistance() + 180;
-        return absoluteEncoder.getAbsolutePosition();
+//        return absoluteEncoder.getAbsolutePosition();
+        return sparkMaxEncoder.getPosition(); //this is most definitely not the way
     }
 
     public double getVelocity() {
@@ -158,7 +159,6 @@ public class ArmFirstJoint extends SparkMaxGenericSubsystem {
                 * GEAR_RATIO_MOTOR_TO_ABSOLUTE_ENCODER / SECONDS_IN_MINUTE);
         absoluteEncoder.setDistancePerRotation(DEGREES_PER_ROTATION * GEAR_RATIO_ABSOLUTE_ENCODER_TO_ARM);
         absoluteEncoder.setPositionOffset(ABSOLUTE_ENCODER_OFFSET / GEAR_RATIO_ABSOLUTE_ENCODER_TO_ARM);
-        sparkMaxEncoder.setPosition(getAbsolutePosition());
     }
 
     @Override
@@ -174,5 +174,9 @@ public class ArmFirstJoint extends SparkMaxGenericSubsystem {
 
     public void setArbitraryFeedForward(double arbitraryFeedForward) {
         this.arbitraryFeedForward = arbitraryFeedForward;
+    }
+
+    public void initializeEncoder() {
+        sparkMaxEncoder.setPosition(95.25);
     }
 }

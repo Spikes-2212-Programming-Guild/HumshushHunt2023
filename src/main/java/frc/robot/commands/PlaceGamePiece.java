@@ -6,10 +6,7 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import frc.robot.services.ArmGravityCompensation;
-import frc.robot.subsystems.ArmFirstJoint;
-import frc.robot.subsystems.ArmSecondJoint;
-import frc.robot.subsystems.Drivetrain;
-import frc.robot.subsystems.Gripper;
+import frc.robot.subsystems.*;
 
 import java.util.function.Supplier;
 
@@ -19,6 +16,7 @@ public class PlaceGamePiece extends SequentialCommandGroup {
     private static final double WAIT_PERIOD = 0.5;
 
     public PlaceGamePiece(ArmFirstJoint firstJoint, ArmSecondJoint secondJoint, ArmState state) {
+        addRequirements(firstJoint, secondJoint, FakeArm.getInstance());
         if (state == ArmState.BACK_MID || state == ArmState.BACK_TOP || state == ArmState.FLOOR_BACK) {
             addCommands(
                     new InstantCommand(() -> Drivetrain.getInstance().setMode(CANSparkMax.IdleMode.kBrake)),
@@ -29,12 +27,12 @@ public class PlaceGamePiece extends SequentialCommandGroup {
                     new MoveSecondJoint(secondJoint, () -> state.secondJointPosition, WAIT_TIME,
                             () -> state.moveDuration),
 //                new WaitCommand(2 * WAIT_PERIOD),
-                    new OpenGripper(Gripper.getInstance()),
-                    new WaitCommand(WAIT_PERIOD),
-                    new MoveSecondJoint(secondJoint, () -> ArmState.FOLD_BELOW_180.secondJointPosition, WAIT_TIME,
-                            () -> state.moveDuration),
-                    new CloseGripper(Gripper.getInstance()),
-                    new MoveFirstJoint(firstJoint, () -> 90.0, WAIT_TIME, () -> state.moveDuration),
+//                    new OpenGripper(Gripper.getInstance()),
+//                    new WaitCommand(WAIT_PERIOD),
+//                    new MoveSecondJoint(secondJoint, () -> ArmState.FOLD_BELOW_180.secondJointPosition, WAIT_TIME,
+//                            () -> state.moveDuration),
+//                    new CloseGripper(Gripper.getInstance()),
+//                    new MoveFirstJoint(firstJoint, () -> 90.0, WAIT_TIME, () -> state.moveDuration),
                     new InstantCommand(() -> Drivetrain.getInstance().setMode(CANSparkMax.IdleMode.kCoast)),
                     new KeepArmStable(firstJoint, secondJoint, ArmGravityCompensation.getInstance())
             );
@@ -49,12 +47,12 @@ public class PlaceGamePiece extends SequentialCommandGroup {
                         new MoveSecondJoint(secondJoint, () -> state.secondJointPosition, WAIT_TIME,
                                 () -> state.moveDuration),
 //                new WaitCommand(2 * WAIT_PERIOD),
-                        new OpenGripper(Gripper.getInstance()),
-                        new WaitCommand(WAIT_PERIOD),
-                        new MoveSecondJoint(secondJoint, () -> ArmState.FOLD_ABOVE_180.secondJointPosition, WAIT_TIME,
-                                () -> state.moveDuration),
-                        new CloseGripper(Gripper.getInstance()),
-                        new MoveFirstJoint(firstJoint, () -> 90.0, WAIT_TIME, () -> state.moveDuration),
+//                        new OpenGripper(Gripper.getInstance()),
+//                        new WaitCommand(WAIT_PERIOD),
+//                        new MoveSecondJoint(secondJoint, () -> ArmState.FOLD_ABOVE_180.secondJointPosition, WAIT_TIME,
+//                                () -> state.moveDuration),
+//                        new CloseGripper(Gripper.getInstance()),
+//                        new MoveFirstJoint(firstJoint, () -> 90.0, WAIT_TIME, () -> state.moveDuration),
                         new InstantCommand(() -> Drivetrain.getInstance().setMode(CANSparkMax.IdleMode.kCoast)),
                         new KeepArmStable(firstJoint, secondJoint, ArmGravityCompensation.getInstance())
                 );
