@@ -6,15 +6,22 @@ package frc.robot;
 
 import com.revrobotics.CANSparkMax;
 import com.spikes2212.command.drivetrains.commands.DriveArcade;
+import com.spikes2212.command.drivetrains.commands.DriveArcadeWithPID;
+import com.spikes2212.command.drivetrains.commands.smartmotorcontrollerdrivetrain.MoveSmartMotorControllerTankDrivetrain;
+import com.spikes2212.control.PIDSettings;
 import com.spikes2212.dashboard.RootNamespace;
+import com.spikes2212.util.UnifiedControlMode;
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.PneumaticsModuleType;
+import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import frc.robot.commands.*;
 import frc.robot.commands.autonomous.SmashAndDash;
+import frc.robot.commands.autonomous.SplooshAndVamoose;
 import frc.robot.services.ArmGravityCompensation;
+import frc.robot.services.LedsService;
 import frc.robot.services.VisionService;
 import frc.robot.subsystems.ArmFirstJoint;
 import frc.robot.subsystems.ArmSecondJoint;
@@ -31,6 +38,7 @@ public class Robot extends TimedRobot {
     private OI oi;
     private ArmGravityCompensation compensation;
     private VisionService vision;
+    private LedsService leds;
 
 
     @Override
@@ -51,6 +59,7 @@ public class Robot extends TimedRobot {
         secondJoint.periodic();
         gripper.periodic();
         vision.periodic();
+        leds.periodic();
     }
 
     @Override
@@ -58,10 +67,12 @@ public class Robot extends TimedRobot {
         CommandScheduler.getInstance().cancelAll();
         firstJoint.finish();
         secondJoint.finish();
-//        new InstantCommand(() -> {
-//            firstJoint.setIdleMode(CANSparkMax.IdleMode.kCoast);
-//            secondJoint.setIdleMode(CANSparkMax.IdleMode.kCoast);
-//        }).ignoringDisable(true).schedule();
+        drivetrain.finish();
+        new InstantCommand(() -> {
+            firstJoint.setIdleMode(CANSparkMax.IdleMode.kBrake);
+            secondJoint.setIdleMode(CANSparkMax.IdleMode.kBrake);
+        }).ignoringDisable(true).schedule();
+        new InstantCommand(() -> drivetrain.setMode(CANSparkMax.IdleMode.kCoast)).ignoringDisable(true).schedule();
     }
 
     @Override
@@ -75,7 +86,7 @@ public class Robot extends TimedRobot {
             firstJoint.setIdleMode(CANSparkMax.IdleMode.kBrake);
             secondJoint.setIdleMode(CANSparkMax.IdleMode.kBrake);
         });
-//        new SmashAndDash(drivetrain).getCommand().schedule();
+        new SplooshAndVamoose(drivetrain).getCommand().schedule();
         firstJoint.initializeEncoder();
     }
 
@@ -125,6 +136,7 @@ public class Robot extends TimedRobot {
         secondJoint = ArmSecondJoint.getInstance();
         gripper = Gripper.getInstance();
         vision = VisionService.getInstance();
+        leds = LedsService.getInstance();
     }
 
     private void setCompressor() {
@@ -173,5 +185,24 @@ public class Robot extends TimedRobot {
         namespace.putData("switch sides front", new SwitchSides(firstJoint, secondJoint, gripper, false));
         namespace.putData("limelight center", new CenterWithLimelight(drivetrain, VisionService.getInstance(), VisionService.LimelightPipeline.HIGH_RRT));
         namespace.putData("climb", new Climb(drivetrain));
+        namespace.putData("velocity drivetrain", new MoveSmartMotorControllerTankDrivetrain(drivetrain, drivetrain.getLeftPIDSettings(),
+                drivetrain.getRightPIDSettings(), drivetrain.getFeedForwardSettings(),
+                UnifiedControlMode.VELOCITY, () -> 3.0, () -> 3.0));
+        namespace.putBoolean("center on high rrt scheduled", () -> OI.getInstance().centerOnHighRRT.isScheduled());
+        namespace.putData("lift", new PlaceGamePiece(firstJoint, secondJoint, PlaceGamePiece.ArmState.FRONT_LIFT));
+        namespace.putData("reset to 90", new InstantCommand(firstJoint::initializeEncoder).ignoringDisable(true));
+        namespace.putData("turn", new DriveArcadeWithPID(drivetrain, drivetrain::getYaw, () -> 0.0, () -> 0.0,
+                drivetrain.getCameraPIDSettings(), drivetrain.getFeedForwardSettings()) {
+            @Override
+            public void initialize() {
+                feedForwardSettings.setkG(() -> (3.1 / RobotController.getBatteryVoltage()) * -Math.signum(((Drivetrain) drivetrain).getYaw()));
+            }
+
+            @Override
+            public void end(boolean interrupted) {
+                super.end(interrupted);
+                feedForwardSettings.setkG(() -> 0.0);
+            }
+        });
     }
 }

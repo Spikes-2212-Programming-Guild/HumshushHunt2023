@@ -4,6 +4,7 @@ import com.kauailabs.navx.frc.AHRS;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMaxLowLevel;
 import com.revrobotics.RelativeEncoder;
+import com.spikes2212.command.drivetrains.commands.DriveArcade;
 import com.spikes2212.command.drivetrains.commands.DriveTank;
 import com.spikes2212.command.drivetrains.smartmotorcontrollerdrivetrain.SparkMaxTankDrivetrain;
 import com.spikes2212.control.FeedForwardSettings;
@@ -15,6 +16,7 @@ import edu.wpi.first.math.controller.RamseteController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
 import edu.wpi.first.math.kinematics.DifferentialDriveOdometry;
+import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.SerialPort;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
@@ -275,5 +277,7 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
         namespace.putData("test ks", new DriveTank(this, val, val));
         namespace.putNumber("left output", leftMaster::getAppliedOutput);
         namespace.putNumber("right output", rightMaster::getAppliedOutput);
+        namespace.putNumber("kG current value", feedForwardSettings::getkG);
+        namespace.putData("turn", new DriveArcade(this, () -> 0.0, () -> (limelightkS.get() / RobotController.getBatteryVoltage())));
     }
 }

@@ -2,13 +2,13 @@
   "waypoints": [
     {
       "anchorPoint": {
-        "x": 1.8983607197983627,
-        "y": 2.215318618671426
+        "x": 1.9326182242108072,
+        "y": 0.46818589363674523
       },
       "prevControl": null,
       "nextControl": {
-        "x": 2.5036843495001353,
-        "y": 2.215318618671426
+        "x": 6.854279691465366,
+        "y": 0.4453475573617818
       },
       "holonomicAngle": 0,
       "isReversal": false,
@@ -26,63 +26,31 @@
     },
     {
       "anchorPoint": {
-        "x": 6.580219656165809,
-        "y": 2.1353844417090553
+        "x": 5.404045338005206,
+        "y": 2.7520195211330596
       },
       "prevControl": {
-        "x": 5.632428700754838,
-        "y": 2.1353844417090553
-      },
-      "nextControl": {
-        "x": 5.632428700754838,
-        "y": 2.1353844417090553
-      },
-      "holonomicAngle": 0,
-      "isReversal": true,
-      "velOverride": null,
-      "isLocked": false,
-      "isStopPoint": true,
-      "stopEvent": {
-        "names": [
-          "takeGP"
-        ],
-        "executionBehavior": "parallel",
-        "waitBehavior": "none",
-        "waitTime": 0
-      }
-    },
-    {
-      "anchorPoint": {
-        "x": 5.449722010555132,
-        "y": 2.363767804458686
-      },
-      "prevControl": {
-        "x": 6.214891488693678,
-        "y": 2.363767804458686
+        "x": 6.831441355190402,
+        "y": 2.7748578574080227
       },
       "nextControl": null,
       "holonomicAngle": 0,
       "isReversal": false,
       "velOverride": null,
-      "isLocked": true,
+      "isLocked": false,
       "isStopPoint": false,
       "stopEvent": {
-        "names": [],
+        "names": [
+          "climb"
+        ],
         "executionBehavior": "parallel",
-        "waitBehavior": "none",
+        "waitBehavior": "after",
         "waitTime": 0
       }
     }
   ],
   "maxVelocity": 4.0,
   "maxAcceleration": 3.0,
-  "isReversed": false,
-  "markers": [
-    {
-      "position": 2.0,
-      "names": [
-        "climb"
-      ]
-    }
-  ]
+  "isReversed": true,
+  "markers": []
 }

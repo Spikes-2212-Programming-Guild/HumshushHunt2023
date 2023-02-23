@@ -2,24 +2,30 @@ package frc.robot.commands.autonomous;
 
 import com.pathplanner.lib.PathConstraints;
 import com.pathplanner.lib.PathPlanner;
+import com.spikes2212.command.drivetrains.commands.DriveArcadeWithPID;
+import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj2.command.*;
-import frc.robot.commands.Climb;
+import frc.robot.commands.*;
+import frc.robot.services.VisionService;
+import frc.robot.subsystems.ArmFirstJoint;
+import frc.robot.subsystems.ArmSecondJoint;
 import frc.robot.subsystems.Drivetrain;
+import frc.robot.subsystems.Gripper;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class SplooshAndVamoose extends BasePathAuto {
 
-    private static final double MAX_VELOCITY = 1;
-    private static final double MAX_ACCELERATION = 1;
+    private static final double MAX_VELOCITY = 2.5;
+    private static final double MAX_ACCELERATION = 2;
 
     public SplooshAndVamoose(Drivetrain drivetrain) {
         super(drivetrain, getEventMap());
     }
 
     public CommandBase getCommand() {
-        return fullAuto(PathPlanner.loadPath("Sploosh And Vamoose",
+        return fullAuto(PathPlanner.loadPathGroup("Sploosh And Vamoose", true,
                 new PathConstraints(MAX_VELOCITY, MAX_ACCELERATION)));
     }
 
@@ -27,12 +33,38 @@ public class SplooshAndVamoose extends BasePathAuto {
         Drivetrain drivetrain = Drivetrain.getInstance();
         HashMap<String, Command> eventMap = new HashMap<>();
         eventMap.put("putGP", new SequentialCommandGroup(
-            new PrintCommand("put gp"), new WaitCommand(1)
+                new PrintCommand("put gp"),
+//                new CenterWithLimelight(drivetrain, VisionService.getInstance(), VisionService.LimelightPipeline.HIGH_RRT).withTimeout(1.5),
+                new PlaceGamePiece(ArmFirstJoint.getInstance(), ArmSecondJoint.getInstance(),
+                        PlaceGamePiece.ArmState.FRONT_TOP),
+                new OpenGripper(Gripper.getInstance()),
+                new MoveSecondJoint(ArmSecondJoint.getInstance(), () -> PlaceGamePiece.ArmState.FOLD_ABOVE_180.secondJointPosition, () -> 0.005,
+                        () -> PlaceGamePiece.ArmState.FOLD_ABOVE_180.moveDuration + 0.2),
+                new CloseGripper(Gripper.getInstance()),
+                new MoveFirstJoint(ArmFirstJoint.getInstance(), () -> 110.0, () -> 0.005,
+                        () -> PlaceGamePiece.ArmState.FOLD_ABOVE_180.moveDuration + 0.2)
         ));
         eventMap.put("takeGP", new SequentialCommandGroup(
-            new PrintCommand("take gp"), new WaitCommand(1)
+//                new PrintCommand("take gp"), new WaitCommand(3)
+                new PrintCommand("take gp"), new InstantCommand()
         ));
-        eventMap.put("climb", new Climb(drivetrain));
+        eventMap.put("climb",
+//                new SequentialCommandGroup(
+//                        new DriveArcadeWithPID(drivetrain, drivetrain::getYaw, () -> 0.0, () -> 0.0,
+//                                drivetrain.getCameraPIDSettings(), drivetrain.getFeedForwardSettings()) {
+//                            @Override
+//                            public void initialize() {
+//                                feedForwardSettings.setkG(() -> (3.1 / RobotController.getBatteryVoltage()) * -((Drivetrain) drivetrain).getYaw());
+//                            }
+//
+//                            @Override
+//                            public void end(boolean interrupted) {
+//                                super.end(interrupted);
+//                                feedForwardSettings.setkG(() -> 0.0);
+//                            }
+//                        },
+                new Climb(drivetrain)
+        );
         return eventMap;
     }
 }

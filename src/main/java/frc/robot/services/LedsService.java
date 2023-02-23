@@ -1,7 +1,10 @@
 package frc.robot.services;
 
+import com.ctre.phoenix.CANifier;
+import com.spikes2212.dashboard.RootNamespace;
 import edu.wpi.first.wpilibj.AddressableLED;
 import edu.wpi.first.wpilibj.AddressableLEDBuffer;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import frc.robot.RobotMap;
 import frc.robot.subsystems.Gripper;
 
@@ -27,6 +30,8 @@ public class LedsService {
 
     private static LedsService instance;
 
+    private final RootNamespace namespace;
+
     private final Gripper gripper;
 
     private final VisionService vision;
@@ -36,19 +41,25 @@ public class LedsService {
 
     public static LedsService getInstance() {
         if (instance == null) {
-            instance = new LedsService(new AddressableLED(RobotMap.PWM.LED_PORT),
+            instance = new LedsService("leds", new AddressableLED(RobotMap.PWM.LED_PORT),
                     new AddressableLEDBuffer(NUMBER_OF_LEDS), VisionService.getInstance(), Gripper.getInstance());
         }
         return instance;
     }
 
-    private LedsService(AddressableLED led, AddressableLEDBuffer ledBuffer, VisionService vision, Gripper gripper) {
+    private LedsService(String namespaceName, AddressableLED led, AddressableLEDBuffer ledBuffer, VisionService vision, Gripper gripper) {
         this.led = led;
         this.ledBuffer = ledBuffer;
+        namespace = new RootNamespace(namespaceName);
         this.vision = vision;
         this.gripper = gripper;
         led.setLength(ledBuffer.getLength());
         led.start();
+        configureDashboard();
+        CANifier caNifier = new CANifier(8);
+        caNifier.setLEDOutput(0.3, CANifier.LEDChannel.LEDChannelA);
+        caNifier.setLEDOutput(0.3, CANifier.LEDChannel.LEDChannelB);
+        caNifier.setLEDOutput(0.3, CANifier.LEDChannel.LEDChannelC);
     }
 
     public void periodic() {
@@ -73,10 +84,31 @@ public class LedsService {
         setMode(Mode.OFF);
     }
 
+    private void rainbow() {
+        // For every pixel
+        int rainbowFirstPixelHue = 0;
+        for (int i = 0; i < ledBuffer.getLength(); i++) {
+            // Calculate the hue - hue is easier for rainbows because the color
+            // shape is a circle so only one value needs to precess
+            int hue = (rainbowFirstPixelHue + (i * 180 / ledBuffer.getLength())) % 180;
+            // Set the value
+            ledBuffer.setHSV(i, hue, 255, 128);
+        }
+        // Increase by to make the rainbow "move"
+        rainbowFirstPixelHue += 3;
+        // Check bounds
+        rainbowFirstPixelHue %= 180;
+    }
+
     private void setMode(Mode mode) {
         for (int i = 0; i < ledBuffer.getLength(); i++) {
             ledBuffer.setRGB(i, mode.red, mode.green, mode.blue);
         }
         led.setData(ledBuffer);
+    }
+
+    private void configureDashboard() {
+        namespace.putData("rainbow leds", new InstantCommand(this::rainbow).ignoringDisable(true));
+        namespace.putData("turn off", new InstantCommand(this::turnOff).ignoringDisable(true));
     }
 }

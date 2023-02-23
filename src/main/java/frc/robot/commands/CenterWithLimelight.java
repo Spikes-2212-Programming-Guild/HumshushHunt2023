@@ -21,7 +21,12 @@ public class CenterWithLimelight extends DriveArcadeWithPID {
 
     @Override
     public void initialize() {
-        feedForwardSettings.setkG(() -> (feedForwardSettings.getkS() / RobotController.getBatteryVoltage()) * -Math.signum(vision.getLimelightYaw()));
+        feedForwardSettings.setkG(() -> (3.1 / RobotController.getBatteryVoltage()) * -Math.signum(vision.getLimelightYaw()));
         vision.setLimelightPipeline(pipeline);
+    }
+
+    @Override
+    public void end(boolean intur) {
+        feedForwardSettings.setkG(() -> 0.0);
     }
 }

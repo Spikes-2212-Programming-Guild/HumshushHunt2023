@@ -177,6 +177,7 @@ public class ArmFirstJoint extends SparkMaxGenericSubsystem {
     }
 
     public void initializeEncoder() {
-        sparkMaxEncoder.setPosition(95.25);
+//        sparkMaxEncoder.setPosition(95.25);
+        sparkMaxEncoder.setPosition(90);
     }
 }
