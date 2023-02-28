@@ -6,13 +6,11 @@ package frc.robot;
 
 import com.pathplanner.lib.PathConstraints;
 import com.pathplanner.lib.PathPlanner;
-import com.pathplanner.lib.PathPlannerTrajectory;
 import com.pathplanner.lib.commands.PPRamseteCommand;
 import com.revrobotics.CANSparkMax;
 import com.spikes2212.command.drivetrains.commands.DriveArcade;
 import com.spikes2212.command.drivetrains.commands.DriveArcadeWithPID;
 import com.spikes2212.command.drivetrains.commands.smartmotorcontrollerdrivetrain.MoveSmartMotorControllerTankDrivetrain;
-import com.spikes2212.control.PIDSettings;
 import com.spikes2212.dashboard.AutoChooser;
 import com.spikes2212.dashboard.RootNamespace;
 import com.spikes2212.util.UnifiedControlMode;
@@ -203,7 +201,7 @@ public class Robot extends TimedRobot {
         namespace.putData("floor front", new MoveArmToFloor(firstJoint, secondJoint, compensation, false));
         namespace.putData("switch sides back", new SwitchSides(firstJoint, secondJoint, gripper, true));
         namespace.putData("switch sides front", new SwitchSides(firstJoint, secondJoint, gripper, false));
-        namespace.putData("limelight center", new CenterWithLimelight(drivetrain, VisionService.getInstance(), VisionService.LimelightPipeline.HIGH_RRT));
+        namespace.putData("limelight center", new CenterWithFrontLimelight(drivetrain, VisionService.getInstance(), VisionService.LimelightPipeline.HIGH_RRT));
         namespace.putData("climb", new Climb(drivetrain));
         namespace.putData("velocity drivetrain", new MoveSmartMotorControllerTankDrivetrain(drivetrain, drivetrain.getLeftPIDSettings(),
                 drivetrain.getRightPIDSettings(), drivetrain.getFeedForwardSettings(),

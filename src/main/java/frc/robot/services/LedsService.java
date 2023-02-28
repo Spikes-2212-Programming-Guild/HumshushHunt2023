@@ -6,6 +6,7 @@ import edu.wpi.first.wpilibj.AddressableLED;
 import edu.wpi.first.wpilibj.AddressableLEDBuffer;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import frc.robot.RobotMap;
+import frc.robot.subsystems.ArmSecondJoint;
 import frc.robot.subsystems.Gripper;
 
 public class LedsService {
@@ -32,6 +33,7 @@ public class LedsService {
 
     private final RootNamespace namespace;
 
+    private final ArmSecondJoint secondJoint;
     private final Gripper gripper;
 
     private final VisionService vision;
@@ -42,15 +44,16 @@ public class LedsService {
     public static LedsService getInstance() {
         if (instance == null) {
             instance = new LedsService("leds", new AddressableLED(RobotMap.PWM.LED_PORT),
-                    new AddressableLEDBuffer(NUMBER_OF_LEDS), VisionService.getInstance(), Gripper.getInstance());
+                    new AddressableLEDBuffer(NUMBER_OF_LEDS), ArmSecondJoint.getInstance(), VisionService.getInstance(), Gripper.getInstance());
         }
         return instance;
     }
 
-    private LedsService(String namespaceName, AddressableLED led, AddressableLEDBuffer ledBuffer, VisionService vision, Gripper gripper) {
+    private LedsService(String namespaceName, AddressableLED led, AddressableLEDBuffer ledBuffer, ArmSecondJoint secondJoint, VisionService vision, Gripper gripper) {
+        namespace = new RootNamespace(namespaceName);
         this.led = led;
         this.ledBuffer = ledBuffer;
-        namespace = new RootNamespace(namespaceName);
+        this.secondJoint = secondJoint;
         this.vision = vision;
         this.gripper = gripper;
         led.setLength(ledBuffer.getLength());
@@ -65,10 +68,19 @@ public class LedsService {
     public void periodic() {
         Mode mode;
         if (gripper.hasGamePiece()) {
-            if (vision.limelightCentered()) {
-                mode = Mode.HAS_GAME_PIECE_AND_ALLIGNED;
-            } else {
-                mode = Mode.HAS_GAME_PIECE;
+            if(secondJoint.isBack()) {
+                if (vision.backLimelightCentered()) {
+                    mode = Mode.HAS_GAME_PIECE_AND_ALLIGNED;
+                } else {
+                    mode = Mode.HAS_GAME_PIECE;
+                }
+            }
+            else{
+                if (vision.frontLimelightCentered()) {
+                    mode = Mode.HAS_GAME_PIECE_AND_ALLIGNED;
+                } else {
+                    mode = Mode.HAS_GAME_PIECE;
+                }
             }
         } else {
             if (vision.photonVisionCentered()) {

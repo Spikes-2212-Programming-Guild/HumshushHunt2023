@@ -32,6 +32,8 @@ public class VisionService {
     }
 
     private static final String PHOTON_VISION_CAMERA_NAME = "photonvision";
+    private static final String FRONT_LIMELIGHT_NAME = "limelight-front";
+    private static final String BACK_LIMELIGHT_NAME = "limelight-back";
 
     private static final int TOLERANCE = 1;
 
@@ -40,19 +42,21 @@ public class VisionService {
     private final RootNamespace namespace;
 
     private final PhotonCamera photonCamera;
-    private final Limelight limelight;
+    private final Limelight frontLimelight;
+    private final Limelight backLimelight;
 
     public static VisionService getInstance() {
         if (instance == null) {
-            instance = new VisionService("vision", new PhotonCamera(PHOTON_VISION_CAMERA_NAME), new Limelight());
+            instance = new VisionService("vision", new PhotonCamera(PHOTON_VISION_CAMERA_NAME), new Limelight(FRONT_LIMELIGHT_NAME), new Limelight(BACK_LIMELIGHT_NAME));
         }
         return instance;
     }
 
-    private VisionService(String namespaceName, PhotonCamera photonCamera, Limelight limelight) {
+    private VisionService(String namespaceName, PhotonCamera photonCamera, Limelight frontLimelight, Limelight backLimelight) {
         this.namespace = new RootNamespace(namespaceName);
         this.photonCamera = photonCamera;
-        this.limelight = limelight;
+        this.frontLimelight = frontLimelight;
+        this.backLimelight = backLimelight;
         configureDashboard();
     }
 
@@ -69,28 +73,43 @@ public class VisionService {
     }
 
     public Pose3d getRobotPose() {
-        return limelight.getRobotPose();
+        return frontLimelight.getRobotPose();
     }
 
     public long getAprilTagID() {
-        return limelight.getID();
+        return frontLimelight.getID();
     }
 
-    public double getLimelightYaw() {
-        return limelight.getHorizontalOffsetFromTargetInDegrees();
+    public double getFrontLimelightYaw() {
+        return frontLimelight.getHorizontalOffsetFromTargetInDegrees();
+    }
+
+    public double getBackLimelightYaw() {
+        return backLimelight.getHorizontalOffsetFromTargetInDegrees();
     }
 
     public void setPhotonVisionDriverMode(boolean mode) {
         photonCamera.setDriverMode(mode);
     }
 
-    public boolean limelightHasTarget() {
-        return limelight.hasTarget();
+    public boolean frontLimelightHasTarget() {
+        return frontLimelight.hasTarget();
     }
 
-    public boolean limelightCentered() {
-        if (limelightHasTarget()) {
-            return (Math.abs(limelight.getHorizontalOffsetFromTargetInDegrees()) <= TOLERANCE);
+    public boolean backLLimelightHasTarget() {
+        return backLimelight.hasTarget();
+    }
+
+    public boolean frontLimelightCentered() {
+        if (frontLimelight.hasTarget()) {
+            return (Math.abs(frontLimelight.getHorizontalOffsetFromTargetInDegrees()) <= TOLERANCE);
+        }
+        return false;
+    }
+
+    public boolean backLimelightCentered() {
+        if (backLimelight.hasTarget()) {
+            return (Math.abs(backLimelight.getHorizontalOffsetFromTargetInDegrees()) <= TOLERANCE);
         }
         return false;
     }
@@ -107,14 +126,20 @@ public class VisionService {
         photonCamera.setPipelineIndex(pipeline.pipeline);
     }
 
-    public void setLimelightPipeline(LimelightPipeline pipeline) {
-        limelight.setPipeline(pipeline.pipeline);
+    public void setFrontLimelightPipeline(LimelightPipeline pipeline) {
+        frontLimelight.setPipeline(pipeline.pipeline);
+    }
+
+    public void setBackLimelightPipeline(LimelightPipeline pipeline) {
+        backLimelight.setPipeline(pipeline.pipeline);
     }
 
     public void configureDashboard() {
-        namespace.putBoolean("limelight has target", this::limelightHasTarget);
-        namespace.putNumber("limelight yaw", this::getLimelightYaw);
+        namespace.putBoolean("front limelight has target", this::frontLimelightHasTarget);
+        namespace.putBoolean("back limelight has target", this::backLLimelightHasTarget);
+        namespace.putNumber("front limelight yaw", this::getFrontLimelightYaw);
+        namespace.putNumber("back limelight yaw", this::getBackLimelightYaw);
         namespace.putNumber("photon vision yaw", this::getPhotonVisionYaw);
-        CameraServer.startAutomaticCapture();
+//        CameraServer.startAutomaticCapture();
     }
 }
