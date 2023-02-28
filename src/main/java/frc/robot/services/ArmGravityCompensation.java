@@ -6,7 +6,6 @@ import frc.robot.subsystems.ArmSecondJoint;
 
 import java.util.function.Supplier;
 
-import static frc.robot.subsystems.ArmFirstJoint.GEAR_RATIO_ABSOLUTE_ENCODER_TO_ARM;
 import static frc.robot.subsystems.ArmFirstJoint.GEAR_RATIO_MOTOR_TO_ABSOLUTE_ENCODER;
 
 public class ArmGravityCompensation {
@@ -40,10 +39,10 @@ public class ArmGravityCompensation {
 
     public double configureFirstJointG(double firstJointAngle, double secondJointAngle) {
         double torque = lm1.get() * GRAVITY * Math.cos(Math.toRadians(firstJointAngle))
-                + (l2.get() * Math.cos(Math.toRadians(firstJointAngle + secondJointAngle)) +
+                + (l2.get() * Math.cos(Math.toRadians(firstJointAngle - secondJointAngle)) +
                 lA.get() * Math.cos(Math.toRadians(firstJointAngle))) * m2.get() * GRAVITY;
 
-        double stallTorque = torque * (GEAR_RATIO_ABSOLUTE_ENCODER_TO_ARM * GEAR_RATIO_MOTOR_TO_ABSOLUTE_ENCODER);
+        double stallTorque = torque * (GEAR_RATIO_MOTOR_TO_ABSOLUTE_ENCODER);
         double voltage = stallTorque * STALL_TORQUE_TO_VOLTAGE / FIRST_JOINT_MOTORS
                 * firstJoint.getFeedForwardSettings().getkG();
         firstJoint.setArbitraryFeedForward(voltage);
@@ -52,7 +51,7 @@ public class ArmGravityCompensation {
 
     public double configureSecondJointG(double firstJointAngle, double secondJointAngle) {
         double voltage = secondJoint.getFeedForwardSettings().getkG() *
-                Math.cos(Math.toRadians(firstJointAngle + secondJointAngle));
+                Math.cos(Math.toRadians(firstJointAngle - secondJointAngle));
         secondJoint.setArbitraryFeedForward(voltage);
         return voltage;
     }

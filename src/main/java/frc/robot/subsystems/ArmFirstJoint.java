@@ -12,6 +12,7 @@ import com.spikes2212.control.TrapezoidProfileSettings;
 import com.spikes2212.dashboard.Namespace;
 import com.spikes2212.util.UnifiedControlMode;
 import edu.wpi.first.wpilibj.DutyCycleEncoder;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import frc.robot.RobotMap;
 
 import java.util.function.Supplier;
@@ -23,34 +24,33 @@ public class ArmFirstJoint extends SparkMaxGenericSubsystem {
     /**
      * Ofek said.
      */
-    public static final double GEAR_RATIO_MOTOR_TO_ABSOLUTE_ENCODER = 1 / ((60.0 / 15) * (50.0 / 14) * (48 / 14.0));
-    public static final double GEAR_RATIO_ABSOLUTE_ENCODER_TO_ARM = 12 / 28.0;
+    public static final double GEAR_RATIO_MOTOR_TO_ABSOLUTE_ENCODER = 1 / ((60.0 / 15) * (50.0 / 14) * (48 / 14.0) * (28 / 12.0));
 
     public static final int SECONDS_IN_MINUTE = 60;
 
-    private static final double ABSOLUTE_ENCODER_OFFSET = 130 / 360.0;
+    private static final double ABSOLUTE_ENCODER_OFFSET = 180;
 
     private static ArmFirstJoint instance;
 
     private final RelativeEncoder sparkMaxEncoder;
     private final DutyCycleEncoder absoluteEncoder;
 
-    public final Supplier<Double> forwardSpeed = namespace.addConstantDouble("forward speed", 0.1);
-    public final Supplier<Double> backwardsSpeed = namespace.addConstantDouble("backwards speed", -0.1);
+    public final Supplier<Double> forwardSpeed = namespace.addConstantDouble("forward speed", 0.175);
+    public final Supplier<Double> backwardsSpeed = namespace.addConstantDouble("backwards speed", -0.175);
 
     private final Namespace pidNamespace = namespace.addChild("pid");
-    private final Supplier<Double> kP = pidNamespace.addConstantDouble("kP", 0);
+    private final Supplier<Double> kP = pidNamespace.addConstantDouble("kP", 0.07);
     private final Supplier<Double> kI = pidNamespace.addConstantDouble("kI", 0);
     private final Supplier<Double> kD = pidNamespace.addConstantDouble("kD", 0);
-    private final Supplier<Double> waitTime = pidNamespace.addConstantDouble("wait time", 0);
-    private final Supplier<Double> tolerance = pidNamespace.addConstantDouble("tolerance", 0);
+    private final Supplier<Double> waitTime = pidNamespace.addConstantDouble("wait time", 0.5);
+    private final Supplier<Double> tolerance = pidNamespace.addConstantDouble("tolerance", 1);
     private final PIDSettings pidSettings;
 
     private final Namespace feedForwardNamespace = namespace.addChild("feed forward");
     private final Supplier<Double> kS = feedForwardNamespace.addConstantDouble("kS", 0);
     private final Supplier<Double> kV = feedForwardNamespace.addConstantDouble("kV", 0);
     private final Supplier<Double> kA = feedForwardNamespace.addConstantDouble("kA", 0);
-    private final Supplier<Double> kG = feedForwardNamespace.addConstantDouble("kG", 0);
+    private final Supplier<Double> kG = feedForwardNamespace.addConstantDouble("kG", -1.35);
     private final FeedForwardSettings feedForwardSettings;
 
     private final Namespace trapezoidProfileNamespace = namespace.addChild("trapezoid profile settings");
@@ -66,7 +66,7 @@ public class ArmFirstJoint extends SparkMaxGenericSubsystem {
     public final Supplier<Double> lA = calibrations.addConstantDouble("la", 0.9);
 
     private final Namespace keepStablePIDNamespace = namespace.addChild("keep stable pid");
-    private final Supplier<Double> keepStableKp = keepStablePIDNamespace.addConstantDouble("kP", 0);
+    private final Supplier<Double> keepStableKp = keepStablePIDNamespace.addConstantDouble("kP", 0.07);
     private final Supplier<Double> keepStableKi = keepStablePIDNamespace.addConstantDouble("kI", 0);
     private final Supplier<Double> keepStableKd = keepStablePIDNamespace.addConstantDouble("kD", 0);
     private final Supplier<Double> keepStableTolerance = keepStablePIDNamespace.addConstantDouble("tolerance", 0);
@@ -131,9 +131,13 @@ public class ArmFirstJoint extends SparkMaxGenericSubsystem {
     }
 
     public double getAbsolutePosition() {
-//        return absoluteEncoder.getDistance() + 180;
-//        return absoluteEncoder.getAbsolutePosition();
-        return sparkMaxEncoder.getPosition(); //this is most definitely not the way
+        if (absoluteEncoder.isConnected()) {
+            double pos = absoluteEncoder.getAbsolutePosition() * DEGREES_PER_ROTATION;
+            if (pos > 90) pos -= 180;
+            else pos += 180;
+            return pos;
+        }
+        return getRelativePosition();
     }
 
     public double getVelocity() {
@@ -153,12 +157,11 @@ public class ArmFirstJoint extends SparkMaxGenericSubsystem {
     }
 
     public void configureEncoders() {
-        sparkMaxEncoder.setPositionConversionFactor(DEGREES_PER_ROTATION * GEAR_RATIO_ABSOLUTE_ENCODER_TO_ARM
-                * GEAR_RATIO_MOTOR_TO_ABSOLUTE_ENCODER);
-        sparkMaxEncoder.setVelocityConversionFactor(DEGREES_PER_ROTATION * GEAR_RATIO_ABSOLUTE_ENCODER_TO_ARM
+        sparkMaxEncoder.setPositionConversionFactor(DEGREES_PER_ROTATION * GEAR_RATIO_MOTOR_TO_ABSOLUTE_ENCODER);
+        sparkMaxEncoder.setVelocityConversionFactor(DEGREES_PER_ROTATION
                 * GEAR_RATIO_MOTOR_TO_ABSOLUTE_ENCODER / SECONDS_IN_MINUTE);
-        absoluteEncoder.setDistancePerRotation(DEGREES_PER_ROTATION * GEAR_RATIO_ABSOLUTE_ENCODER_TO_ARM);
-        absoluteEncoder.setPositionOffset(ABSOLUTE_ENCODER_OFFSET / GEAR_RATIO_ABSOLUTE_ENCODER_TO_ARM);
+        sparkMaxEncoder.setPosition(getAbsolutePosition());
+//        absoluteEncoder.setPositionOffset(ABSOLUTE_ENCODER_OFFSET);
     }
 
     @Override
@@ -170,14 +173,17 @@ public class ArmFirstJoint extends SparkMaxGenericSubsystem {
                 pidSettings, feedForwardSettings, UnifiedControlMode.VELOCITY, () -> 0.0));
         namespace.putNumber("voltage", () -> master.getBusVoltage() * master.getAppliedOutput());
         namespace.putNumber("current", master::getOutputCurrent);
+        namespace.putRunnable("set position", () -> sparkMaxEncoder.setPosition(getAbsolutePosition()));
+        namespace.putNumber("aribtrary ff", () -> arbitraryFeedForward);
+        namespace.putData("move with arbitrary ff",
+                new InstantCommand(() -> arbitraryFeedForward = -1.3).andThen(
+        new MoveSmartMotorControllerGenericSubsystem(this,
+                new PIDSettings(0, 0, 190000), FeedForwardSettings.EMPTY_FFSETTINGS, UnifiedControlMode.POSITION,
+                () -> 45.0)));
     }
 
     public void setArbitraryFeedForward(double arbitraryFeedForward) {
-        this.arbitraryFeedForward = arbitraryFeedForward;
-    }
-
-    public void initializeEncoder() {
-//        sparkMaxEncoder.setPosition(95.25);
-        sparkMaxEncoder.setPosition(90);
+//        this.arbitraryFeedForward = arbitraryFeedForward;
+        this.arbitraryFeedForward = 0;
     }
 }

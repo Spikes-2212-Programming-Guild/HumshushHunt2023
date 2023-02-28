@@ -26,7 +26,8 @@ public class CenterWithLimelight extends DriveArcadeWithPID {
     }
 
     @Override
-    public void end(boolean intur) {
+    public void end(boolean interrupted) {
         feedForwardSettings.setkG(() -> 0.0);
+        super.end(interrupted);
     }
 }

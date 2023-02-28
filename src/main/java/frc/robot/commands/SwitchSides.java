@@ -36,34 +36,35 @@ public class SwitchSides extends SequentialCommandGroup {
         addRequirements(firstJoint, secondJoint, FakeArm.getInstance());
         if (isBack) {
             addCommands(
-                    new InstantCommand(() -> Drivetrain.getInstance().setMode(CANSparkMax.IdleMode.kBrake)),
+//                    new InstantCommand(() -> Drivetrain.getInstance().setMode(CANSparkMax.IdleMode.kBrake)),
                     new CloseGripper(gripper),
                     new MoveSecondJoint(secondJoint, () -> PlaceGamePiece.ArmState.FOLD_BELOW_180.secondJointPosition,
                             WAIT_TIME, MOVE_DURATION),
-                    new MoveFirstJoint(firstJoint, ()
-                            -> 190.0, WAIT_TIME, MOVE_DURATION),
-                    new MoveSecondJoint(secondJoint, () -> 315.0, WAIT_TIME, () -> 1.2),
+                    new MoveFirstJoint(firstJoint, () -> 185.0, WAIT_TIME, MOVE_DURATION),
+                    new MoveSecondJoint(secondJoint, () -> PlaceGamePiece.ArmState.FOLD_ABOVE_180.secondJointPosition,
+                            WAIT_TIME, () -> 1.2),
 //                    new ParallelCommandGroup(
 //                            new MoveSecondJoint(secondJoint, () -> 325.0, WAIT_TIME, () -> 0.8),
                     new MoveFirstJoint(firstJoint, () -> 90.0, WAIT_TIME, () -> 0.8),
-                    new InstantCommand(() -> Drivetrain.getInstance().setMode(CANSparkMax.IdleMode.kCoast)),
+                    new InstantCommand(() -> Drivetrain.getInstance().setMode(CANSparkMax.IdleMode.kCoast))
 //                    ),
-                    new KeepArmStable(firstJoint, secondJoint, ArmGravityCompensation.getInstance())
+//                    new KeepArmStable(firstJoint, secondJoint, ArmGravityCompensation.getInstance())
             );
         } else {
             addCommands(
-                    new InstantCommand(() -> Drivetrain.getInstance().setMode(CANSparkMax.IdleMode.kBrake)),
+//                    new InstantCommand(() -> Drivetrain.getInstance().setMode(CANSparkMax.IdleMode.kBrake)),
                     new CloseGripper(gripper),
                     new MoveSecondJoint(secondJoint, () -> PlaceGamePiece.ArmState.FOLD_ABOVE_180.secondJointPosition,
                             WAIT_TIME, MOVE_DURATION),
-                    new MoveFirstJoint(firstJoint, () -> -7.0, WAIT_TIME, MOVE_DURATION),
+                    new MoveFirstJoint(firstJoint, () -> 5.0, WAIT_TIME, MOVE_DURATION),
 //                    new MoveSecondJoint(secondJoint, () -> 180.0, WAIT_TIME, MOVE_DURATION),
 //                    new ParallelCommandGroup(
-                    new MoveSecondJoint(secondJoint, () -> 40.0, WAIT_TIME, () -> 1.2),
+                    new MoveSecondJoint(secondJoint, () -> PlaceGamePiece.ArmState.FOLD_BELOW_180.secondJointPosition,
+                            WAIT_TIME, () -> 1.2),
                     new MoveFirstJoint(firstJoint, () -> 90.0, WAIT_TIME, () -> 0.8),
 //                    ),
-                    new InstantCommand(() -> Drivetrain.getInstance().setMode(CANSparkMax.IdleMode.kCoast)),
-                    new KeepArmStable(firstJoint, secondJoint, ArmGravityCompensation.getInstance())
+                    new InstantCommand(() -> Drivetrain.getInstance().setMode(CANSparkMax.IdleMode.kCoast))
+//                    new KeepArmStable(firstJoint, secondJoint, ArmGravityCompensation.getInstance())
             );
         }
     }
@@ -72,7 +73,7 @@ public class SwitchSides extends SequentialCommandGroup {
 //        return new SequentialCommandGroup(
 ////                new InstantCommand(() -> Drivetrain.getInstance().setMode(CANSparkMax.IdleMode.kBrake)),
 //                new CloseGripper(gripper),
-//                new MoveSecondJoint(secondJoint, () -> PlaceGamePiece.ArmState.FOLD_BELOW_180.secondJointPosition,
+//                new MoveSecondJoint(secondJoint, () -> PlaceGamePiece.ArmState.FOLD_ABOVE_180.secondJointPosition,
 //                        WAIT_TIME, MOVE_DURATION),
 //                new MoveFirstJoint(firstJoint, ()
 //                        -> 180.0, WAIT_TIME, MOVE_DURATION),

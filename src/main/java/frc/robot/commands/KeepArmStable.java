@@ -37,10 +37,10 @@ public class KeepArmStable extends SequentialCommandGroup {
                 new ParallelCommandGroup(
                         new MoveSmartMotorControllerGenericSubsystem(firstJoint, firstJoint.keepStablePIDSettings,
                                 firstJoint.getFeedForwardSettings(), UnifiedControlMode.POSITION, () -> firstJointAngle)
-                                .alongWith(new RunCommand(() -> compensation.configureFirstJointG(firstJointAngle, secondJointAngle))),
+                                .alongWith(new RunCommand(() -> compensation.configureFirstJointG(firstJoint.getAbsolutePosition(), secondJoint.getAbsolutePosition()))),
                         new MoveSmartMotorControllerGenericSubsystem(secondJoint, secondJoint.keepStablePIDSettings,
                                 secondJoint.getFeedForwardSettings(), UnifiedControlMode.POSITION, () -> secondJointAngle)
-                                .alongWith(new RunCommand(() -> compensation.configureSecondJointG(firstJointAngle, secondJointAngle)))
+                                .alongWith(new RunCommand(() -> compensation.configureSecondJointG(firstJoint.getAbsolutePosition(), secondJoint.getAbsolutePosition())))
                 ),
 
                 new InstantCommand(compensation::zeroGs)

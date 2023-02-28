@@ -25,7 +25,7 @@ public class SplooshAndVamoose extends BasePathAuto {
     }
 
     public CommandBase getCommand() {
-        return fullAuto(PathPlanner.loadPathGroup("Sploosh And Vamoose", true,
+        return fullAuto(PathPlanner.loadPathGroup("Sploosh And Vamoose",
                 new PathConstraints(MAX_VELOCITY, MAX_ACCELERATION)));
     }
 
@@ -36,13 +36,13 @@ public class SplooshAndVamoose extends BasePathAuto {
                 new PrintCommand("put gp"),
 //                new CenterWithLimelight(drivetrain, VisionService.getInstance(), VisionService.LimelightPipeline.HIGH_RRT).withTimeout(1.5),
                 new PlaceGamePiece(ArmFirstJoint.getInstance(), ArmSecondJoint.getInstance(),
-                        PlaceGamePiece.ArmState.FRONT_TOP),
+                        PlaceGamePiece.ArmState.BACK_TOP),
                 new OpenGripper(Gripper.getInstance()),
-                new MoveSecondJoint(ArmSecondJoint.getInstance(), () -> PlaceGamePiece.ArmState.FOLD_ABOVE_180.secondJointPosition, () -> 0.005,
-                        () -> PlaceGamePiece.ArmState.FOLD_ABOVE_180.moveDuration + 0.2),
+                new MoveSecondJoint(ArmSecondJoint.getInstance(), () -> PlaceGamePiece.ArmState.FOLD_BELOW_180.secondJointPosition, () -> 0.005,
+                        () -> PlaceGamePiece.ArmState.FOLD_BELOW_180.moveDuration + 0.2),
                 new CloseGripper(Gripper.getInstance()),
                 new MoveFirstJoint(ArmFirstJoint.getInstance(), () -> 110.0, () -> 0.005,
-                        () -> PlaceGamePiece.ArmState.FOLD_ABOVE_180.moveDuration + 0.2)
+                        () -> PlaceGamePiece.ArmState.FOLD_BELOW_180.moveDuration + 0.2)
         ));
         eventMap.put("takeGP", new SequentialCommandGroup(
 //                new PrintCommand("take gp"), new WaitCommand(3)
@@ -63,7 +63,10 @@ public class SplooshAndVamoose extends BasePathAuto {
 //                                feedForwardSettings.setkG(() -> 0.0);
 //                            }
 //                        },
-                new Climb(drivetrain)
+                new SequentialCommandGroup(
+//                        new TurnToZero(drivetrain).withTimeout(1.5),
+                        new Climb(drivetrain)
+                )
         );
         return eventMap;
     }

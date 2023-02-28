@@ -6,6 +6,7 @@ import com.revrobotics.CANSparkMaxLowLevel;
 import com.revrobotics.RelativeEncoder;
 import com.spikes2212.command.drivetrains.commands.DriveArcade;
 import com.spikes2212.command.drivetrains.commands.DriveTank;
+import com.spikes2212.command.drivetrains.commands.DriveTankWithPID;
 import com.spikes2212.command.drivetrains.smartmotorcontrollerdrivetrain.SparkMaxTankDrivetrain;
 import com.spikes2212.control.FeedForwardSettings;
 import com.spikes2212.control.PIDSettings;
@@ -18,8 +19,11 @@ import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
 import edu.wpi.first.math.kinematics.DifferentialDriveOdometry;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.SerialPort;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
+import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.RunCommand;
 import frc.robot.RobotMap;
 
 import java.util.function.Supplier;
@@ -71,10 +75,18 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
     private final Supplier<Double> toleranceCamera = cameraPIDNamespace.addConstantDouble("tolerance", 1);
     private final PIDSettings cameraPIDSettings;
 
+    private final Namespace climbPIDNamespace = namespace.addChild("climb pid");
+    private final Supplier<Double> kP = climbPIDNamespace.addConstantDouble("kP", 0.05);
+    private final Supplier<Double> kI = climbPIDNamespace.addConstantDouble("kI", 0);
+    private final Supplier<Double> kD = climbPIDNamespace.addConstantDouble("kD", 0.025);
+    private final Supplier<Double> tolerance = climbPIDNamespace.addConstantDouble("tolerance", 0);
+    private final Supplier<Double> waitTime = climbPIDNamespace.addConstantDouble("wait time", 1);
+    public final PIDSettings climbPIDSettings = new PIDSettings(kP, kI, kD, tolerance, waitTime);
+
     private final Namespace feedForwardNamespace = namespace.addChild("feed forward");
-    private final Supplier<Double> kS = feedForwardNamespace.addConstantDouble("kS", 0.14);
-    private final Supplier<Double> kV = feedForwardNamespace.addConstantDouble("kV", 0.28);
-    private final Supplier<Double> kA = feedForwardNamespace.addConstantDouble("kA", 0);
+    private final Supplier<Double> kS = feedForwardNamespace.addConstantDouble("kS", 0.25); //0.14
+    private final Supplier<Double> kV = feedForwardNamespace.addConstantDouble("kV", 3); //0.28
+    private final Supplier<Double> kA = feedForwardNamespace.addConstantDouble("kA", 4);
     private final Supplier<Double> limelightkS = feedForwardNamespace.addConstantDouble("limelight kS", 0.14);
     private final FeedForwardSettings feedForwardSettings;
 
@@ -84,6 +96,12 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
             ("acceleration", 0);
     private final TrapezoidProfileSettings trapezoidProfileSettings;
 
+    private final Namespace testing = namespace.addChild("testing");
+    private final Supplier<Double> leftSetpoint = testing.addConstantDouble("left setpoint", 0);
+    private final Supplier<Double> rightSetpoint = testing.addConstantDouble("right setpoint", 0);
+
+    private double prevLeftSetpoint = 0;
+    private double prevRightSetpoint = 0;
     private double maxAcceleration = 0;
     private double maxLeftSpeed = 0;
     private double maxRightSpeed = 0;
@@ -136,6 +154,8 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
         super.configureLoop(leftPIDSettings, rightPIDSettings, feedForwardSettings, trapezoidProfileSettings);
         configureEncoders();
         rightMaster.setInverted(true);
+        prevLeftSetpoint = 0;
+        prevRightSetpoint = 0;
     }
 
     @Override
@@ -166,9 +186,29 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
         gyro.reset();
     }
 
-    public void setMetersPerSecond(double leftMS, double rightMS, PIDSettings leftPIDSettings, PIDSettings rightPIDSettings,
-                                   FeedForwardSettings feedForwardSettings) {
-        pidSet(UnifiedControlMode.VELOCITY, leftMS, rightMS, leftPIDSettings, rightPIDSettings, feedForwardSettings);
+
+    public void tankDriveVoltages(double leftVoltage, double rightVoltage) {
+        double leftInput = Math.signum(leftVoltage) * Math.sqrt(Math.abs(leftVoltage / RobotController.getBatteryVoltage()));
+        double rightInput = Math.signum(rightVoltage) * Math.sqrt(Math.abs(rightVoltage / RobotController.getBatteryVoltage()));
+        tankDrive(leftInput, rightInput);
+    }
+
+    @Override
+    public void pidSet(UnifiedControlMode controlMode, double leftSetpoint, double rightSetpoint,
+                       PIDSettings leftPIDSettings, PIDSettings rightPIDSettings,
+                       FeedForwardSettings feedForwardSettings) {
+        configPIDF(leftPIDSettings, rightPIDSettings, feedForwardSettings);
+        configureTrapezoid(trapezoidProfileSettings);
+        leftMaster.setPeriodicFramePeriod(CANSparkMaxLowLevel.PeriodicFrame.kStatus0, 20);
+        rightMaster.setPeriodicFramePeriod(CANSparkMaxLowLevel.PeriodicFrame.kStatus0, 20);
+        leftMaster.getPIDController().setReference(leftSetpoint, controlMode.getSparkMaxControlType(),
+                0, feedForwardSettings.getkS() * Math.signum(leftSetpoint)
+                        + kA.get() * (leftSetpoint - prevLeftSetpoint) / 0.02);
+        rightMaster.getPIDController().setReference(rightSetpoint, controlMode.getSparkMaxControlType(),
+                0, feedForwardSettings.getkS() * Math.signum(rightSetpoint)
+                        + kA.get() * (rightSetpoint - prevRightSetpoint) / 0.02);
+        prevLeftSetpoint = leftSetpoint;
+        prevRightSetpoint = rightSetpoint;
     }
 
     public double getLeftPosition() {
@@ -184,7 +224,7 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
     }
 
     public double getYaw() {
-        return gyro.getYaw();
+        return gyro.getAngle();
     }
 
     public double getLeftSpeed() {
@@ -279,5 +319,54 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
         namespace.putNumber("right output", rightMaster::getAppliedOutput);
         namespace.putNumber("kG current value", feedForwardSettings::getkG);
         namespace.putData("turn", new DriveArcade(this, () -> 0.0, () -> (limelightkS.get() / RobotController.getBatteryVoltage())));
+        namespace.putData("drive straight", new DriveTankWithPID(this, leftPIDSettings, rightPIDSettings, leftSetpoint,
+                rightSetpoint, this::getLeftSpeed, this::getRightSpeed, feedForwardSettings, feedForwardSettings) {
+            @Override
+            public void execute() {
+                leftPIDController.setSetpoint(leftSetpoint.get());
+                rightPIDController.setSetpoint(rightSetpoint.get());
+                leftPIDController.setTolerance(leftPIDSettings.getTolerance());
+                rightPIDController.setTolerance(rightPIDSettings.getTolerance());
+                leftPIDController.setPID(leftPIDSettings.getkP(), leftPIDSettings.getkI(), leftPIDSettings.getkD());
+                rightPIDController.setPID(rightPIDSettings.getkP(), rightPIDSettings.getkI(), rightPIDSettings.getkD());
+                leftFeedForwardController.setGains(leftFeedForwardSettings.getkS(), leftFeedForwardSettings.getkV(),
+                        leftFeedForwardSettings.getkA(), leftFeedForwardSettings.getkG());
+                rightFeedForwardController.setGains(rightFeedForwardSettings.getkS(), rightFeedForwardSettings.getkV(),
+                        rightFeedForwardSettings.getkA(), rightFeedForwardSettings.getkG());
+                ((Drivetrain) drivetrain).tankDriveVoltages((leftPIDController.calculate(leftSource.get()) +
+                                leftFeedForwardController.calculate(leftSetpoint.get())),
+                        rightPIDController.calculate(rightSource.get()) +
+                                rightFeedForwardController.calculate(rightSetpoint.get()));
+            }
+        });
+        double batteryVoltage = RobotController.getBatteryVoltage();
+        namespace.putData("drive in voltages", run(() -> tankDriveVoltages(leftSetpoint.get(), rightSetpoint.get())));
+        namespace.putNumber("battery voltage", batteryVoltage);
+        namespace.putNumber("left voltage", () -> leftMaster.getAppliedOutput() * leftMaster.getBusVoltage());
+        namespace.putNumber("right voltage", () -> rightMaster.getAppliedOutput() * rightMaster.getBusVoltage());
+        namespace.putData("do weird thing", new RunCommand(() -> setLeft(3.428 / RobotController.getBatteryVoltage()), this));
+        namespace.putData("accelerate", new FunctionalCommand(() -> {
+        }, () -> {
+        }, b -> {
+        }, () -> false, this) {
+            private DriveArcade driveArcade;
+
+            @Override
+            public void initialize() {
+                double now = Timer.getFPGATimestamp();
+                driveArcade = new DriveArcade(Drivetrain.getInstance(), () -> now + 0.5 * (Timer.getFPGATimestamp() - now),
+                        () -> 0.0);
+            }
+
+            @Override
+            public void execute() {
+                driveArcade.execute();
+            }
+
+            @Override
+            public void end(boolean interrupted) {
+                driveArcade.end(interrupted);
+            }
+        });
     }
 }

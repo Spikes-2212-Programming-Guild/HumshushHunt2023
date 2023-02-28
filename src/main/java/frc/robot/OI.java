@@ -1,13 +1,18 @@
 package frc.robot;
 
 import com.revrobotics.CANSparkMax;
+import com.spikes2212.command.drivetrains.commands.DriveArcade;
 import com.spikes2212.command.genericsubsystem.commands.smartmotorcontrollergenericsubsystem.MoveSmartMotorControllerGenericSubsystem;
+import com.spikes2212.util.Limelight;
 import com.spikes2212.util.PlaystationControllerWrapper;
 import com.spikes2212.util.UnifiedControlMode;
 import com.spikes2212.util.XboxControllerWrapper;
+import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.ConditionalCommand;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
+import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import frc.robot.commands.*;
 import frc.robot.services.ArmGravityCompensation;
 import frc.robot.services.VisionService;
@@ -17,10 +22,12 @@ public class OI /*GEVALD*/ {
 
     private static OI instance;
 
-    public final Command centerOnHighRRT;
-
     private final PlaystationControllerWrapper ps = new PlaystationControllerWrapper(0);
-    private final XboxControllerWrapper xbox = new XboxControllerWrapper(1);
+    //    private final XboxControllerWrapper xbox = new XboxControllerWrapper(1);
+    private final Joystick left = new Joystick(1);
+    private final Joystick right = new Joystick(2);
+    private double lastMoveValue;
+    private double lastRotateValue;
 
     private OI(Drivetrain drivetrain, ArmFirstJoint firstJoint, ArmSecondJoint secondJoint, Gripper gripper,
                ArmGravityCompensation compensation) {
@@ -93,10 +100,16 @@ public class OI /*GEVALD*/ {
                 secondJoint::isBack));
         //lifts the arm to pick up from above
         ps.getLeftButton().onTrue(
-//                new ConditionalCommand(
-//                new PlaceGamePiece(firstJoint, secondJoint, PlaceGamePiece.ArmState.BACK_LIFT),
-                new PlaceGamePiece(firstJoint, secondJoint, PlaceGamePiece.ArmState.FRONT_LIFT));
-//                secondJoint::isBack));
+                new ConditionalCommand(
+                        new PlaceGamePiece(firstJoint, secondJoint, PlaceGamePiece.ArmState.BACK_LIFT),
+                        new PlaceGamePiece(firstJoint, secondJoint, PlaceGamePiece.ArmState.FRONT_LIFT),
+                        secondJoint::isBack));
+        //Moves arm to double substation
+//        ps.getRightButton().onTrue(new ConditionalCommand(
+//                new PlaceGamePiece(firstJoint, secondJoint, PlaceGamePiece.ArmState.BACK_DOUBLE_SUBSTATION),
+//                new PlaceGamePiece(firstJoint, secondJoint, PlaceGamePiece.ArmState.FRONT_DOUBLE_SUBSTATION),
+//                secondJoint::isBack
+//        ));
         //Keeps the arm stable
         ps.getShareButton().whileTrue(new KeepArmStable(firstJoint, secondJoint, compensation));
         //Stops both joints
@@ -107,21 +120,48 @@ public class OI /*GEVALD*/ {
         //Closes the gripper
         ps.getDownButton().onTrue(new CloseGripper(gripper));
         //Folds the arm
-        ps.getOptionsButton().onTrue(new ConditionalCommand(new MoveSecondJoint(secondJoint, () -> PlaceGamePiece.ArmState.FOLD_BELOW_180.secondJointPosition, () -> 0.1,
-                () -> PlaceGamePiece.ArmState.FOLD_BELOW_180.moveDuration), new MoveSecondJoint(secondJoint, () -> PlaceGamePiece.ArmState.FOLD_ABOVE_180.secondJointPosition, () -> 0.1,
-                () -> PlaceGamePiece.ArmState.FOLD_ABOVE_180.moveDuration), secondJoint::isBack));
-        xbox.getLeftStickButton().onTrue(new InstantCommand(() -> drivetrain.setMode(CANSparkMax.IdleMode.kCoast)));
-        xbox.getRightStickButton().onTrue(new InstantCommand(() -> drivetrain.setMode(CANSparkMax.IdleMode.kBrake)));
-        xbox.getButtonStart().onTrue(new Climb(drivetrain));
+        ps.getOptionsButton().onTrue(
+                new ConditionalCommand(
+                        new SequentialCommandGroup(
+                                new CloseGripper(gripper),
+                                new MoveSecondJoint(secondJoint, () -> PlaceGamePiece.ArmState.FOLD_BELOW_180.secondJointPosition,
+                                        () -> 0.05, () -> PlaceGamePiece.ArmState.FOLD_BELOW_180.moveDuration),
+                                new MoveFirstJoint(firstJoint, () -> PlaceGamePiece.ArmState.FOLD_BELOW_180.firstJointPosition,
+                                        () -> 0.05, () -> PlaceGamePiece.ArmState.FOLD_BELOW_180.moveDuration
+                                )),
+                        new SequentialCommandGroup(
+                                new CloseGripper(gripper),
+                                new MoveSecondJoint(secondJoint, () -> PlaceGamePiece.ArmState.FOLD_ABOVE_180.secondJointPosition,
+                                        () -> 0.05, () -> PlaceGamePiece.ArmState.FOLD_ABOVE_180.moveDuration),
+                                new MoveFirstJoint(firstJoint, () -> PlaceGamePiece.ArmState.FOLD_ABOVE_180.firstJointPosition,
+                                        () -> 0.05, () -> PlaceGamePiece.ArmState.FOLD_ABOVE_180.moveDuration
+                                )),
+                        secondJoint::isBack)
+        );
+        new JoystickButton(left, 3).onTrue(new CenterWithLimelight(drivetrain, VisionService.getInstance(), VisionService.LimelightPipeline.HIGH_RRT));
+        new JoystickButton(left, 2).onTrue(new CenterWithLimelight(drivetrain, VisionService.getInstance(), VisionService.LimelightPipeline.APRIL_TAG));
+        new JoystickButton(left, 4).onTrue(new CenterWithLimelight(drivetrain, VisionService.getInstance(), VisionService.LimelightPipeline.LOW_RRT));
+        new JoystickButton(right, 1).onTrue(new InstantCommand(() -> {
+        }, drivetrain));
+        new JoystickButton(right, 2).onTrue(new Climb2(drivetrain));
+        new JoystickButton(right, 3).onTrue(new InstantCommand(() -> drivetrain.setMode(CANSparkMax.IdleMode.kBrake)));
+        new JoystickButton(right, 4).onTrue(new InstantCommand(() -> drivetrain.setMode(CANSparkMax.IdleMode.kCoast)));
+        new JoystickButton(left, 1).onTrue(new InstantCommand(() -> {
+        }, drivetrain));
+        new JoystickButton(left, 5).onTrue(new DriveArcade(drivetrain, 0.5, 0));
+//        xbox.getLeftStickButton().onTrue(new InstantCommand(() -> drivetrain.setMode(CANSparkMax.IdleMode.kCoast)));
+//        xbox.getRightStickButton().onTrue(new InstantCommand(() -> drivetrain.setMode(CANSparkMax.IdleMode.kBrake)));
+//        xbox.getButtonStart().onTrue(new Climb(drivetrain));
 
-        xbox.getUpButton().onTrue(new InstantCommand(() -> {
-        }, drivetrain));
-        centerOnHighRRT = new CenterWithLimelight(drivetrain, VisionService.getInstance(), VisionService.LimelightPipeline.HIGH_RRT);
-        xbox.getLeftButton().onTrue(centerOnHighRRT);
-        xbox.getRightButton().onTrue(new CenterWithLimelight(drivetrain, VisionService.getInstance(), VisionService.LimelightPipeline.LOW_RRT));
-        xbox.getDownButton().onTrue(new CenterWithLimelight(drivetrain, VisionService.getInstance(), VisionService.LimelightPipeline.APRIL_TAG));
-        xbox.getLeftStickButton().onTrue(new InstantCommand(() -> {
-        }, drivetrain));
+//        xbox.getUpButton().onTrue(new InstantCommand(() -> {
+//        }, drivetrain));
+//        centerOnHighRRT = new CenterWithLimelight(drivetrain, VisionService.getInstance(), VisionService.LimelightPipeline.HIGH_RRT);
+//        xbox.getLeftButton().onTrue(centerOnHighRRT);
+//        xbox.getRightButton().onTrue(new CenterWithLimelight(drivetrain, VisionService.getInstance(), VisionService.LimelightPipeline.LOW_RRT));
+//        xbox.getDownButton().onTrue(new CenterWithLimelight(drivetrain, VisionService.getInstance(), VisionService.LimelightPipeline.APRIL_TAG));
+//        xbox.getLeftStickButton().onTrue(new InstantCommand(() -> {
+//        }, drivetrain));
+//        xbox.getButtonStart().onTrue(new Climb(drivetrain));
     }
 
     public static OI getInstance() {
@@ -133,12 +173,24 @@ public class OI /*GEVALD*/ {
     }
 
     public double getRightY() {
-        double val = xbox.getRightY();
-        return Math.signum(val) * val * val;
+//        double val = xbox.getRightY();
+        double val = right.getY();
+        double temp = lastMoveValue;
+        double output = val * 0.8 + temp * 0.2;
+        lastMoveValue = output;
+        return output;
+//        return Math.signum(val) * val * val;
+//        return val;
     }
 
     public double getLeftX() {
-        double val = xbox.getLeftX();
-        return Math.signum(val) * val * val;
+//        double val = xbox.getLeftX();
+        double val = left.getX();
+        double temp = lastRotateValue;
+        double output = val * 0.6 + temp * 0.4;
+        lastRotateValue = output;
+        return output;
+//        return Math.signum(val) * val * val;
+//        return val;
     }
 }

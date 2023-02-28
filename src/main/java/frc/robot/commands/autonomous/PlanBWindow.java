@@ -2,11 +2,8 @@ package frc.robot.commands.autonomous;
 
 import com.pathplanner.lib.PathConstraints;
 import com.pathplanner.lib.PathPlanner;
-import com.spikes2212.command.drivetrains.commands.DriveArcadeWithPID;
-import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj2.command.*;
 import frc.robot.commands.*;
-import frc.robot.services.VisionService;
 import frc.robot.subsystems.ArmFirstJoint;
 import frc.robot.subsystems.ArmSecondJoint;
 import frc.robot.subsystems.Drivetrain;
@@ -15,17 +12,17 @@ import frc.robot.subsystems.Gripper;
 import java.util.HashMap;
 import java.util.Map;
 
-public class PlanB extends BasePathAuto {
+public class PlanBWindow extends BasePathAuto {
 
-    private static final double MAX_VELOCITY = 1.5;
-    private static final double MAX_ACCELERATION = 2;
+    private static final double MAX_VELOCITY = 1;
+    private static final double MAX_ACCELERATION = 1;
 
-    public PlanB(Drivetrain drivetrain) {
+    public PlanBWindow(Drivetrain drivetrain) {
         super(drivetrain, getEventMap());
     }
 
     public CommandBase getCommand() {
-        return fullAuto(PathPlanner.loadPathGroup("Plan B", true,
+        return fullAuto(PathPlanner.loadPathGroup("Plan B WINDOW", true,
                 new PathConstraints(MAX_VELOCITY, MAX_ACCELERATION)));
     }
 

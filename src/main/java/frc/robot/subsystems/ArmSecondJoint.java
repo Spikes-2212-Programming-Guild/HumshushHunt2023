@@ -18,7 +18,7 @@ import java.util.function.Supplier;
 public class ArmSecondJoint extends SparkMaxGenericSubsystem {
 
     public static final double DEGREES_PER_ROTATION = 360;
-    public static final double GEAR_RATIO = 1 / 58.33;
+    public static final double GEAR_RATIO = (1 / 25.0) * (12 / 28.0) * (12 / 28.0);
 
     public static final int SECONDS_IN_MINUTE = 60;
 
@@ -27,11 +27,11 @@ public class ArmSecondJoint extends SparkMaxGenericSubsystem {
     private final DutyCycleEncoder absoluteEncoder;
     private final RelativeEncoder sparkMaxEncoder;
 
-    public final Supplier<Double> forwardSpeed = namespace.addConstantDouble("forward speed", 0.1);
-    public final Supplier<Double> backwardsSpeed = namespace.addConstantDouble("backwards speed", -0.1);
+    public final Supplier<Double> forwardSpeed = namespace.addConstantDouble("forward speed", 0.2);
+    public final Supplier<Double> backwardsSpeed = namespace.addConstantDouble("backwards speed", -0.2);
 
     private final Namespace pidNamespace = namespace.addChild("pid");
-    private final Supplier<Double> kP = pidNamespace.addConstantDouble("kP", 0);
+    private final Supplier<Double> kP = pidNamespace.addConstantDouble("kP", 0.1);
     private final Supplier<Double> kI = pidNamespace.addConstantDouble("kI", 0);
     private final Supplier<Double> kD = pidNamespace.addConstantDouble("kD", 0);
     private final Supplier<Double> waitTime = pidNamespace.addConstantDouble("wait time", 0);
@@ -42,7 +42,7 @@ public class ArmSecondJoint extends SparkMaxGenericSubsystem {
     private final Supplier<Double> kS = feedForwardNamespace.addConstantDouble("kS", 0);
     private final Supplier<Double> kV = feedForwardNamespace.addConstantDouble("kV", 0);
     private final Supplier<Double> kA = feedForwardNamespace.addConstantDouble("kA", 0);
-    private final Supplier<Double> kG = feedForwardNamespace.addConstantDouble("kG", 0);
+    private final Supplier<Double> kG = feedForwardNamespace.addConstantDouble("kG", 0.55);
     private final FeedForwardSettings feedForwardSettings;
 
     private final Namespace trapezoidProfileNamespace = namespace.addChild("trapezoid profile settings");
@@ -52,7 +52,7 @@ public class ArmSecondJoint extends SparkMaxGenericSubsystem {
     private final TrapezoidProfileSettings trapezoidProfileSettings;
 
     private final Namespace keepStablePIDNamespace = namespace.addChild("keep stable pid");
-    private final Supplier<Double> keepStableKp = keepStablePIDNamespace.addConstantDouble("kP", 0);
+    private final Supplier<Double> keepStableKp = keepStablePIDNamespace.addConstantDouble("kP", 0.1);
     private final Supplier<Double> keepStableKi = keepStablePIDNamespace.addConstantDouble("kI", 0);
     private final Supplier<Double> keepStableKd = keepStablePIDNamespace.addConstantDouble("kD", 0);
     private final Supplier<Double> keepStableTolerance = keepStablePIDNamespace.addConstantDouble("tolerance", 0);
@@ -77,7 +77,7 @@ public class ArmSecondJoint extends SparkMaxGenericSubsystem {
         super(namespaceName, master);
         setIdleMode(CANSparkMax.IdleMode.kCoast);
         sparkMaxEncoder = master.getEncoder();
-        master.setInverted(true);
+        master.setInverted(false);
         absoluteEncoder = new DutyCycleEncoder(RobotMap.DIO.ARM_SECOND_JOINT_ABSOLUTE_ENCODER);
         configureEncoders();
         pidSettings = new PIDSettings(kP, kI, kD, tolerance, waitTime);
@@ -90,7 +90,8 @@ public class ArmSecondJoint extends SparkMaxGenericSubsystem {
     public void configureLoop(PIDSettings pidSettings, FeedForwardSettings feedForwardSettings,
                               TrapezoidProfileSettings trapezoidProfileSettings) {
         super.configureLoop(pidSettings, feedForwardSettings, trapezoidProfileSettings);
-        master.setInverted(true);
+        master.setInverted(false);
+        master.setIdleMode(CANSparkMax.IdleMode.kBrake);
         configureEncoders();
     }
 
@@ -116,7 +117,10 @@ public class ArmSecondJoint extends SparkMaxGenericSubsystem {
     }
 
     public double getAbsolutePosition() {
-        return (absoluteEncoder.getAbsolutePosition() * 360 + 90) % 360;
+        if (absoluteEncoder.isConnected()) {
+            return absoluteEncoder.getAbsolutePosition() * DEGREES_PER_ROTATION - 22;
+        }
+        return getRelativePosition();
     }
 
     public boolean isBack() {
@@ -124,7 +128,7 @@ public class ArmSecondJoint extends SparkMaxGenericSubsystem {
     }
 
     public double getCombinedAngle(ArmFirstJoint firstJoint) {
-        return getAbsolutePosition() + firstJoint.getAbsolutePosition();
+        return getAbsolutePosition() - firstJoint.getAbsolutePosition();
     }
 
     public double getVelocity() {
@@ -146,22 +150,24 @@ public class ArmSecondJoint extends SparkMaxGenericSubsystem {
     public void configureEncoders() {
         sparkMaxEncoder.setPositionConversionFactor(DEGREES_PER_ROTATION * GEAR_RATIO);
         sparkMaxEncoder.setVelocityConversionFactor((DEGREES_PER_ROTATION * GEAR_RATIO) / SECONDS_IN_MINUTE);
-        absoluteEncoder.setDistancePerRotation(-DEGREES_PER_ROTATION);
         sparkMaxEncoder.setPosition(getAbsolutePosition());
     }
 
     @Override
     public void configureDashboard() {
         namespace.putNumber("absolute encoder position", this::getAbsolutePosition);
+        namespace.putBoolean("absolute encoder connected", absoluteEncoder::isConnected);
         namespace.putNumber("spark max encoder position", this::getRelativePosition);
         namespace.putNumber("velocity", this::getVelocity);
         namespace.putNumber("angle sum", () -> getCombinedAngle(ArmFirstJoint.getInstance()));
         namespace.putNumber("current", master::getOutputCurrent);
         namespace.putBoolean("is back", this::isBack);
         namespace.putNumber("encoder ticks", absoluteEncoder::getAbsolutePosition);
+        namespace.putNumber("aribtrary ff", ()-> arbitraryFeedForward);
     }
 
     public void setArbitraryFeedForward(double arbitraryFeedForward) {
-        this.arbitraryFeedForward = arbitraryFeedForward;
+//        this.arbitraryFeedForward = arbitraryFeedForward;
+        this.arbitraryFeedForward = 0;
     }
 }

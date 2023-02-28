@@ -1,6 +1,7 @@
 package frc.robot.commands;
 
 import com.spikes2212.command.drivetrains.commands.DriveArcadeWithPID;
+import edu.wpi.first.wpilibj.RobotController;
 import frc.robot.services.VisionService;
 import frc.robot.services.VisionService.PhotonVisionPipeline;
 import frc.robot.subsystems.Drivetrain;
@@ -19,5 +20,12 @@ public class CenterOnGamePiece extends DriveArcadeWithPID {
     @Override
     public void initialize() {
         vision.setPhotonVisionPipeline(pipeline);
+        feedForwardSettings.setkG(() -> (3.1 / RobotController.getBatteryVoltage()) * -Math.signum(vision.getPhotonVisionYaw()));
+    }
+
+    @Override
+    public void end(boolean interrupted) {
+        feedForwardSettings.setkG(() -> 0.0);
+        super.end(interrupted);
     }
 }

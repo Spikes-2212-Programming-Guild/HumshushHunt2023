@@ -23,24 +23,16 @@ public class MoveArmToFloor extends SequentialCommandGroup {
             state = PlaceGamePiece.ArmState.FLOOR_BACK;
             addCommands(
                     new MoveSecondJoint(secondJoint, () -> PlaceGamePiece.ArmState.FOLD_BELOW_180.secondJointPosition, WAIT_TIME,
-                            () -> state.moveDuration),
-                    new ParallelCommandGroup(
-                            new MoveFirstJoint(firstJoint, () -> state.firstJointPosition, WAIT_TIME, MOVE_DURATION),
-                            new MoveSecondJoint(secondJoint, () -> state.secondJointPosition, WAIT_TIME, MOVE_DURATION)
-                    ),
-                    new KeepArmStable(firstJoint, secondJoint, compensation)
-            );
+                            () -> state.moveDuration));
         } else {
             state = PlaceGamePiece.ArmState.FLOOR_FRONT;
             addCommands(
                     new MoveSecondJoint(secondJoint, () -> PlaceGamePiece.ArmState.FOLD_ABOVE_180.secondJointPosition, WAIT_TIME,
-                            () -> state.moveDuration),
-                    new ParallelCommandGroup(
-                            new MoveFirstJoint(firstJoint, () -> state.firstJointPosition, WAIT_TIME, MOVE_DURATION),
-                            new MoveSecondJoint(secondJoint, () -> state.secondJointPosition, WAIT_TIME, MOVE_DURATION)
-                    ),
-                    new KeepArmStable(firstJoint, secondJoint, compensation)
-            );
+                            () -> state.moveDuration));
         }
+        addCommands(
+                new MoveFirstJoint(firstJoint, () -> state.firstJointPosition, WAIT_TIME, MOVE_DURATION),
+                new MoveSecondJoint(secondJoint, () -> state.secondJointPosition, WAIT_TIME, MOVE_DURATION),
+                new KeepArmStable(firstJoint, secondJoint, compensation));
     }
 }

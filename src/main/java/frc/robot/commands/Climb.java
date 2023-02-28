@@ -6,7 +6,6 @@ import com.spikes2212.dashboard.RootNamespace;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.CommandBase;
-import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import frc.robot.subsystems.Drivetrain;
 
 import java.util.function.Supplier;
@@ -16,8 +15,8 @@ public class Climb extends CommandBase {
 
     private static final RootNamespace namespace = new RootNamespace("climb");
     private static final Namespace testing = namespace.addChild("testing");
-    private static final Supplier<Double> PRE_CLIMB_SPEED = namespace.addConstantDouble("pre climb speed", 0.6);
-    private static final Supplier<Double> MID_CLIMB_SPEED = namespace.addConstantDouble("mid climb speed", 0.3);
+    private static final Supplier<Double> PRE_CLIMB_VOLTAGE = namespace.addConstantDouble("pre climb voltage", 0.6);
+    private static final Supplier<Double> MID_CLIMB_VOLTAGE = namespace.addConstantDouble("mid climb voltage", 0.3);
     private static final Supplier<Double> ROTATE_SPEED = namespace.addConstantDouble("rotate speed climb speed", 0.2);
     private static final Supplier<Double> MIN_MID_CLIMB_VOLTAGE = namespace.addConstantDouble("minimum mid climb voltage", 2.4);
     private static final Supplier<Double> PRE_CLIMB_TOLERANCE = namespace.addConstantDouble("pre climb tolerance", 15);
@@ -53,7 +52,7 @@ public class Climb extends CommandBase {
         double pitch = drivetrain.getPitch();
         namespace.putBoolean("pitch smaller than tolerance", Math.abs(pitch) <= MID_CLIMB_TOLERANCE.get());
         if (!startedClimbing) {
-            drivetrain.arcadeDrive(PRE_CLIMB_SPEED.get(), 0);
+            drivetrain.tankDriveVoltages(MID_CLIMB_VOLTAGE.get(), MID_CLIMB_VOLTAGE.get());
             startedClimbing = Math.abs(pitch) > PRE_CLIMB_TOLERANCE.get();
             lastTimeNotOnTarget = Timer.getFPGATimestamp();
             if (startedClimbing) drivetrain.resetEncoders();
@@ -70,11 +69,11 @@ public class Climb extends CommandBase {
 //                    lastTimeNotOnTarget = Timer.getFPGATimestamp();
 //                }
             } else {
-                drivetrain.arcadeDrive(
-                        Math.signum(pitch) * Math.max(
-                                Math.abs(MID_CLIMB_SPEED.get() *
-                                        Math.sqrt((ENCODERS_SETPOINT.get() - Math.abs(drivetrain.getLeftPosition())))),
-                                Math.abs(MIN_MID_CLIMB_VOLTAGE.get() / RobotController.getBatteryVoltage())), 0);
+                double voltage = Math.signum(pitch) * Math.max(
+                        Math.abs(MID_CLIMB_VOLTAGE.get() *
+                                Math.sqrt((ENCODERS_SETPOINT.get() - Math.abs(drivetrain.getLeftPosition())))),
+                        Math.abs(MIN_MID_CLIMB_VOLTAGE.get()));
+                drivetrain.tankDriveVoltages(voltage, voltage);
                 lastTimeNotOnTarget = Timer.getFPGATimestamp();
             }
         }

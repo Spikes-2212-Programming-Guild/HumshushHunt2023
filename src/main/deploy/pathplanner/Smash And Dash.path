@@ -26,16 +26,16 @@
     },
     {
       "anchorPoint": {
-        "x": 6.260482948316324,
+        "x": 5.826554559092024,
         "y": 4.601924759405074
       },
       "prevControl": {
-        "x": 5.260482948316331,
-        "y": 4.601924759405074
+        "x": 4.970116948777301,
+        "y": 4.601924759404567
       },
       "nextControl": {
-        "x": 5.260482948316331,
-        "y": 4.601924759405074
+        "x": 4.970116948777301,
+        "y": 4.601924759404567
       },
       "holonomicAngle": 0,
       "isReversal": true,
@@ -47,18 +47,18 @@
           "takeGP"
         ],
         "executionBehavior": "parallel",
-        "waitBehavior": "before",
+        "waitBehavior": "after",
         "waitTime": 0
       }
     },
     {
       "anchorPoint": {
-        "x": 2.126744082547994,
-        "y": 4.476313909892777
+        "x": 3.0,
+        "y": 4.521990582442704
       },
       "prevControl": {
-        "x": 4.547607727694087,
-        "y": 4.476313909892777
+        "x": 5.084308630155721,
+        "y": 4.13373886576833
       },
       "nextControl": null,
       "holonomicAngle": 0,
@@ -71,7 +71,7 @@
           "putGP2"
         ],
         "executionBehavior": "parallel",
-        "waitBehavior": "after",
+        "waitBehavior": "none",
         "waitTime": 0
       }
     }
@@ -81,9 +81,15 @@
   "isReversed": false,
   "markers": [
     {
-      "position": 0.15,
+      "position": 0.05,
       "names": [
-        "switchSides"
+        "switchSides1"
+      ]
+    },
+    {
+      "position": 1.03,
+      "names": [
+        "switchSides2"
       ]
     }
   ]

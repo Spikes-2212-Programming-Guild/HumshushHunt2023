@@ -57,9 +57,9 @@ public class LedsService {
         led.start();
         configureDashboard();
         CANifier caNifier = new CANifier(8);
-        caNifier.setLEDOutput(0.3, CANifier.LEDChannel.LEDChannelA);
-        caNifier.setLEDOutput(0.3, CANifier.LEDChannel.LEDChannelB);
-        caNifier.setLEDOutput(0.3, CANifier.LEDChannel.LEDChannelC);
+//        caNifier.setLEDOutput(1, CANifier.LEDChannel.LEDChannelA);
+//        caNifier.setLEDOutput(1, CANifier.LEDChannel.LEDChannelB);
+//        caNifier.setLEDOutput(1, CANifier.LEDChannel.LEDChannelC);
     }
 
     public void periodic() {
