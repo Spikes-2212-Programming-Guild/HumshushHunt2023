@@ -107,8 +107,6 @@ public class OI /*GEVALD*/ {
                 new PlaceGamePiece(firstJoint, secondJoint, PlaceGamePiece.ArmState.FRONT_DOUBLE_SUBSTATION),
                 secondJoint::isBack
         ));
-        //Keeps the arm stable
-        ps.getShareButton().whileTrue(new KeepArmStable(firstJoint, secondJoint, compensation));
         //Stops both joints
         ps.getRightStickButton().onTrue(new InstantCommand(() -> {
         }, firstJoint, secondJoint));
@@ -144,6 +142,7 @@ public class OI /*GEVALD*/ {
         new JoystickButton(right, 1).onTrue(new InstantCommand(() -> {
         }, drivetrain));
         new JoystickButton(right, 2).onTrue(new Climb2(drivetrain));
+        new JoystickButton(right, 5).onTrue(new Climb(drivetrain));
         new JoystickButton(right, 3).onTrue(new InstantCommand(() -> drivetrain.setMode(CANSparkMax.IdleMode.kBrake)));
         new JoystickButton(right, 4).onTrue(new InstantCommand(() -> drivetrain.setMode(CANSparkMax.IdleMode.kCoast)));
         new JoystickButton(left, 1).onTrue(new InstantCommand(() -> {
@@ -186,7 +185,7 @@ public class OI /*GEVALD*/ {
 
     public double getLeftX() {
 //        double val = xbox.getLeftX();
-        double val = -left.getX();
+        double val = left.getX();
         double temp = lastRotateValue;
         double output = val * 0.6 + temp * 0.4;
         lastRotateValue = output;

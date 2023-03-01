@@ -33,9 +33,9 @@ public class VisionService {
 
     private static final String PHOTON_VISION_CAMERA_NAME = "photonvision";
     private static final String FRONT_LIMELIGHT_NAME = "limelight-front";
-    private static final String BACK_LIMELIGHT_NAME = "limelight-back";
+    private static final String BACK_LIMELIGHT_NAME = "limelight";
 
-    private static final int TOLERANCE = 1;
+    private static final double TOLERANCE = 1.5;
 
     private static VisionService instance;
 
@@ -140,6 +140,8 @@ public class VisionService {
         namespace.putNumber("front limelight yaw", this::getFrontLimelightYaw);
         namespace.putNumber("back limelight yaw", this::getBackLimelightYaw);
         namespace.putNumber("photon vision yaw", this::getPhotonVisionYaw);
+        namespace.putBoolean("front limelight centered", this::frontLimelightCentered);
+        namespace.putBoolean("back limelight centered", this::backLimelightCentered);
 //        CameraServer.startAutomaticCapture();
     }
 }

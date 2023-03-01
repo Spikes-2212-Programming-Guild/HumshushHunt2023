@@ -21,14 +21,9 @@ import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.PneumaticsModuleType;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.TimedRobot;
-import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
+import edu.wpi.first.wpilibj2.command.*;
 import frc.robot.commands.*;
-import frc.robot.commands.autonomous.PlanBEdge;
-import frc.robot.commands.autonomous.PlanBWindow;
-import frc.robot.commands.autonomous.SmashAndDash;
-import frc.robot.commands.autonomous.SplooshAndVamooseWindow;
+import frc.robot.commands.autonomous.*;
 import frc.robot.services.ArmGravityCompensation;
 import frc.robot.services.LedsService;
 import frc.robot.services.VisionService;
@@ -88,7 +83,7 @@ public class Robot extends TimedRobot {
             firstJoint.setIdleMode(CANSparkMax.IdleMode.kBrake);
             secondJoint.setIdleMode(CANSparkMax.IdleMode.kBrake);
         }).ignoringDisable(true).schedule();
-        new InstantCommand(() -> drivetrain.setMode(CANSparkMax.IdleMode.kCoast)).ignoringDisable(true).schedule();
+//        new InstantCommand(() -> drivetrain.setMode(CANSparkMax.IdleMode.kCoast)).ignoringDisable(true).schedule();
     }
 
     @Override
@@ -102,10 +97,13 @@ public class Robot extends TimedRobot {
             firstJoint.setIdleMode(CANSparkMax.IdleMode.kBrake);
             secondJoint.setIdleMode(CANSparkMax.IdleMode.kBrake);
         });
+        new CloseGripper(gripper);
 //        new SplooshAndVamoose(drivetrain).getCommand().schedule();
 //        autoChooser.schedule();
 //        new SplooshAndVamoose(drivetrain).getCommand().schedule();
-        new PlanBWindow(drivetrain).getCommand().schedule();
+        new PlanBEdge(drivetrain).getCommand().schedule();
+//        new PlanBWindow(drivetrain).getCommand().schedule();
+//        new ClimbPlanB(drivetrain).schedule();
     }
 
     @Override
@@ -192,11 +190,18 @@ public class Robot extends TimedRobot {
             firstJoint.setIdleMode(CANSparkMax.IdleMode.kCoast);
             secondJoint.setIdleMode(CANSparkMax.IdleMode.kCoast);
         }).ignoringDisable(true));
+        namespace.putData("brake arm", new InstantCommand(() -> {
+            firstJoint.setIdleMode(CANSparkMax.IdleMode.kBrake);
+            secondJoint.setIdleMode(CANSparkMax.IdleMode.kBrake);
+        }).ignoringDisable(true));
         namespace.putData("keep arm stable", new KeepArmStable(firstJoint, secondJoint, ArmGravityCompensation.getInstance()));
         namespace.putData("stop", new InstantCommand(() -> {
         }, firstJoint, secondJoint));
-        namespace.putData("move arm", new PlaceGamePiece(firstJoint, secondJoint, PlaceGamePiece.ArmState.BACK_TOP));
-
+        namespace.putData("move arm", new PlaceGamePiece(firstJoint, secondJoint, PlaceGamePiece.ArmState.FRONT_TOP));
+        namespace.putData("drive arcade positive", new DriveArcade(drivetrain, 0.3, 0));
+        namespace.putData("drive arcade negative", new DriveArcade(drivetrain, -0.3, 0));
+        namespace.putData("drive arcade positive with rotate", new DriveArcade(drivetrain, 0.3, 0.1));
+        namespace.putData("drive arcade negative with rotate", new DriveArcade(drivetrain, -0.3, -0.1));
         namespace.putData("floor back", new MoveArmToFloor(firstJoint, secondJoint, compensation, true));
         namespace.putData("floor front", new MoveArmToFloor(firstJoint, secondJoint, compensation, false));
         namespace.putData("switch sides back", new SwitchSides(firstJoint, secondJoint, gripper, true));
@@ -233,6 +238,8 @@ public class Robot extends TimedRobot {
                 feedForwardSettings.setkG(() -> 0.0);
             }
         });
+        namespace.putData("drivetrain coast", new InstantCommand(() -> drivetrain.setMode(CANSparkMax.IdleMode.kCoast)).ignoringDisable(true));
+        namespace.putData("drivetrain brake", new InstantCommand(() -> drivetrain.setMode(CANSparkMax.IdleMode.kBrake)).ignoringDisable(true));
         namespace.putData("smash and dash", new SmashAndDash(drivetrain).getCommand());
         namespace.putData("test test test", new ParallelCommandGroup(
                 new MoveSecondJoint(secondJoint, () -> PlaceGamePiece.ArmState.FOLD_ABOVE_180.secondJointPosition,
@@ -258,5 +265,14 @@ public class Robot extends TimedRobot {
         namespace.putData("sploosh and vamoose", new SplooshAndVamooseWindow(drivetrain).getCommand());
         namespace.putData("climb2", new Climb2(drivetrain));
         namespace.putData("turn to 0", new TurnToZero(drivetrain));
+        namespace.putData("test plan b", new SequentialCommandGroup(new PlaceGamePiece(ArmFirstJoint.getInstance(), ArmSecondJoint.getInstance(),
+                PlaceGamePiece.ArmState.BACK_TOP),
+                new OpenGripper(Gripper.getInstance()),
+                new MoveSecondJoint(ArmSecondJoint.getInstance(), () -> PlaceGamePiece.ArmState.FOLD_BELOW_180.secondJointPosition,
+                        () -> 0.005, () -> PlaceGamePiece.ArmState.FOLD_BELOW_180.moveDuration + 0.2),
+                new CloseGripper(Gripper.getInstance()),
+                new WaitCommand(1),
+                new MoveFirstJoint(ArmFirstJoint.getInstance(), () -> 110.0, () -> 0.005,
+                        () -> PlaceGamePiece.ArmState.FOLD_BELOW_180.moveDuration + 0.2)));
     }
 }

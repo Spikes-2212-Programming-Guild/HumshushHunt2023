@@ -46,8 +46,8 @@ public class PlaceGamePiece extends SequentialCommandGroup {
 
     public enum ArmState {
 
-        FOLD_BELOW_180(90, 35, 0.5),
-        FOLD_ABOVE_180(90, 325, 0.5),
+        FOLD_BELOW_180(90, 40, 0.5),
+        FOLD_ABOVE_180(90, 320, 0.5),
         REST(0, 0, 0),
         FLOOR_BACK(110, 120, 0.5),
         FLOOR_FRONT(75, 233, 0.5),
