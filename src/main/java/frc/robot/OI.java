@@ -27,7 +27,7 @@ public class OI /*GEVALD*/ {
     private double lastRotateValue;
 
     private OI(Drivetrain drivetrain, ArmFirstJoint firstJoint, ArmSecondJoint secondJoint, Gripper gripper,
-               ArmGravityCompensation compensation) {
+               ArmGravityCompensation compensation, VisionService visionService) {
         FakeArm fakeArm = FakeArm.getInstance();
         //Moves the first joint forward
         ps.getR1Button().whileTrue(new MoveSmartMotorControllerGenericSubsystem(firstJoint, firstJoint.getPIDSettings(), firstJoint.getFeedForwardSettings(), UnifiedControlMode.PERCENT_OUTPUT, firstJoint.forwardSpeed) {
@@ -102,11 +102,11 @@ public class OI /*GEVALD*/ {
                         new PlaceGamePiece(firstJoint, secondJoint, PlaceGamePiece.ArmState.FRONT_LIFT),
                         secondJoint::isBack));
         //Moves arm to double substation
-//        ps.getRightButton().onTrue(new ConditionalCommand(
-//                new PlaceGamePiece(firstJoint, secondJoint, PlaceGamePiece.ArmState.BACK_DOUBLE_SUBSTATION),
-//                new PlaceGamePiece(firstJoint, secondJoint, PlaceGamePiece.ArmState.FRONT_DOUBLE_SUBSTATION),
-//                secondJoint::isBack
-//        ));
+        ps.getRightButton().onTrue(new ConditionalCommand(
+                new PlaceGamePiece(firstJoint, secondJoint, PlaceGamePiece.ArmState.BACK_DOUBLE_SUBSTATION),
+                new PlaceGamePiece(firstJoint, secondJoint, PlaceGamePiece.ArmState.FRONT_DOUBLE_SUBSTATION),
+                secondJoint::isBack
+        ));
         //Keeps the arm stable
         ps.getShareButton().whileTrue(new KeepArmStable(firstJoint, secondJoint, compensation));
         //Stops both joints
@@ -161,12 +161,14 @@ public class OI /*GEVALD*/ {
 //        xbox.getLeftStickButton().onTrue(new InstantCommand(() -> {
 //        }, drivetrain));
 //        xbox.getButtonStart().onTrue(new Climb(drivetrain));
+
+
     }
 
     public static OI getInstance() {
         if (instance == null) {
             instance = new OI(Drivetrain.getInstance(), ArmFirstJoint.getInstance(), ArmSecondJoint.getInstance(),
-                    Gripper.getInstance(), ArmGravityCompensation.getInstance());
+                    Gripper.getInstance(), ArmGravityCompensation.getInstance(), VisionService.getInstance());
         }
         return instance;
     }
@@ -184,12 +186,28 @@ public class OI /*GEVALD*/ {
 
     public double getLeftX() {
 //        double val = xbox.getLeftX();
-        double val = left.getX();
+        double val = -left.getX();
         double temp = lastRotateValue;
         double output = val * 0.6 + temp * 0.4;
         lastRotateValue = output;
         return output;
 //        return Math.signum(val) * val * val;
 //        return val;
+    }
+
+    public double getRightX() {
+        double val = right.getX();
+        double temp = lastRotateValue;
+        double output = val * 0.6 + temp * 0.4;
+        lastRotateValue = output;
+        return output * output * Math.signum(output);
+    }
+
+    public double getLeftY() {
+        double val = left.getY();
+        double temp = lastMoveValue;
+        double output = val * 0.8 + temp * 0.2;
+        lastMoveValue = output;
+        return output * output * Math.signum(output);
     }
 }

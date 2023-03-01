@@ -28,7 +28,7 @@ import frc.robot.commands.*;
 import frc.robot.commands.autonomous.PlanBEdge;
 import frc.robot.commands.autonomous.PlanBWindow;
 import frc.robot.commands.autonomous.SmashAndDash;
-import frc.robot.commands.autonomous.SplooshAndVamoose;
+import frc.robot.commands.autonomous.SplooshAndVamooseWindow;
 import frc.robot.services.ArmGravityCompensation;
 import frc.robot.services.LedsService;
 import frc.robot.services.VisionService;
@@ -60,7 +60,7 @@ public class Robot extends TimedRobot {
                 new RootNamespace("auto chooser"),
                 new PlanBWindow(drivetrain).getCommand(), "plan b window",
                 new PlanBEdge(drivetrain).getCommand(), "plan b edge",
-                new SplooshAndVamoose(drivetrain).getCommand(), "sploosh and vamoose"
+                new SplooshAndVamooseWindow(drivetrain).getCommand(), "sploosh and vamoose"
         );
         firstJoint.configureEncoders();
         secondJoint.configureEncoders();
@@ -255,7 +255,7 @@ public class Robot extends TimedRobot {
                 new PIDController(drivetrain.getLeftPIDSettings().getkP(), drivetrain.getLeftPIDSettings().getkI(), drivetrain.getLeftPIDSettings().getkD()),
                 new PIDController(drivetrain.getRightPIDSettings().getkP(), drivetrain.getRightPIDSettings().getkI(), drivetrain.getRightPIDSettings().getkD()),
                 drivetrain::tankDriveVoltages, drivetrain));
-        namespace.putData("sploosh and vamoose", new SplooshAndVamoose(drivetrain).getCommand());
+        namespace.putData("sploosh and vamoose", new SplooshAndVamooseWindow(drivetrain).getCommand());
         namespace.putData("climb2", new Climb2(drivetrain));
         namespace.putData("turn to 0", new TurnToZero(drivetrain));
     }
