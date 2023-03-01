@@ -104,11 +104,11 @@ public class OI /*GEVALD*/ {
                         new PlaceGamePiece(firstJoint, secondJoint, PlaceGamePiece.ArmState.FRONT_LIFT),
                         secondJoint::isBack));
         //Moves arm to double substation
-//        ps.getRightButton().onTrue(new ConditionalCommand(
-//                new PlaceGamePiece(firstJoint, secondJoint, PlaceGamePiece.ArmState.BACK_DOUBLE_SUBSTATION),
-//                new PlaceGamePiece(firstJoint, secondJoint, PlaceGamePiece.ArmState.FRONT_DOUBLE_SUBSTATION),
-//                secondJoint::isBack
-//        ));
+        ps.getRightButton().onTrue(new ConditionalCommand(
+                new PlaceGamePiece(firstJoint, secondJoint, PlaceGamePiece.ArmState.BACK_DOUBLE_SUBSTATION),
+                new PlaceGamePiece(firstJoint, secondJoint, PlaceGamePiece.ArmState.FRONT_DOUBLE_SUBSTATION),
+                secondJoint::isBack
+        ));
         //Keeps the arm stable
         ps.getShareButton().whileTrue(new KeepArmStable(firstJoint, secondJoint, compensation));
         //Stops both joints
