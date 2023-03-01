@@ -6,13 +6,11 @@ package frc.robot;
 
 import com.pathplanner.lib.PathConstraints;
 import com.pathplanner.lib.PathPlanner;
-import com.pathplanner.lib.PathPlannerTrajectory;
 import com.pathplanner.lib.commands.PPRamseteCommand;
 import com.revrobotics.CANSparkMax;
 import com.spikes2212.command.drivetrains.commands.DriveArcade;
 import com.spikes2212.command.drivetrains.commands.DriveArcadeWithPID;
 import com.spikes2212.command.drivetrains.commands.smartmotorcontrollerdrivetrain.MoveSmartMotorControllerTankDrivetrain;
-import com.spikes2212.control.PIDSettings;
 import com.spikes2212.dashboard.AutoChooser;
 import com.spikes2212.dashboard.RootNamespace;
 import com.spikes2212.util.UnifiedControlMode;
@@ -30,7 +28,7 @@ import frc.robot.commands.*;
 import frc.robot.commands.autonomous.PlanBEdge;
 import frc.robot.commands.autonomous.PlanBWindow;
 import frc.robot.commands.autonomous.SmashAndDash;
-import frc.robot.commands.autonomous.SplooshAndVamoose;
+import frc.robot.commands.autonomous.SplooshAndVamooseWindow;
 import frc.robot.services.ArmGravityCompensation;
 import frc.robot.services.LedsService;
 import frc.robot.services.VisionService;
@@ -62,7 +60,7 @@ public class Robot extends TimedRobot {
                 new RootNamespace("auto chooser"),
                 new PlanBWindow(drivetrain).getCommand(), "plan b window",
                 new PlanBEdge(drivetrain).getCommand(), "plan b edge",
-                new SplooshAndVamoose(drivetrain).getCommand(), "sploosh and vamoose"
+                new SplooshAndVamooseWindow(drivetrain).getCommand(), "sploosh and vamoose"
         );
         firstJoint.configureEncoders();
         secondJoint.configureEncoders();
@@ -203,7 +201,6 @@ public class Robot extends TimedRobot {
         namespace.putData("floor front", new MoveArmToFloor(firstJoint, secondJoint, compensation, false));
         namespace.putData("switch sides back", new SwitchSides(firstJoint, secondJoint, gripper, true));
         namespace.putData("switch sides front", new SwitchSides(firstJoint, secondJoint, gripper, false));
-        namespace.putData("limelight center", new CenterWithLimelight(drivetrain, VisionService.getInstance(), VisionService.LimelightPipeline.HIGH_RRT));
         namespace.putData("climb", new Climb(drivetrain));
         namespace.putData("velocity drivetrain", new MoveSmartMotorControllerTankDrivetrain(drivetrain, drivetrain.getLeftPIDSettings(),
                 drivetrain.getRightPIDSettings(), drivetrain.getFeedForwardSettings(),
@@ -257,7 +254,7 @@ public class Robot extends TimedRobot {
                 new PIDController(drivetrain.getLeftPIDSettings().getkP(), drivetrain.getLeftPIDSettings().getkI(), drivetrain.getLeftPIDSettings().getkD()),
                 new PIDController(drivetrain.getRightPIDSettings().getkP(), drivetrain.getRightPIDSettings().getkI(), drivetrain.getRightPIDSettings().getkD()),
                 drivetrain::tankDriveVoltages, drivetrain));
-        namespace.putData("sploosh and vamoose", new SplooshAndVamoose(drivetrain).getCommand());
+        namespace.putData("sploosh and vamoose", new SplooshAndVamooseWindow(drivetrain).getCommand());
         namespace.putData("climb2", new Climb2(drivetrain));
         namespace.putData("turn to 0", new TurnToZero(drivetrain));
     }

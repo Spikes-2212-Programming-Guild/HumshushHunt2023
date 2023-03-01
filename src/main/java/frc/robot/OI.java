@@ -3,12 +3,10 @@ package frc.robot;
 import com.revrobotics.CANSparkMax;
 import com.spikes2212.command.drivetrains.commands.DriveArcade;
 import com.spikes2212.command.genericsubsystem.commands.smartmotorcontrollergenericsubsystem.MoveSmartMotorControllerGenericSubsystem;
-import com.spikes2212.util.Limelight;
 import com.spikes2212.util.PlaystationControllerWrapper;
 import com.spikes2212.util.UnifiedControlMode;
 import com.spikes2212.util.XboxControllerWrapper;
 import edu.wpi.first.wpilibj.Joystick;
-import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.ConditionalCommand;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
@@ -26,11 +24,12 @@ public class OI /*GEVALD*/ {
     //    private final XboxControllerWrapper xbox = new XboxControllerWrapper(1);
     private final Joystick left = new Joystick(1);
     private final Joystick right = new Joystick(2);
+    private final XboxControllerWrapper xbox = new XboxControllerWrapper(3);
     private double lastMoveValue;
     private double lastRotateValue;
 
     private OI(Drivetrain drivetrain, ArmFirstJoint firstJoint, ArmSecondJoint secondJoint, Gripper gripper,
-               ArmGravityCompensation compensation) {
+               ArmGravityCompensation compensation, VisionService visionService) {
         FakeArm fakeArm = FakeArm.getInstance();
         //Moves the first joint forward
         ps.getR1Button().whileTrue(new MoveSmartMotorControllerGenericSubsystem(firstJoint, firstJoint.getPIDSettings(), firstJoint.getFeedForwardSettings(), UnifiedControlMode.PERCENT_OUTPUT, firstJoint.forwardSpeed) {
@@ -138,6 +137,7 @@ public class OI /*GEVALD*/ {
                                 )),
                         secondJoint::isBack)
         );
+
         new JoystickButton(left, 3).onTrue(new CenterWithLimelight(drivetrain, VisionService.getInstance(), VisionService.LimelightPipeline.HIGH_RRT));
         new JoystickButton(left, 2).onTrue(new CenterWithLimelight(drivetrain, VisionService.getInstance(), VisionService.LimelightPipeline.APRIL_TAG));
         new JoystickButton(left, 4).onTrue(new CenterWithLimelight(drivetrain, VisionService.getInstance(), VisionService.LimelightPipeline.LOW_RRT));
@@ -162,12 +162,14 @@ public class OI /*GEVALD*/ {
 //        xbox.getLeftStickButton().onTrue(new InstantCommand(() -> {
 //        }, drivetrain));
 //        xbox.getButtonStart().onTrue(new Climb(drivetrain));
+
+
     }
 
     public static OI getInstance() {
         if (instance == null) {
             instance = new OI(Drivetrain.getInstance(), ArmFirstJoint.getInstance(), ArmSecondJoint.getInstance(),
-                    Gripper.getInstance(), ArmGravityCompensation.getInstance());
+                    Gripper.getInstance(), ArmGravityCompensation.getInstance(), VisionService.getInstance());
         }
         return instance;
     }
@@ -185,12 +187,28 @@ public class OI /*GEVALD*/ {
 
     public double getLeftX() {
 //        double val = xbox.getLeftX();
-        double val = left.getX();
+        double val = -left.getX();
         double temp = lastRotateValue;
         double output = val * 0.6 + temp * 0.4;
         lastRotateValue = output;
         return output;
 //        return Math.signum(val) * val * val;
 //        return val;
+    }
+
+    public double getRightX() {
+        double val = xbox.getRightX();
+        double temp = lastRotateValue;
+        double output = val * 0.6 + temp * 0.4;
+        lastRotateValue = output;
+        return output * output * Math.signum(output);
+    }
+
+    public double getLeftY() {
+        double val = xbox.getLeftY();
+        double temp = lastMoveValue;
+        double output = val * 0.8 + temp * 0.2;
+        lastMoveValue = output;
+        return output * output * Math.signum(output);
     }
 }

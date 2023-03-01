@@ -2,11 +2,8 @@ package frc.robot.commands.autonomous;
 
 import com.pathplanner.lib.PathConstraints;
 import com.pathplanner.lib.PathPlanner;
-import com.spikes2212.command.drivetrains.commands.DriveArcadeWithPID;
-import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj2.command.*;
 import frc.robot.commands.*;
-import frc.robot.services.VisionService;
 import frc.robot.subsystems.ArmFirstJoint;
 import frc.robot.subsystems.ArmSecondJoint;
 import frc.robot.subsystems.Drivetrain;
@@ -15,17 +12,17 @@ import frc.robot.subsystems.Gripper;
 import java.util.HashMap;
 import java.util.Map;
 
-public class SplooshAndVamoose extends BasePathAuto {
+public class SplooshAndVamooseEdge extends BasePathAuto {
 
     private static final double MAX_VELOCITY = 2.5;
     private static final double MAX_ACCELERATION = 2;
 
-    public SplooshAndVamoose(Drivetrain drivetrain) {
+    public SplooshAndVamooseEdge(Drivetrain drivetrain) {
         super(drivetrain, getEventMap());
     }
 
     public CommandBase getCommand() {
-        return fullAuto(PathPlanner.loadPathGroup("Sploosh And Vamoose",
+        return fullAuto(PathPlanner.loadPathGroup("Sploosh And Vamoose Edge",
                 new PathConstraints(MAX_VELOCITY, MAX_ACCELERATION)));
     }
 
@@ -64,8 +61,8 @@ public class SplooshAndVamoose extends BasePathAuto {
 //                            }
 //                        },
                 new SequentialCommandGroup(
-//                        new TurnToZero(drivetrain).withTimeout(1.5),
-                        new Climb(drivetrain)
+                        new TurnToZero(drivetrain).withTimeout(1.5),
+                        new Climb2(drivetrain)
                 )
         );
         return eventMap;

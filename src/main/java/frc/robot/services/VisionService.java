@@ -114,6 +114,7 @@ public class VisionService {
     public void configureDashboard() {
         namespace.putBoolean("limelight has target", this::limelightHasTarget);
         namespace.putNumber("limelight yaw", this::getLimelightYaw);
+        namespace.putBoolean("limelight centered", this::limelightCentered);
         namespace.putNumber("photon vision yaw", this::getPhotonVisionYaw);
         CameraServer.startAutomaticCapture();
     }
