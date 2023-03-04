@@ -37,6 +37,8 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
 
     private static final double TRACK_WIDTH = 0.57;
 
+    private static final int CURRENT_LIMIT = 50;
+
     private static final int SECONDS_IN_MINUTE = 60;
 
     private static Drivetrain instance;
@@ -106,29 +108,6 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
     private double maxLeftSpeed = 0;
     private double maxRightSpeed = 0;
 
-    private Drivetrain(String namespaceName, CANSparkMax leftMaster, CANSparkMax leftSlave,
-                       CANSparkMax rightMaster, CANSparkMax rightSlave, AHRS gyro, double trackWidth) {
-        super(
-                namespaceName, leftMaster, leftSlave, rightMaster, rightSlave);
-        this.gyro = gyro;
-        leftEncoder = leftMaster.getEncoder();
-        //yes i'm serious
-        rightController.setInverted(false);
-        rightMaster.setInverted(true);
-        rightEncoder = rightMaster.getEncoder();
-        configureEncoders();
-        leftPIDSettings = new PIDSettings(kPLeft, kILeft, kDLeft, toleranceLeft, waitTimeLeft);
-        rightPIDSettings = new PIDSettings(kPRight, kIRight, kDRight, toleranceRight, waitTimeRight);
-        cameraPIDSettings = new PIDSettings(kPCamera, kICamera, kDCamera, toleranceCamera, waitTimeCamera);
-        trapezoidProfileSettings = new TrapezoidProfileSettings(maxVelocity, trapezoidAcceleration);
-        feedForwardSettings = new FeedForwardSettings(kS, kV, kA);
-        odometry = new DifferentialDriveOdometry(gyro.getRotation2d(), getLeftPosition(), getRightPosition());
-        kinematics = new DifferentialDriveKinematics(trackWidth);
-        ramseteController = new RamseteController();
-        field2d = new Field2d();
-        configureDashboard();
-    }
-
     public static Drivetrain getInstance() {
         if (instance == null) {
             instance = new Drivetrain(
@@ -147,12 +126,37 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
         return instance;
     }
 
+    private Drivetrain(String namespaceName, CANSparkMax leftMaster, CANSparkMax leftSlave,
+                       CANSparkMax rightMaster, CANSparkMax rightSlave, AHRS gyro, double trackWidth) {
+        super(
+                namespaceName, leftMaster, leftSlave, rightMaster, rightSlave);
+        this.gyro = gyro;
+        leftEncoder = leftMaster.getEncoder();
+        //yes i'm serious
+        rightController.setInverted(false);
+        rightMaster.setInverted(true);
+        rightEncoder = rightMaster.getEncoder();
+        configureEncoders();
+        setCurrentLimits();
+        leftPIDSettings = new PIDSettings(kPLeft, kILeft, kDLeft, toleranceLeft, waitTimeLeft);
+        rightPIDSettings = new PIDSettings(kPRight, kIRight, kDRight, toleranceRight, waitTimeRight);
+        cameraPIDSettings = new PIDSettings(kPCamera, kICamera, kDCamera, toleranceCamera, waitTimeCamera);
+        trapezoidProfileSettings = new TrapezoidProfileSettings(maxVelocity, trapezoidAcceleration);
+        feedForwardSettings = new FeedForwardSettings(kS, kV, kA);
+        odometry = new DifferentialDriveOdometry(gyro.getRotation2d(), getLeftPosition(), getRightPosition());
+        kinematics = new DifferentialDriveKinematics(trackWidth);
+        ramseteController = new RamseteController();
+        field2d = new Field2d();
+        configureDashboard();
+    }
+
     @Override
     public void configureLoop(PIDSettings leftPIDSettings, PIDSettings rightPIDSettings,
                               FeedForwardSettings feedForwardSettings,
                               TrapezoidProfileSettings trapezoidProfileSettings) {
         super.configureLoop(leftPIDSettings, rightPIDSettings, feedForwardSettings, trapezoidProfileSettings);
         configureEncoders();
+        setCurrentLimits();
         rightMaster.setInverted(true);
         prevLeftSetpoint = 0;
         prevRightSetpoint = 0;
@@ -280,6 +284,13 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
         leftEncoder.setVelocityConversionFactor(DISTANCE_PER_ROTATION / SECONDS_IN_MINUTE);
         rightEncoder.setPositionConversionFactor(DISTANCE_PER_ROTATION);
         rightEncoder.setVelocityConversionFactor(DISTANCE_PER_ROTATION / SECONDS_IN_MINUTE);
+    }
+
+    private void setCurrentLimits(){
+        leftMaster.setSmartCurrentLimit(CURRENT_LIMIT);
+        rightMaster.setSmartCurrentLimit(CURRENT_LIMIT);
+        leftSlaves.get(0).setSmartCurrentLimit(CURRENT_LIMIT);
+        rightSlaves.get(0).setSmartCurrentLimit(CURRENT_LIMIT);
     }
 
     private double getAcceleration() {

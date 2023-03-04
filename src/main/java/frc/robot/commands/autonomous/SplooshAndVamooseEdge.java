@@ -62,7 +62,7 @@ public class SplooshAndVamooseEdge extends BasePathAuto {
 //                        },
                 new SequentialCommandGroup(
                         new TurnToZero(drivetrain).withTimeout(1.5),
-                        new Climb2(drivetrain)
+                        new Climb(drivetrain)
                 )
         );
         return eventMap;

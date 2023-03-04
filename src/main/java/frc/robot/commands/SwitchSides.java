@@ -33,7 +33,7 @@ public class SwitchSides extends SequentialCommandGroup {
         this.firstJoint = firstJoint;
         this.secondJoint = secondJoint;
         this.gripper = gripper;
-        addRequirements(firstJoint, secondJoint, FakeArm.getInstance());
+        addRequirements(firstJoint, secondJoint);
         if (isBack) {
             addCommands(
 //                    new InstantCommand(() -> Drivetrain.getInstance().setMode(CANSparkMax.IdleMode.kBrake)),

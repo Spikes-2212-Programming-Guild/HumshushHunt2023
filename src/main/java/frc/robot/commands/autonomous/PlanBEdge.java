@@ -2,6 +2,7 @@ package frc.robot.commands.autonomous;
 
 import com.pathplanner.lib.PathConstraints;
 import com.pathplanner.lib.PathPlanner;
+import com.spikes2212.command.drivetrains.commands.DriveArcade;
 import edu.wpi.first.wpilibj2.command.*;
 import frc.robot.commands.*;
 import frc.robot.subsystems.ArmFirstJoint;
@@ -30,8 +31,10 @@ public class PlanBEdge extends BasePathAuto {
         HashMap<String, Command> eventMap = new HashMap<>();
         eventMap.put("putGP", new SequentialCommandGroup(
                 new PrintCommand("put gp"),
-                new PlaceGamePiece(ArmFirstJoint.getInstance(), ArmSecondJoint.getInstance(),
-                        PlaceGamePiece.ArmState.FRONT_TOP),
+                new ParallelRaceGroup(
+                        new DriveArcade(Drivetrain.getInstance(), 0.25, 0),
+                        new PlaceGamePiece(ArmFirstJoint.getInstance(), ArmSecondJoint.getInstance(),
+                                PlaceGamePiece.ArmState.FRONT_TOP)),
                 new OpenGripper(Gripper.getInstance()),
                 new WaitCommand(1),
                 new MoveSecondJoint(ArmSecondJoint.getInstance(), () -> PlaceGamePiece.ArmState.FOLD_ABOVE_180.secondJointPosition, () -> 0.005,

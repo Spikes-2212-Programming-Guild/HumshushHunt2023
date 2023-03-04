@@ -1,7 +1,6 @@
 package frc.robot;
 
 import com.revrobotics.CANSparkMax;
-import com.spikes2212.command.drivetrains.commands.DriveArcade;
 import com.spikes2212.command.genericsubsystem.commands.smartmotorcontrollergenericsubsystem.MoveSmartMotorControllerGenericSubsystem;
 import com.spikes2212.util.PlaystationControllerWrapper;
 import com.spikes2212.util.UnifiedControlMode;
@@ -28,18 +27,11 @@ public class OI /*GEVALD*/ {
 
     private OI(Drivetrain drivetrain, ArmFirstJoint firstJoint, ArmSecondJoint secondJoint, Gripper gripper,
                ArmGravityCompensation compensation, VisionService visionService) {
-        FakeArm fakeArm = FakeArm.getInstance();
         //Moves the first joint forward
         ps.getR1Button().whileTrue(new MoveSmartMotorControllerGenericSubsystem(firstJoint, firstJoint.getPIDSettings(), firstJoint.getFeedForwardSettings(), UnifiedControlMode.PERCENT_OUTPUT, firstJoint.forwardSpeed) {
             @Override
             public boolean isFinished() {
                 return false;
-            }
-
-            @Override
-            public void initialize() {
-                super.initialize();
-                addRequirements(fakeArm);
             }
         });
         //Moves the first joint backwards
@@ -48,12 +40,6 @@ public class OI /*GEVALD*/ {
             public boolean isFinished() {
                 return false;
             }
-
-            @Override
-            public void initialize() {
-                super.initialize();
-                addRequirements(fakeArm);
-            }
         });
         //Moves the second joint forward
         ps.getL1Button().whileTrue(new MoveSmartMotorControllerGenericSubsystem(secondJoint, secondJoint.getPIDSettings(), secondJoint.getFeedForwardSettings(), UnifiedControlMode.PERCENT_OUTPUT, secondJoint.forwardSpeed) {
@@ -61,12 +47,6 @@ public class OI /*GEVALD*/ {
             public boolean isFinished() {
                 return false;
             }
-
-//            @Override
-//            public void initialize() {
-//                super.initialize();
-//                addRequirements(fakeArm);
-//            }
         });
         //Moves the second joint backwards
         ps.getL2Button().whileTrue(new MoveSmartMotorControllerGenericSubsystem(secondJoint, secondJoint.getPIDSettings(), secondJoint.getFeedForwardSettings(), UnifiedControlMode.PERCENT_OUTPUT, secondJoint.backwardsSpeed) {
@@ -74,12 +54,6 @@ public class OI /*GEVALD*/ {
             public boolean isFinished() {
                 return false;
             }
-
-//            @Override
-//            public void initialize() {
-//                super.initialize();
-//                addRequirements(fakeArm);
-//            }
         });
         //Moves the arm to the floor
         ps.getCrossButton().onTrue(new ConditionalCommand(new MoveArmToFloor(firstJoint, secondJoint, compensation, true),
@@ -133,6 +107,7 @@ public class OI /*GEVALD*/ {
                                 )),
                         secondJoint::isBack)
         );
+
         new JoystickButton(left, 3).onTrue(new ConditionalCommand(new CenterWithBackLimelight(drivetrain, VisionService.getInstance(), VisionService.LimelightPipeline.HIGH_RRT),
                 new CenterWithFrontLimelight(drivetrain, VisionService.getInstance(), VisionService.LimelightPipeline.HIGH_RRT), secondJoint::isBack));
         new JoystickButton(left, 2).onTrue(new ConditionalCommand(new CenterWithBackLimelight(drivetrain, VisionService.getInstance(), VisionService.LimelightPipeline.HIGH_RRT),
@@ -141,8 +116,7 @@ public class OI /*GEVALD*/ {
                 new CenterWithFrontLimelight(drivetrain, VisionService.getInstance(), VisionService.LimelightPipeline.LOW_RRT), secondJoint::isBack));
         new JoystickButton(right, 1).onTrue(new InstantCommand(() -> {
         }, drivetrain));
-        new JoystickButton(right, 2).onTrue(new Climb2(drivetrain));
-        new JoystickButton(right, 5).onTrue(new Climb(drivetrain));
+        new JoystickButton(right, 2).onTrue(new Climb(drivetrain));
         new JoystickButton(right, 3).onTrue(new InstantCommand(() -> drivetrain.setMode(CANSparkMax.IdleMode.kBrake)));
         new JoystickButton(right, 4).onTrue(new InstantCommand(() -> drivetrain.setMode(CANSparkMax.IdleMode.kCoast)));
         new JoystickButton(left, 1).onTrue(new InstantCommand(() -> {

@@ -101,9 +101,9 @@ public class Robot extends TimedRobot {
 //        new SplooshAndVamoose(drivetrain).getCommand().schedule();
 //        autoChooser.schedule();
 //        new SplooshAndVamoose(drivetrain).getCommand().schedule();
-        new PlanBEdge(drivetrain).getCommand().schedule();
+//        new PlanBEdge(drivetrain).getCommand().schedule();
 //        new PlanBWindow(drivetrain).getCommand().schedule();
-//        new ClimbPlanB(drivetrain).schedule();
+        new ClimbPlanB(drivetrain).schedule();
     }
 
     @Override
@@ -186,6 +186,7 @@ public class Robot extends TimedRobot {
     }
 
     private void setNamespaceTestingCommands() {
+        namespace.putData("limelight pipeline to 1", new InstantCommand(()->VisionService.getInstance().setBackLimelightPipeline(VisionService.LimelightPipeline.HIGH_RRT)));
         namespace.putData("coast arm", new InstantCommand(() -> {
             firstJoint.setIdleMode(CANSparkMax.IdleMode.kCoast);
             secondJoint.setIdleMode(CANSparkMax.IdleMode.kCoast);
@@ -207,7 +208,6 @@ public class Robot extends TimedRobot {
         namespace.putData("switch sides back", new SwitchSides(firstJoint, secondJoint, gripper, true));
         namespace.putData("switch sides front", new SwitchSides(firstJoint, secondJoint, gripper, false));
         namespace.putData("limelight center", new CenterWithFrontLimelight(drivetrain, VisionService.getInstance(), VisionService.LimelightPipeline.HIGH_RRT));
-        namespace.putData("climb", new Climb(drivetrain));
         namespace.putData("velocity drivetrain", new MoveSmartMotorControllerTankDrivetrain(drivetrain, drivetrain.getLeftPIDSettings(),
                 drivetrain.getRightPIDSettings(), drivetrain.getFeedForwardSettings(),
                 UnifiedControlMode.VELOCITY, () -> 3.0, () -> 3.0));
@@ -263,7 +263,7 @@ public class Robot extends TimedRobot {
                 new PIDController(drivetrain.getRightPIDSettings().getkP(), drivetrain.getRightPIDSettings().getkI(), drivetrain.getRightPIDSettings().getkD()),
                 drivetrain::tankDriveVoltages, drivetrain));
         namespace.putData("sploosh and vamoose", new SplooshAndVamooseWindow(drivetrain).getCommand());
-        namespace.putData("climb2", new Climb2(drivetrain));
+        namespace.putData("climb2", new Climb(drivetrain));
         namespace.putData("turn to 0", new TurnToZero(drivetrain));
         namespace.putData("test plan b", new SequentialCommandGroup(new PlaceGamePiece(ArmFirstJoint.getInstance(), ArmSecondJoint.getInstance(),
                 PlaceGamePiece.ArmState.BACK_TOP),
