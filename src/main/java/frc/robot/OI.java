@@ -117,8 +117,10 @@ public class OI /*GEVALD*/ {
         new JoystickButton(right, 1).onTrue(new InstantCommand(() -> {
         }, drivetrain));
         new JoystickButton(right, 2).onTrue(new Climb(drivetrain));
-        new JoystickButton(right, 3).onTrue(new InstantCommand(() -> drivetrain.setMode(CANSparkMax.IdleMode.kBrake)));
-        new JoystickButton(right, 4).onTrue(new InstantCommand(() -> drivetrain.setMode(CANSparkMax.IdleMode.kCoast)));
+//        new JoystickButton(right, 3).onTrue(new InstantCommand(() -> drivetrain.setMode(CANSparkMax.IdleMode.kBrake)));
+//        new JoystickButton(right, 4).onTrue(new InstantCommand(() -> drivetrain.setMode(CANSparkMax.IdleMode.kCoast)));
+        new JoystickButton(right, 3).onTrue(new CenterOnGamePiece(drivetrain, visionService, VisionService.PhotonVisionPipeline.CUBE));
+        new JoystickButton(right, 4).onTrue(new CenterOnGamePiece(drivetrain, visionService, VisionService.PhotonVisionPipeline.CONE));
         new JoystickButton(left, 1).onTrue(new InstantCommand(() -> {
         }, drivetrain));
 //        xbox.getLeftStickButton().onTrue(new InstantCommand(() -> drivetrain.setMode(CANSparkMax.IdleMode.kCoast)));

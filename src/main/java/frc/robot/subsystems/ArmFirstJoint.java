@@ -132,12 +132,16 @@ public class ArmFirstJoint extends SparkMaxGenericSubsystem {
 
     public double getAbsolutePosition() {
         if (absoluteEncoder.isConnected()) {
-            double pos = absoluteEncoder.getAbsolutePosition() * DEGREES_PER_ROTATION;
+            double pos = absoluteEncoder.getAbsolutePosition()  * DEGREES_PER_ROTATION;
             if (pos > 90) pos -= 180;
             else pos += 180;
             return pos;
         }
         return getRelativePosition();
+    }
+
+    public CANSparkMax.IdleMode getIdleMode() {
+        return master.getIdleMode();
     }
 
     public double getVelocity() {
@@ -175,15 +179,11 @@ public class ArmFirstJoint extends SparkMaxGenericSubsystem {
         namespace.putNumber("current", master::getOutputCurrent);
         namespace.putRunnable("set position", () -> sparkMaxEncoder.setPosition(getAbsolutePosition()));
         namespace.putNumber("aribtrary ff", () -> arbitraryFeedForward);
-        namespace.putData("move with arbitrary ff",
-                new InstantCommand(() -> arbitraryFeedForward = -1.3).andThen(
-        new MoveSmartMotorControllerGenericSubsystem(this,
-                new PIDSettings(0, 0, 190000), FeedForwardSettings.EMPTY_FFSETTINGS, UnifiedControlMode.POSITION,
-                () -> 45.0)));
+        namespace.putBoolean("absolute encoder connected", absoluteEncoder::isConnected);
     }
 
     public void setArbitraryFeedForward(double arbitraryFeedForward) {
-//        this.arbitraryFeedForward = arbitraryFeedForward;
-        this.arbitraryFeedForward = 0;
+        this.arbitraryFeedForward = arbitraryFeedForward;
+//        this.arbitraryFeedForward = 0;
     }
 }

@@ -9,12 +9,12 @@ import frc.robot.services.ArmGravityCompensation;
 import frc.robot.subsystems.ArmFirstJoint;
 import frc.robot.subsystems.ArmSecondJoint;
 
-public class KeepSecondJointAngle extends SequentialCommandGroup {
+public class KeepSecondJointStable extends SequentialCommandGroup {
 
     double firstJointAngle;
     double secondJointAngle;
 
-    public KeepSecondJointAngle(ArmFirstJoint firstJoint, ArmSecondJoint secondJoint, ArmGravityCompensation compensation) {
+    public KeepSecondJointStable(ArmFirstJoint firstJoint, ArmSecondJoint secondJoint, ArmGravityCompensation compensation) {
         addCommands(
                 new InstantCommand(() -> {
                     firstJointAngle = firstJoint.getAbsolutePosition();

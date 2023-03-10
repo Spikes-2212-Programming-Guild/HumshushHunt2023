@@ -9,18 +9,14 @@ import com.pathplanner.lib.PathPlanner;
 import com.pathplanner.lib.commands.PPRamseteCommand;
 import com.revrobotics.CANSparkMax;
 import com.spikes2212.command.drivetrains.commands.DriveArcade;
-import com.spikes2212.command.drivetrains.commands.DriveArcadeWithPID;
-import com.spikes2212.command.drivetrains.commands.smartmotorcontrollerdrivetrain.MoveSmartMotorControllerTankDrivetrain;
 import com.spikes2212.dashboard.AutoChooser;
 import com.spikes2212.dashboard.RootNamespace;
-import com.spikes2212.util.UnifiedControlMode;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
-import edu.wpi.first.wpilibj.Compressor;
-import edu.wpi.first.wpilibj.PneumaticsModuleType;
-import edu.wpi.first.wpilibj.RobotController;
-import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.*;
 import edu.wpi.first.wpilibj2.command.*;
 import frc.robot.commands.*;
 import frc.robot.commands.autonomous.*;
@@ -44,6 +40,7 @@ public class Robot extends TimedRobot {
     private VisionService vision;
     private LedsService leds;
     private AutoChooser autoChooser;
+    private WrapperCommand coastCommand;
 
     @Override
     public void robotInit() {
@@ -55,10 +52,16 @@ public class Robot extends TimedRobot {
                 new RootNamespace("auto chooser"),
                 new PlanBWindow(drivetrain).getCommand(), "plan b window",
                 new PlanBEdge(drivetrain).getCommand(), "plan b edge",
-                new SplooshAndVamooseWindow(drivetrain).getCommand(), "sploosh and vamoose"
+                new SplooshAndVamooseWindow(drivetrain).getCommand(), "sploosh and vamoose",
+                new SmashAndDash(drivetrain).getCommand(), "smash and dash"
         );
         firstJoint.configureEncoders();
         secondJoint.configureEncoders();
+        coastCommand = new InstantCommand(() -> {
+            drivetrain.setMode(CANSparkMax.IdleMode.kCoast);
+            firstJoint.setIdleMode(CANSparkMax.IdleMode.kCoast);
+            secondJoint.setIdleMode(CANSparkMax.IdleMode.kCoast);
+        }).ignoringDisable(true);
     }
 
     @Override
@@ -71,6 +74,10 @@ public class Robot extends TimedRobot {
         gripper.periodic();
         vision.periodic();
         leds.periodic();
+        SmashAndDash.update();
+        if (RobotController.getUserButton()) {
+            coastCommand.schedule();
+        }
     }
 
     @Override
@@ -83,7 +90,6 @@ public class Robot extends TimedRobot {
             firstJoint.setIdleMode(CANSparkMax.IdleMode.kBrake);
             secondJoint.setIdleMode(CANSparkMax.IdleMode.kBrake);
         }).ignoringDisable(true).schedule();
-//        new InstantCommand(() -> drivetrain.setMode(CANSparkMax.IdleMode.kCoast)).ignoringDisable(true).schedule();
     }
 
     @Override
@@ -98,12 +104,7 @@ public class Robot extends TimedRobot {
             secondJoint.setIdleMode(CANSparkMax.IdleMode.kBrake);
         });
         new CloseGripper(gripper);
-//        new SplooshAndVamoose(drivetrain).getCommand().schedule();
 //        autoChooser.schedule();
-//        new SplooshAndVamoose(drivetrain).getCommand().schedule();
-//        new PlanBEdge(drivetrain).getCommand().schedule();
-//        new PlanBWindow(drivetrain).getCommand().schedule();
-        new ClimbPlanB(drivetrain).schedule();
     }
 
     @Override
@@ -163,116 +164,11 @@ public class Robot extends TimedRobot {
 
     private void setDefaultJointsCommands() {
         firstJoint.setDefaultCommand(new KeepFirstJointStable(firstJoint, secondJoint, compensation));
-        secondJoint.setDefaultCommand(new KeepSecondJointAngle(firstJoint, secondJoint, compensation));
-
-//        FakeArm.getInstance().setDefaultCommand(new KeepArmStable(firstJoint, secondJoint, compensation));
-
-//        firstJoint.setDefaultCommand(new InstantCommand(() -> compensation.configureFirstJointG(firstJointAngle, secondJointAngle)).
-//                andThen(new MoveSmartMotorControllerGenericSubsystem(firstJoint, firstJoint.keepStablePIDSettings,
-//                firstJoint.getFeedForwardSettings(), UnifiedControlMode.POSITION, () -> firstJointAngle) {
-//            @Override
-//            public boolean isFinished() {
-//                return false;
-//            }
-//        }.alongWith(new RunCommand(() -> compensation.configureFirstJointG(firstJointAngle, secondJointAngle)))));
-//
-//        secondJoint.setDefaultCommand(new InstantCommand(() -> compensation.configureFirstJointG(firstJointAngle, secondJointAngle)).andThen(new MoveSmartMotorControllerGenericSubsystem(secondJoint, secondJoint.keepStablePIDSettings,
-//                secondJoint.getFeedForwardSettings(), UnifiedControlMode.POSITION, () -> secondJointAngle) {
-//            @Override
-//            public boolean isFinished() {
-//                return false;
-//            }
-//        }.alongWith(new RunCommand(() -> compensation.configureSecondJointG(firstJointAngle, secondJointAngle)))));
+        secondJoint.setDefaultCommand(new KeepSecondJointStable(firstJoint, secondJoint, compensation));
     }
 
     private void setNamespaceTestingCommands() {
-        namespace.putData("limelight pipeline to 1", new InstantCommand(()->VisionService.getInstance().setBackLimelightPipeline(VisionService.LimelightPipeline.HIGH_RRT)));
-        namespace.putData("coast arm", new InstantCommand(() -> {
-            firstJoint.setIdleMode(CANSparkMax.IdleMode.kCoast);
-            secondJoint.setIdleMode(CANSparkMax.IdleMode.kCoast);
-        }).ignoringDisable(true));
-        namespace.putData("brake arm", new InstantCommand(() -> {
-            firstJoint.setIdleMode(CANSparkMax.IdleMode.kBrake);
-            secondJoint.setIdleMode(CANSparkMax.IdleMode.kBrake);
-        }).ignoringDisable(true));
-        namespace.putData("keep arm stable", new KeepArmStable(firstJoint, secondJoint, ArmGravityCompensation.getInstance()));
-        namespace.putData("stop", new InstantCommand(() -> {
-        }, firstJoint, secondJoint));
-        namespace.putData("move arm", new PlaceGamePiece(firstJoint, secondJoint, PlaceGamePiece.ArmState.FRONT_TOP));
-        namespace.putData("drive arcade positive", new DriveArcade(drivetrain, 0.3, 0));
-        namespace.putData("drive arcade negative", new DriveArcade(drivetrain, -0.3, 0));
-        namespace.putData("drive arcade positive with rotate", new DriveArcade(drivetrain, 0.3, 0.1));
-        namespace.putData("drive arcade negative with rotate", new DriveArcade(drivetrain, -0.3, -0.1));
-        namespace.putData("floor back", new MoveArmToFloor(firstJoint, secondJoint, compensation, true));
-        namespace.putData("floor front", new MoveArmToFloor(firstJoint, secondJoint, compensation, false));
-        namespace.putData("switch sides back", new SwitchSides(firstJoint, secondJoint, gripper, true));
-        namespace.putData("switch sides front", new SwitchSides(firstJoint, secondJoint, gripper, false));
-        namespace.putData("limelight center", new CenterWithFrontLimelight(drivetrain, VisionService.getInstance(), VisionService.LimelightPipeline.HIGH_RRT));
-        namespace.putData("velocity drivetrain", new MoveSmartMotorControllerTankDrivetrain(drivetrain, drivetrain.getLeftPIDSettings(),
-                drivetrain.getRightPIDSettings(), drivetrain.getFeedForwardSettings(),
-                UnifiedControlMode.VELOCITY, () -> 3.0, () -> 3.0));
-        namespace.putData("lift", new PlaceGamePiece(firstJoint, secondJoint, PlaceGamePiece.ArmState.FRONT_LIFT));
-        namespace.putData("turn", new DriveArcadeWithPID(drivetrain, () -> -drivetrain.getYaw(), () -> 0.0, () -> 0.0,
-                drivetrain.getCameraPIDSettings(), drivetrain.getFeedForwardSettings()) {
-            @Override
-            public void initialize() {
-                feedForwardSettings.setkG(() -> (3.1 / RobotController.getBatteryVoltage()) * -Math.signum(((Drivetrain) drivetrain).getYaw()));
-            }
-
-            @Override
-            public void execute() {
-                pidController.setTolerance(pidSettings.getTolerance());
-                pidController.setPID(pidSettings.getkP(), pidSettings.getkI(), pidSettings.getkD());
-
-                feedForwardController.setGains(feedForwardSettings.getkS(), feedForwardSettings.getkV(),
-                        feedForwardSettings.getkA(), feedForwardSettings.getkG());
-                double calculate = pidController.calculate(source.get(), setpoint.get()) +
-                        feedForwardController.calculate(setpoint.get());
-                namespace.putNumber("turn calculate", calculate);
-                drivetrain.arcadeDrive(moveValue.get(), calculate);
-            }
-
-            @Override
-            public void end(boolean interrupted) {
-                super.end(interrupted);
-                feedForwardSettings.setkG(() -> 0.0);
-            }
-        });
-        namespace.putData("drivetrain coast", new InstantCommand(() -> drivetrain.setMode(CANSparkMax.IdleMode.kCoast)).ignoringDisable(true));
-        namespace.putData("drivetrain brake", new InstantCommand(() -> drivetrain.setMode(CANSparkMax.IdleMode.kBrake)).ignoringDisable(true));
         namespace.putData("smash and dash", new SmashAndDash(drivetrain).getCommand());
-        namespace.putData("test test test", new ParallelCommandGroup(
-                new MoveSecondJoint(secondJoint, () -> PlaceGamePiece.ArmState.FOLD_ABOVE_180.secondJointPosition,
-                        () -> 0.005, () -> 0.7),
-                new MoveFirstJoint(firstJoint, () -> 5.0, () -> 0.005, () -> 0.7)));
-        namespace.putData("test test test 1", new ParallelCommandGroup(
-                new MoveFirstJoint(firstJoint, () -> PlaceGamePiece.ArmState.BACK_TOP.firstJointPosition,
-                        () -> 0.005, () -> 0.7),
-                new MoveSecondJoint(secondJoint, () -> PlaceGamePiece.ArmState.BACK_TOP.secondJointPosition,
-                        () -> 0.005, () -> 0.7)));
-        namespace.putData("center on gp", new CenterOnGamePiece(drivetrain, vision, VisionService.PhotonVisionPipeline.CUBE));
-        namespace.putNumber("battery voltage", RobotController::getBatteryVoltage);
-        namespace.putData("do path", new PPRamseteCommand(
-                PathPlanner.loadPath("Smash And Dash", new PathConstraints(2.5, 2)),
-                drivetrain::getPose2d, drivetrain.getRamseteController(),
-                new SimpleMotorFeedforward(drivetrain.getFeedForwardSettings().getkS(),
-                        drivetrain.getFeedForwardSettings().getkV(),
-                        drivetrain.getFeedForwardSettings().getkA()),
-                drivetrain.getKinematics(), () -> new DifferentialDriveWheelSpeeds(drivetrain.getLeftSpeed(), drivetrain.getRightSpeed()),
-                new PIDController(drivetrain.getLeftPIDSettings().getkP(), drivetrain.getLeftPIDSettings().getkI(), drivetrain.getLeftPIDSettings().getkD()),
-                new PIDController(drivetrain.getRightPIDSettings().getkP(), drivetrain.getRightPIDSettings().getkI(), drivetrain.getRightPIDSettings().getkD()),
-                drivetrain::tankDriveVoltages, drivetrain));
-        namespace.putData("sploosh and vamoose", new SplooshAndVamooseWindow(drivetrain).getCommand());
-        namespace.putData("climb2", new Climb(drivetrain));
-        namespace.putData("turn to 0", new TurnToZero(drivetrain));
-        namespace.putData("test plan b", new SequentialCommandGroup(new PlaceGamePiece(ArmFirstJoint.getInstance(), ArmSecondJoint.getInstance(),
-                PlaceGamePiece.ArmState.BACK_TOP),
-                new OpenGripper(Gripper.getInstance()),
-                new MoveSecondJoint(ArmSecondJoint.getInstance(), () -> PlaceGamePiece.ArmState.FOLD_BELOW_180.secondJointPosition,
-                        () -> 0.005, () -> PlaceGamePiece.ArmState.FOLD_BELOW_180.moveDuration + 0.2),
-                new CloseGripper(Gripper.getInstance()),
-                new WaitCommand(1),
-                new MoveFirstJoint(ArmFirstJoint.getInstance(), () -> 110.0, () -> 0.005,
-                        () -> PlaceGamePiece.ArmState.FOLD_BELOW_180.moveDuration + 0.2)));
+        namespace.putData("climb", new Climb(drivetrain));
     }
 }

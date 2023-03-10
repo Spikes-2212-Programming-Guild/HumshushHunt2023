@@ -40,7 +40,7 @@ public class Gripper extends DashboardedSubsystem {
     }
 
     public boolean hasGamePiece() {
-        return lightSensor.get();
+        return !lightSensor.get();
     }
 
     @Override

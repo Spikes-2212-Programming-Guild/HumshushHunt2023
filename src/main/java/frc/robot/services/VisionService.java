@@ -2,10 +2,11 @@ package frc.robot.services;
 
 import com.spikes2212.dashboard.RootNamespace;
 import com.spikes2212.util.Limelight;
-import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.math.geometry.Pose3d;
 import org.photonvision.PhotonCamera;
 import org.photonvision.targeting.PhotonPipelineResult;
+
+import java.util.function.Function;
 
 public class VisionService {
 
@@ -33,7 +34,11 @@ public class VisionService {
 
     private static final String PHOTON_VISION_CAMERA_NAME = "photonvision";
     private static final String FRONT_LIMELIGHT_NAME = "limelight-front";
-    private static final String BACK_LIMELIGHT_NAME = "limelight";
+    private static final String BACK_LIMELIGHT_NAME = "limelight-back";
+    private static final Function<Double, Double> AREA_TO_DISTANCE_CONE
+            = area -> -79.14 * Math.log(area) + 274.51;
+    private static final Function<Double, Double> AREA_TO_DISTANCE_CUBE
+            = area -> -76.91 * Math.log(area) + 240.96;
 
     private static final double TOLERANCE = 1.5;
 
@@ -70,6 +75,15 @@ public class VisionService {
             return result.getBestTarget().getYaw();
         }
         return 0; // if no target is detected
+    }
+
+    public double getPhotonVisionDistanceFromTarget() {
+        double pipeline = photonCamera.getPipelineIndex();
+        double area = getPhotonVisionTargetArea();
+        if (area == 0) return 0;
+        if (pipeline == PhotonVisionPipeline.CONE.pipeline) return AREA_TO_DISTANCE_CONE.apply(area);
+        if (pipeline == PhotonVisionPipeline.CUBE.pipeline) return AREA_TO_DISTANCE_CUBE.apply(area);
+        return 0;
     }
 
     public Pose3d getRobotPose() {
@@ -126,6 +140,18 @@ public class VisionService {
         photonCamera.setPipelineIndex(pipeline.pipeline);
     }
 
+    public boolean photonVisionHasTarget() {
+        return photonCamera.getLatestResult().hasTargets();
+    }
+
+    public double getPhotonVisionTargetArea() {
+        var result = photonCamera.getLatestResult();
+        if (result.hasTargets()) {
+            return result.getBestTarget().getArea();
+        }
+        return 0;
+    }
+
     public void setFrontLimelightPipeline(LimelightPipeline pipeline) {
         frontLimelight.setPipeline(pipeline.pipeline);
     }
@@ -143,5 +169,6 @@ public class VisionService {
         namespace.putBoolean("front limelight centered", this::frontLimelightCentered);
         namespace.putBoolean("back limelight centered", this::backLimelightCentered);
 //        CameraServer.startAutomaticCapture();
+        namespace.putNumber("distance from target", this::getPhotonVisionDistanceFromTarget);
     }
 }

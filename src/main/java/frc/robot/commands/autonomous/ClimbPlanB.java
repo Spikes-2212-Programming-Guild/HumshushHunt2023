@@ -21,6 +21,7 @@ public class ClimbPlanB extends SequentialCommandGroup {
                         new PlaceGamePiece(ArmFirstJoint.getInstance(), ArmSecondJoint.getInstance(),
                                 PlaceGamePiece.ArmState.BACK_TOP)),
                 new OpenGripper(Gripper.getInstance()),
+                new WaitCommand(0.75),
                 new MoveSecondJoint(ArmSecondJoint.getInstance(), () -> PlaceGamePiece.ArmState.FOLD_BELOW_180.secondJointPosition,
                         () -> 0.005, () -> PlaceGamePiece.ArmState.FOLD_BELOW_180.moveDuration + 0.2),
                 new CloseGripper(Gripper.getInstance()),
