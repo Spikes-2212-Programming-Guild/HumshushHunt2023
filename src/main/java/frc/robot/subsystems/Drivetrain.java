@@ -49,7 +49,7 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
     private final Field2d field2d;
 
     private final Namespace leftPIDNamespace = namespace.addChild("left pid");
-    private final Supplier<Double> kPLeft = leftPIDNamespace.addConstantDouble("kP", 0);
+    private final Supplier<Double> kPLeft = leftPIDNamespace.addConstantDouble("kP", 0.2);
     private final Supplier<Double> kILeft = leftPIDNamespace.addConstantDouble("kI", 0);
     private final Supplier<Double> kDLeft = leftPIDNamespace.addConstantDouble("kD", 0);
     private final Supplier<Double> waitTimeLeft = leftPIDNamespace.addConstantDouble("wait time", 0);
@@ -57,7 +57,7 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
     private final PIDSettings leftPIDSettings;
 
     private final Namespace rightPIDNamespace = namespace.addChild("right pid");
-    private final Supplier<Double> kPRight = rightPIDNamespace.addConstantDouble("kP", 0);
+    private final Supplier<Double> kPRight = rightPIDNamespace.addConstantDouble("kP", 0.2);
     private final Supplier<Double> kIRight = rightPIDNamespace.addConstantDouble("kI", 0);
     private final Supplier<Double> kDRight = rightPIDNamespace.addConstantDouble("kD", 0);
     private final Supplier<Double> waitTimeRight = rightPIDNamespace.addConstantDouble("wait time", 0);
@@ -194,12 +194,16 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
         configureTrapezoid(trapezoidProfileSettings);
         leftMaster.setPeriodicFramePeriod(CANSparkMaxLowLevel.PeriodicFrame.kStatus0, 20);
         rightMaster.setPeriodicFramePeriod(CANSparkMaxLowLevel.PeriodicFrame.kStatus0, 20);
-        leftMaster.getPIDController().setReference(leftSetpoint, controlMode.getSparkMaxControlType(),
-                0, feedForwardSettings.getkS() * Math.signum(leftSetpoint)
-                        + kA.get() * (leftSetpoint - prevLeftSetpoint) / 0.02);
-        rightMaster.getPIDController().setReference(rightSetpoint, controlMode.getSparkMaxControlType(),
-                0, feedForwardSettings.getkS() * Math.signum(rightSetpoint)
-                        + kA.get() * (rightSetpoint - prevRightSetpoint) / 0.02);
+        leftMaster.getPIDController().setReference(leftSetpoint, controlMode.getSparkMaxControlType(), 0,
+                feedForwardSettings.getkS() * Math.signum(leftSetpoint));
+        rightMaster.getPIDController().setReference(rightSetpoint, controlMode.getSparkMaxControlType(), 0,
+                feedForwardSettings.getkS() * Math.signum(rightSetpoint));
+//        leftMaster.getPIDController().setReference(leftSetpoint, controlMode.getSparkMaxControlType(),
+//                0, feedForwardSettings.getkS() * Math.signum(leftSetpoint)
+//                        + kA.get() * (leftSetpoint - prevLeftSetpoint) / 0.02);
+//        rightMaster.getPIDController().setReference(rightSetpoint, controlMode.getSparkMaxControlType(),
+//                0, feedForwardSettings.getkS() * Math.signum(rightSetpoint)
+//                        + kA.get() * (rightSetpoint - prevRightSetpoint) / 0.02);
         prevLeftSetpoint = leftSetpoint;
         prevRightSetpoint = rightSetpoint;
     }

@@ -44,14 +44,21 @@ public class SmashAndDash extends BasePathAuto {
     public SmashAndDash(Drivetrain drivetrain) {
         super(drivetrain, getEventMap());
         ROOT.putData("move to cube", moveToCube(drivetrain, VisionService.getInstance()));
+        configureDashboard(ArmFirstJoint.getInstance(), ArmSecondJoint.getInstance(), ArmGravityCompensation.getInstance());
 //        super(drivetrain, new HashMap<>());
     }
 
+    private void configureDashboard(ArmFirstJoint firstJoint, ArmSecondJoint secondJoint, ArmGravityCompensation compensation) {
+        ROOT.putData("switchsides1", switchSides1(firstJoint, secondJoint, compensation));
+    }
+
     public CommandBase getCommand() {
-        List<PathPlannerTrajectory> trajectory = PathPlanner.loadPathGroup("Smash And Dash",
-                new PathConstraints(MAX_VELOCITY, MAX_ACCELERATION));
-        System.out.println(trajectory.get(0).toString());
-        return fullAuto(trajectory);
+//        List<PathPlannerTrajectory> trajectory = PathPlanner.loadPathGroup("Smash And Dash",
+//                new PathConstraints(MAX_VELOCITY, MAX_ACCELERATION));
+//        System.out.println(trajectory.get(0).toString());
+//        return fullAuto(trajectory);
+        PathPlannerTrajectory trajectory = PathPlanner.loadPath("Smash And Dash", new PathConstraints(MAX_VELOCITY, MAX_ACCELERATION));
+        return followPath(trajectory);
     }
 
     private static Map<String, Command> getEventMap() {
@@ -167,5 +174,26 @@ public class SmashAndDash extends BasePathAuto {
 
     public static void update() {
         ROOT.update();
+    }
+
+    private static CommandBase switchSides1(ArmFirstJoint firstJoint, ArmSecondJoint secondJoint,
+                                            ArmGravityCompensation compensation) {
+        return new SequentialCommandGroup(
+                new MoveSecondJoint(secondJoint,
+                        () -> PlaceGamePiece.ArmState.FOLD_BELOW_180.secondJointPosition, MIN_WAIT_TIME,
+                        SWITCH_SIDES_GENERAL_MOVE_DURATION),
+                new MoveFirstJoint(firstJoint, SWITCH_SIDES_1_FIRST_JOINT_TOP_POSITION, MIN_WAIT_TIME,
+                        SWITCH_SIDES_GENERAL_MOVE_DURATION),
+                new MoveSecondJoint(secondJoint, SWITCH_SIDES_1_SECOND_JOINT_FOLD_POSITION, MIN_WAIT_TIME,
+                        SWITCH_SIDES_GENERAL_MOVE_DURATION),
+                new ParallelRaceGroup(
+                        new MoveFirstJoint(firstJoint, SWITCH_SIDES_1_FIRST_JOINT_FLO0R_POSITION,
+                                MIN_WAIT_TIME, SWITCH_SIDES_GENERAL_MOVE_DURATION),
+                        new KeepSecondJointStable(firstJoint, secondJoint, compensation)
+                ),
+                new MoveSecondJoint(secondJoint, SWITCH_SIDES_1_SECOND_JOINT_FLO0R_POSITION, MIN_WAIT_TIME,
+                        SWITCH_SIDES_LOW_MOVE_DURATION),
+                new KeepSecondJointStable(firstJoint, secondJoint, compensation)
+        );
     }
 }

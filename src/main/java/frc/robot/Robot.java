@@ -57,6 +57,8 @@ public class Robot extends TimedRobot {
         );
         firstJoint.configureEncoders();
         secondJoint.configureEncoders();
+        vision.setBackLimelightPipeline(VisionService.LimelightPipeline.HIGH_RRT);
+        vision.setFrontLimelightPipeline(VisionService.LimelightPipeline.HIGH_RRT);
         coastCommand = new InstantCommand(() -> {
             drivetrain.setMode(CANSparkMax.IdleMode.kCoast);
             firstJoint.setIdleMode(CANSparkMax.IdleMode.kCoast);
@@ -168,7 +170,10 @@ public class Robot extends TimedRobot {
     }
 
     private void setNamespaceTestingCommands() {
+        namespace.putData("plan b window", new PlanBWindow(drivetrain).getCommand());
         namespace.putData("smash and dash", new SmashAndDash(drivetrain).getCommand());
         namespace.putData("climb", new Climb(drivetrain));
+        namespace.putData("move first joint with roborio",
+                new MoveFirstJointRoboRIO(firstJoint, () -> 0.0, () -> 1.0, () -> 0.1));
     }
 }
