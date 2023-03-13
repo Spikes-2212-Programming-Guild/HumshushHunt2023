@@ -5,7 +5,9 @@ import com.pathplanner.lib.PathPlanner;
 import com.pathplanner.lib.PathPlannerTrajectory;
 import com.spikes2212.command.drivetrains.commands.DriveArcade;
 import com.spikes2212.command.drivetrains.commands.DriveTank;
+import com.spikes2212.command.genericsubsystem.commands.smartmotorcontrollergenericsubsystem.MoveSmartMotorControllerGenericSubsystem;
 import com.spikes2212.dashboard.RootNamespace;
+import com.spikes2212.util.UnifiedControlMode;
 import edu.wpi.first.wpilibj2.command.*;
 import frc.robot.commands.*;
 import frc.robot.commands.PlaceGamePiece.ArmState;
@@ -21,8 +23,7 @@ public class SmashAndDash extends BasePathAuto {
 
     private static final RootNamespace ROOT = new RootNamespace("smash and dash testing");
 
-    private static final double
-            MAX_VELOCITY = 1;
+    private static final double MAX_VELOCITY = 1;
     private static final double MAX_ACCELERATION = 1;
     private static final Supplier<Double> MIN_WAIT_TIME = () -> 0.005;
     private static final Supplier<Double> MOVE_VALUE_TO_CUBE = ROOT.addConstantDouble("move value to cube", 0.4);
@@ -53,12 +54,10 @@ public class SmashAndDash extends BasePathAuto {
     }
 
     public CommandBase getCommand() {
-//        List<PathPlannerTrajectory> trajectory = PathPlanner.loadPathGroup("Smash And Dash",
-//                new PathConstraints(MAX_VELOCITY, MAX_ACCELERATION));
+        List<PathPlannerTrajectory> trajectory = PathPlanner.loadPathGroup("Smash And Dash",
+                new PathConstraints(MAX_VELOCITY, MAX_ACCELERATION));
 //        System.out.println(trajectory.get(0).toString());
-//        return fullAuto(trajectory);
-        PathPlannerTrajectory trajectory = PathPlanner.loadPath("Smash And Dash", new PathConstraints(MAX_VELOCITY, MAX_ACCELERATION));
-        return followPath(trajectory);
+        return fullAuto(trajectory);
     }
 
     private static Map<String, Command> getEventMap() {
@@ -74,12 +73,10 @@ public class SmashAndDash extends BasePathAuto {
                 new PlaceGamePiece(ArmFirstJoint.getInstance(), ArmSecondJoint.getInstance(),
                         ArmState.BACK_TOP),
                 new OpenGripper(Gripper.getInstance()),
-                //fold second joint
                 new MoveSecondJoint(ArmSecondJoint.getInstance(),
                         () -> ArmState.FOLD_BELOW_180.secondJointPosition, MIN_WAIT_TIME,
                         () -> ArmState.FOLD_BELOW_180.moveDuration + 0.2),
                 new CloseGripper(Gripper.getInstance()),
-                //
                 new MoveFirstJoint(ArmFirstJoint.getInstance(), POST_PUT_GP_FIRST_JOINT_TARGET, MIN_WAIT_TIME,
                         () -> ArmState.FOLD_BELOW_180.moveDuration + 0.2)
         ));
@@ -96,21 +93,32 @@ public class SmashAndDash extends BasePathAuto {
                                 new KeepSecondJointStable(firstJoint, secondJoint, compensation),
                                 new SequentialCommandGroup(
                                         new OpenGripper(gripper),
-//                                        new CenterOnGamePiece(drivetrain, vision, VisionService.PhotonVisionPipeline.CUBE).withTimeout(0.5),
-                                        moveToCube(drivetrain, vision),
+//                                        moveToCube(drivetrain, vision),
+                                        new CenterOnGamePiece(drivetrain, vision, VisionService.PhotonVisionPipeline.CUBE) {
+                                            @Override
+                                            public void initialize() {
+                                                super.initialize();
+                                                moveValue = () -> 0.4;
+                                            }
+
+                                            @Override
+                                            public boolean isFinished() {
+                                                return gripper.hasGamePiece();
+                                            }
+                                        },
                                         new CloseGripper(gripper)
                                 )
                         )
                 )
         );
-        eventMap.put("putGP2", new SequentialCommandGroup(
-                new MoveFirstJoint(firstJoint, () -> ArmState.BACK_TOP.firstJointPosition, MIN_WAIT_TIME,
-                        () -> ArmState.BACK_TOP.moveDuration),
-                new ParallelRaceGroup(
-                        new KeepFirstJointStable(firstJoint, secondJoint, ArmGravityCompensation.getInstance()),
-                        new MoveSecondJoint(secondJoint, () -> ArmState.BACK_TOP.secondJointPosition, MIN_WAIT_TIME,
-                                () -> ArmState.BACK_TOP.moveDuration)),
-                new DriveTank(drivetrain, DRIVE_TO_GRID_SPEED, DRIVE_TO_GRID_SPEED).withTimeout(DRIVE_TO_GRID_TIMEOUT),
+//        eventMap.put("putGP2", new SequentialCommandGroup(
+//                new MoveFirstJoint(firstJoint, () -> ArmState.BACK_TOP.firstJointPosition, MIN_WAIT_TIME,
+//                        () -> ArmState.BACK_TOP.moveDuration),
+//                new ParallelRaceGroup(
+//                        new KeepFirstJointStable(firstJoint, secondJoint, ArmGravityCompensation.getInstance()),
+//                        new MoveSecondJoint(secondJoint, () -> ArmState.BACK_TOP.secondJointPosition, MIN_WAIT_TIME,
+//                                () -> ArmState.BACK_TOP.moveDuration)),
+//                new DriveTank(drivetrain, DRIVE_TO_GRID_SPEED, DRIVE_TO_GRID_SPEED).withTimeout(DRIVE_TO_GRID_TIMEOUT),
 //                new CenterWithLimelight(drivetrain, vision, VisionService.LimelightPipeline.APRIL_TAG) {
 //                    @Override
 //                    public void initialize() {
@@ -118,15 +126,18 @@ public class SmashAndDash extends BasePathAuto {
 //                        moveValue = () -> -0.5;
 //                    }
 //                }
-                new OpenGripper(gripper)
-        ));
+//                new OpenGripper(gripper)
+//        ));
         eventMap.put("switchSides1",
                 new SequentialCommandGroup(
                         new MoveSecondJoint(secondJoint,
                                 () -> PlaceGamePiece.ArmState.FOLD_BELOW_180.secondJointPosition, MIN_WAIT_TIME,
                                 SWITCH_SIDES_GENERAL_MOVE_DURATION),
                         new MoveFirstJoint(firstJoint, SWITCH_SIDES_1_FIRST_JOINT_TOP_POSITION, MIN_WAIT_TIME,
-                                SWITCH_SIDES_GENERAL_MOVE_DURATION),
+                                SWITCH_SIDES_GENERAL_MOVE_DURATION).withTimeout(1),
+                        new MoveSmartMotorControllerGenericSubsystem(firstJoint, firstJoint.getPIDSettings(),
+                                firstJoint.getFeedForwardSettings(), UnifiedControlMode.PERCENT_OUTPUT,
+                                firstJoint.backwardsSpeed).withTimeout(1.4),
                         new MoveSecondJoint(secondJoint, SWITCH_SIDES_1_SECOND_JOINT_FOLD_POSITION, MIN_WAIT_TIME,
                                 SWITCH_SIDES_GENERAL_MOVE_DURATION),
                         new ParallelRaceGroup(
@@ -141,7 +152,7 @@ public class SmashAndDash extends BasePathAuto {
         );
         eventMap.put("switchSides2", new SequentialCommandGroup(
                 new ParallelCommandGroup(
-                        new MoveSecondJoint(secondJoint, () -> ArmState.FOLD_ABOVE_180.secondJointPosition,
+                        new MoveSecondJoint(secondJoint, () -> ArmState.FOLD_ABOVE_180.secondJointPosition - 5,
                                 () -> 0.005, () -> 0.7),
                         new MoveFirstJoint(firstJoint, () -> 5.0, () -> 0.005, () -> 0.7)),
                 new MoveFirstJoint(firstJoint, () -> ArmState.BACK_TOP.firstJointPosition,

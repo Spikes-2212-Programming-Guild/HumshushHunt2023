@@ -65,9 +65,9 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
     private final PIDSettings rightPIDSettings;
 
     private final Namespace cameraPIDNamespace = namespace.addChild("camera pid");
-    private final Supplier<Double> kPCamera = cameraPIDNamespace.addConstantDouble("kP", 0.04);
-    private final Supplier<Double> kICamera = cameraPIDNamespace.addConstantDouble("kI", 0.0001);
-    private final Supplier<Double> kDCamera = cameraPIDNamespace.addConstantDouble("kD", 0.005);
+    private final Supplier<Double> kPCamera = cameraPIDNamespace.addConstantDouble("kP", 0.024);
+    private final Supplier<Double> kICamera = cameraPIDNamespace.addConstantDouble("kI", 0.001);
+    private final Supplier<Double> kDCamera = cameraPIDNamespace.addConstantDouble("kD", 0);
     private final Supplier<Double> waitTimeCamera = cameraPIDNamespace.addConstantDouble("wait time", 0.5);
     private final Supplier<Double> toleranceCamera = cameraPIDNamespace.addConstantDouble("tolerance", 1);
     private final PIDSettings cameraPIDSettings;
@@ -146,6 +146,8 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
         super.configureLoop(leftPIDSettings, rightPIDSettings, feedForwardSettings, trapezoidProfileSettings);
         configureEncoders();
         setCurrentLimits();
+        leftMaster.setPeriodicFramePeriod(CANSparkMaxLowLevel.PeriodicFrame.kStatus0, 10);
+        rightMaster.setPeriodicFramePeriod(CANSparkMaxLowLevel.PeriodicFrame.kStatus0, 10);
         rightMaster.setInverted(true);
         prevLeftSetpoint = 0;
         prevRightSetpoint = 0;
@@ -192,18 +194,16 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
                        FeedForwardSettings feedForwardSettings) {
         configPIDF(leftPIDSettings, rightPIDSettings, feedForwardSettings);
         configureTrapezoid(trapezoidProfileSettings);
-        leftMaster.setPeriodicFramePeriod(CANSparkMaxLowLevel.PeriodicFrame.kStatus0, 20);
-        rightMaster.setPeriodicFramePeriod(CANSparkMaxLowLevel.PeriodicFrame.kStatus0, 20);
-        leftMaster.getPIDController().setReference(leftSetpoint, controlMode.getSparkMaxControlType(), 0,
-                feedForwardSettings.getkS() * Math.signum(leftSetpoint));
-        rightMaster.getPIDController().setReference(rightSetpoint, controlMode.getSparkMaxControlType(), 0,
-                feedForwardSettings.getkS() * Math.signum(rightSetpoint));
-//        leftMaster.getPIDController().setReference(leftSetpoint, controlMode.getSparkMaxControlType(),
-//                0, feedForwardSettings.getkS() * Math.signum(leftSetpoint)
-//                        + kA.get() * (leftSetpoint - prevLeftSetpoint) / 0.02);
-//        rightMaster.getPIDController().setReference(rightSetpoint, controlMode.getSparkMaxControlType(),
-//                0, feedForwardSettings.getkS() * Math.signum(rightSetpoint)
-//                        + kA.get() * (rightSetpoint - prevRightSetpoint) / 0.02);
+//        leftMaster.getPIDController().setReference(leftSetpoint, controlMode.getSparkMaxControlType(), 0,
+//                feedForwardSettings.getkS() * Math.signum(leftSetpoint));
+//        rightMaster.getPIDController().setReference(rightSetpoint, controlMode.getSparkMaxControlType(), 0,
+//                feedForwardSettings.getkS() * Math.signum(rightSetpoint));
+        leftMaster.getPIDController().setReference(leftSetpoint, controlMode.getSparkMaxControlType(),
+                0, feedForwardSettings.getkS() * Math.signum(leftSetpoint)
+                        + kA.get() * (leftSetpoint - prevLeftSetpoint) / 0.02);
+        rightMaster.getPIDController().setReference(rightSetpoint, controlMode.getSparkMaxControlType(),
+                0, feedForwardSettings.getkS() * Math.signum(rightSetpoint)
+                        + kA.get() * (rightSetpoint - prevRightSetpoint) / 0.02);
         prevLeftSetpoint = leftSetpoint;
         prevRightSetpoint = rightSetpoint;
     }
@@ -292,6 +292,8 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
 
     @Override
     public void configureDashboard() {
+        namespace.putBoolean("navx calibrating", gyro::isCalibrating);
+        namespace.putBoolean("navx connected", gyro::isConnected);
         namespace.putData("reset encoders", new InstantCommand(this::resetEncoders).ignoringDisable(true));
         namespace.putData("reset gyro", new InstantCommand(this::resetGyro).ignoringDisable(true));
         namespace.putData("reset odometry", new InstantCommand(() -> resetOdometry(new Pose2d())).ignoringDisable(true));

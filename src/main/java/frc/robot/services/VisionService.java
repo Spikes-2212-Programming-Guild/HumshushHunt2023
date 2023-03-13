@@ -152,6 +152,14 @@ public class VisionService {
         return 0;
     }
 
+    public void setFrontLimelightMode(Limelight.CamMode camMode) {
+        frontLimelight.setCamMode(camMode);
+    }
+
+    public void setBackLimelightMode(Limelight.CamMode camMode) {
+        backLimelight.setCamMode(camMode);
+    }
+
     public void setFrontLimelightPipeline(LimelightPipeline pipeline) {
         frontLimelight.setPipeline(pipeline.pipeline);
     }

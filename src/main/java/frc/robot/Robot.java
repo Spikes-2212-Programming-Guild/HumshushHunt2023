@@ -11,6 +11,7 @@ import com.revrobotics.CANSparkMax;
 import com.spikes2212.command.drivetrains.commands.DriveArcade;
 import com.spikes2212.dashboard.AutoChooser;
 import com.spikes2212.dashboard.RootNamespace;
+import com.spikes2212.util.Limelight;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -27,6 +28,8 @@ import frc.robot.subsystems.ArmFirstJoint;
 import frc.robot.subsystems.ArmSecondJoint;
 import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.Gripper;
+
+import java.util.function.Supplier;
 
 public class Robot extends TimedRobot {
 
@@ -64,6 +67,8 @@ public class Robot extends TimedRobot {
             firstJoint.setIdleMode(CANSparkMax.IdleMode.kCoast);
             secondJoint.setIdleMode(CANSparkMax.IdleMode.kCoast);
         }).ignoringDisable(true);
+        DutyCycleEncoder encoder = new DutyCycleEncoder(0);
+        namespace.putBoolean("encoder connected", encoder::isConnected);
     }
 
     @Override
@@ -121,6 +126,8 @@ public class Robot extends TimedRobot {
             secondJoint.setIdleMode(CANSparkMax.IdleMode.kBrake);
         }, firstJoint, secondJoint).schedule();
         drivetrain.setDefaultCommand(new DriveArcade(drivetrain, oi::getRightY, oi::getLeftX));
+        vision.setBackLimelightPipeline(VisionService.LimelightPipeline.HIGH_RRT);
+        vision.setFrontLimelightPipeline(VisionService.LimelightPipeline.HIGH_RRT);
     }
 
     @Override
@@ -170,10 +177,78 @@ public class Robot extends TimedRobot {
     }
 
     private void setNamespaceTestingCommands() {
+        namespace.putData("center on gamepiece", new CenterOnGamePiece(drivetrain, vision, VisionService.PhotonVisionPipeline.CUBE) {
+
+            @Override
+            public boolean isFinished() {
+                return gripper.hasGamePiece();
+            }
+        });
+        namespace.putData("move to gamepiece", new CenterOnGamePiece(drivetrain, vision, VisionService.PhotonVisionPipeline.CUBE) {
+            @Override
+            public void initialize() {
+                super.initialize();
+                moveValue = () -> 0.4;
+            }
+
+            @Override
+            public boolean isFinished() {
+                return gripper.hasGamePiece();
+            }
+        }.andThen(new CloseGripper(gripper)));
         namespace.putData("plan b window", new PlanBWindow(drivetrain).getCommand());
         namespace.putData("smash and dash", new SmashAndDash(drivetrain).getCommand());
         namespace.putData("climb", new Climb(drivetrain));
         namespace.putData("move first joint with roborio",
                 new MoveFirstJointRoboRIO(firstJoint, () -> 0.0, () -> 1.0, () -> 0.1));
+        Supplier<Double> MIN_WAIT_TIME = () -> 0.005;
+        Supplier<Double> SWITCH_SIDES_GENERAL_MOVE_DURATION = () -> 0.5;
+        Supplier<Double> SWITCH_SIDES_1_FIRST_JOINT_TOP_POSITION = () -> -10.0;
+        Supplier<Double> SWITCH_SIDES_1_SECOND_JOINT_FOLD_POSITION = () -> 300.0;
+        Supplier<Double> SWITCH_SIDES_1_FIRST_JOINT_FLO0R_POSITION = () -> 77.0;
+        Supplier<Double> SWITCH_SIDES_1_SECOND_JOINT_FLO0R_POSITION = () -> 240.0;
+        Supplier<Double> SWITCH_SIDES_LOW_MOVE_DURATION = () -> 0.2;
+        Supplier<Double> POST_PUT_GP_FIRST_JOINT_TARGET = () -> 110.0;
+        namespace.putData("switchSides1",
+                new SequentialCommandGroup(
+                        new PrintCommand("put gp"),
+                        new PlaceGamePiece(ArmFirstJoint.getInstance(), ArmSecondJoint.getInstance(),
+                                PlaceGamePiece.ArmState.BACK_TOP),
+                        new OpenGripper(Gripper.getInstance()),
+                        new MoveSecondJoint(ArmSecondJoint.getInstance(),
+                                () -> PlaceGamePiece.ArmState.FOLD_BELOW_180.secondJointPosition, MIN_WAIT_TIME,
+                                () -> PlaceGamePiece.ArmState.FOLD_BELOW_180.moveDuration + 0.2),
+                        new CloseGripper(Gripper.getInstance()),
+                        new MoveFirstJoint(ArmFirstJoint.getInstance(), POST_PUT_GP_FIRST_JOINT_TARGET, MIN_WAIT_TIME,
+                                () -> PlaceGamePiece.ArmState.FOLD_BELOW_180.moveDuration + 0.2),
+                        new WaitCommand(0.2),
+                        new MoveSecondJoint(secondJoint,
+                                () -> PlaceGamePiece.ArmState.FOLD_BELOW_180.secondJointPosition, MIN_WAIT_TIME,
+                                SWITCH_SIDES_GENERAL_MOVE_DURATION),
+                        new MoveFirstJoint(firstJoint, SWITCH_SIDES_1_FIRST_JOINT_TOP_POSITION, MIN_WAIT_TIME,
+                                SWITCH_SIDES_GENERAL_MOVE_DURATION),
+                        new MoveSecondJoint(secondJoint, SWITCH_SIDES_1_SECOND_JOINT_FOLD_POSITION, MIN_WAIT_TIME,
+                                SWITCH_SIDES_GENERAL_MOVE_DURATION),
+                        new ParallelRaceGroup(
+                                new MoveFirstJoint(firstJoint, SWITCH_SIDES_1_FIRST_JOINT_FLO0R_POSITION,
+                                        MIN_WAIT_TIME, SWITCH_SIDES_GENERAL_MOVE_DURATION),
+                                new KeepSecondJointStable(firstJoint, secondJoint, compensation)
+                        ),
+                        new MoveSecondJoint(secondJoint, SWITCH_SIDES_1_SECOND_JOINT_FLO0R_POSITION, MIN_WAIT_TIME,
+                                SWITCH_SIDES_LOW_MOVE_DURATION),
+                        new KeepSecondJointStable(firstJoint, secondJoint, compensation)
+                ));
+        namespace.putData("putGP", new SequentialCommandGroup(
+                new PrintCommand("put gp"),
+                new PlaceGamePiece(ArmFirstJoint.getInstance(), ArmSecondJoint.getInstance(),
+                        PlaceGamePiece.ArmState.BACK_TOP),
+                new OpenGripper(Gripper.getInstance()),
+                new MoveSecondJoint(ArmSecondJoint.getInstance(),
+                        () -> PlaceGamePiece.ArmState.FOLD_BELOW_180.secondJointPosition, MIN_WAIT_TIME,
+                        () -> PlaceGamePiece.ArmState.FOLD_BELOW_180.moveDuration + 0.2),
+                new CloseGripper(Gripper.getInstance()),
+                new MoveFirstJoint(ArmFirstJoint.getInstance(), POST_PUT_GP_FIRST_JOINT_TARGET, MIN_WAIT_TIME,
+                        () -> PlaceGamePiece.ArmState.FOLD_BELOW_180.moveDuration + 0.2)
+        ));
     }
 }
