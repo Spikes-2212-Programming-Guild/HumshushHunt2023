@@ -1,6 +1,5 @@
 package frc.robot;
 
-import com.revrobotics.CANSparkMax;
 import com.spikes2212.command.genericsubsystem.commands.smartmotorcontrollergenericsubsystem.MoveSmartMotorControllerGenericSubsystem;
 import com.spikes2212.util.PlaystationControllerWrapper;
 import com.spikes2212.util.UnifiedControlMode;
@@ -11,6 +10,7 @@ import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import frc.robot.commands.*;
 import frc.robot.services.ArmGravityCompensation;
+import frc.robot.services.LedsService;
 import frc.robot.services.VisionService;
 import frc.robot.subsystems.*;
 
@@ -26,7 +26,7 @@ public class OI /*GEVALD*/ {
     private double lastRotateValue;
 
     private OI(Drivetrain drivetrain, ArmFirstJoint firstJoint, ArmSecondJoint secondJoint, Gripper gripper,
-               ArmGravityCompensation compensation, VisionService visionService) {
+               ArmGravityCompensation compensation, VisionService visionService, LedsService ledsService) {
         //Moves the first joint forward
         ps.getR1Button().whileTrue(new MoveSmartMotorControllerGenericSubsystem(firstJoint, firstJoint.getPIDSettings(), firstJoint.getFeedForwardSettings(), UnifiedControlMode.PERCENT_OUTPUT, firstJoint.forwardSpeed) {
             @Override
@@ -107,6 +107,8 @@ public class OI /*GEVALD*/ {
                                 )),
                         secondJoint::isBack)
         );
+        //changes leds mode to cube
+        ps.getTouchpadButton().onTrue(new InstantCommand(ledsService::switchGamePieceMode).ignoringDisable(true));
 
         new JoystickButton(left, 3).onTrue(new ConditionalCommand(new CenterWithBackLimelight(drivetrain, VisionService.getInstance(), VisionService.LimelightPipeline.HIGH_RRT),
                 new CenterWithFrontLimelight(drivetrain, VisionService.getInstance(), VisionService.LimelightPipeline.HIGH_RRT), secondJoint::isBack));
@@ -143,7 +145,8 @@ public class OI /*GEVALD*/ {
     public static OI getInstance() {
         if (instance == null) {
             instance = new OI(Drivetrain.getInstance(), ArmFirstJoint.getInstance(), ArmSecondJoint.getInstance(),
-                    Gripper.getInstance(), ArmGravityCompensation.getInstance(), VisionService.getInstance());
+                    Gripper.getInstance(), ArmGravityCompensation.getInstance(), VisionService.getInstance(),
+                    LedsService.getInstance());
         }
         return instance;
     }

@@ -1,6 +1,5 @@
 package frc.robot.services;
 
-import com.ctre.phoenix.CANifier;
 import com.spikes2212.dashboard.RootNamespace;
 import edu.wpi.first.wpilibj.AddressableLED;
 import edu.wpi.first.wpilibj.AddressableLEDBuffer;
@@ -13,8 +12,8 @@ public class LedsService {
 
     public enum Mode {
 
-        OFF(0, 0, 0), EMPTY_GRIPPER(254, 0, 0), ALLIGNED_TO_GAME_PIECE(204, 0, 254), HAS_GAME_PIECE(0, 0, 254),
-        HAS_GAME_PIECE_AND_ALLIGNED(0, 254, 0);
+        OFF(0, 0, 0), START_CONFIGURATION(0, 0, 139), EMPTY_GRIPPER(254, 0, 0), ALLIGNED_TO_GAME_PIECE(204, 0, 254), HAS_GAME_PIECE(0, 0, 254),
+        HAS_GAME_PIECE_AND_ALLIGNED(0, 254, 0), CONE(255, 255, 0), CUBE(255, 0, 255);
 
         public final int red;
         public final int green;
@@ -38,6 +37,8 @@ public class LedsService {
 
     private final VisionService vision;
 
+    private Mode mode;
+
     private final AddressableLED led;
     private final AddressableLEDBuffer ledBuffer;
 
@@ -56,40 +57,42 @@ public class LedsService {
         this.secondJoint = secondJoint;
         this.vision = vision;
         this.gripper = gripper;
+        this.mode = Mode.START_CONFIGURATION;
         led.setLength(ledBuffer.getLength());
         led.start();
         configureDashboard();
-        CANifier caNifier = new CANifier(8);
-//        caNifier.setLEDOutput(1, CANifier.LEDChannel.LEDChannelA);
-//        caNifier.setLEDOutput(1, CANifier.LEDChannel.LEDChannelB);
-//        caNifier.setLEDOutput(1, CANifier.LEDChannel.LEDChannelC);
     }
 
     public void periodic() {
-        Mode mode;
-        if (gripper.hasGamePiece()) {
-            if(secondJoint.isBack()) {
-                if (vision.backLimelightCentered()) {
-                    mode = Mode.HAS_GAME_PIECE_AND_ALLIGNED;
-                } else {
-                    mode = Mode.HAS_GAME_PIECE;
-                }
-            }
-            else{
-                if (vision.frontLimelightCentered()) {
-                    mode = Mode.HAS_GAME_PIECE_AND_ALLIGNED;
-                } else {
-                    mode = Mode.HAS_GAME_PIECE;
-                }
-            }
-        } else {
-            if (vision.photonVisionCentered()) {
-                mode = Mode.ALLIGNED_TO_GAME_PIECE;
-            } else {
-                mode = Mode.EMPTY_GRIPPER;
-            }
-        }
         setMode(mode);
+//        Mode mode;
+//        if (gripper.hasGamePiece()) {
+//            if(secondJoint.isBack()) {
+//                if (vision.backLimelightCentered()) {
+//                    mode = Mode.HAS_GAME_PIECE_AND_ALLIGNED;
+//                } else {
+//                    mode = Mode.HAS_GAME_PIECE;
+//                }
+//            }
+//            else{
+//                if (vision.frontLimelightCentered()) {
+//                    mode = Mode.HAS_GAME_PIECE_AND_ALLIGNED;
+//                } else {
+//                    mode = Mode.HAS_GAME_PIECE;
+//                }
+//            }
+//        } else {
+//            if (vision.photonVisionCentered()) {
+//                mode = Mode.ALLIGNED_TO_GAME_PIECE;
+//            } else {
+//                mode = Mode.EMPTY_GRIPPER;
+//            }
+//        }
+//        setMode(mode);
+    }
+
+    public void switchGamePieceMode() {
+        mode = mode == Mode.CUBE || mode == Mode.START_CONFIGURATION ? Mode.CONE : Mode.CUBE;
     }
 
     public void turnOff() {
