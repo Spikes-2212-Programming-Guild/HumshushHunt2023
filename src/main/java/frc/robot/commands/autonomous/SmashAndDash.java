@@ -7,6 +7,7 @@ import com.spikes2212.command.drivetrains.commands.DriveArcade;
 import com.spikes2212.command.drivetrains.commands.DriveTank;
 import com.spikes2212.command.genericsubsystem.commands.smartmotorcontrollergenericsubsystem.MoveSmartMotorControllerGenericSubsystem;
 import com.spikes2212.dashboard.RootNamespace;
+import com.spikes2212.util.RepeatCommand;
 import com.spikes2212.util.UnifiedControlMode;
 import edu.wpi.first.wpilibj2.command.*;
 import frc.robot.commands.*;
@@ -42,8 +43,8 @@ public class SmashAndDash extends BasePathAuto {
     private static final Supplier<Double> SWITCH_SIDES_1_FIRST_JOINT_FLO0R_POSITION = () -> 79.0;
     private static final Supplier<Double> SWITCH_SIDES_1_SECOND_JOINT_FLO0R_POSITION = () -> 245.0;
     private static final Supplier<Double> SWITCH_SIDES_2_FIRST_JOINT_TARGET = () -> 195.0;
-    private static final Supplier<Double> SWITCH_SIDES_2_SECOND_JOINT_TARGET_MIDPOINT = () -> 150.0;
-    private static final Supplier<Double> SWITCH_SIDES_2_SECOND_JOINT_TARGET_FINAL = () -> 205.0;
+    private static final Supplier<Double> SWITCH_SIDES_2_SECOND_JOINT_TARGET_MIDPOINT = () -> 160.0;
+    private static final Supplier<Double> SWITCH_SIDES_2_SECOND_JOINT_TARGET_FINAL = () -> 210.0;
 
     public SmashAndDash(Drivetrain drivetrain) {
         super(drivetrain, getEventMap());
@@ -119,18 +120,17 @@ public class SmashAndDash extends BasePathAuto {
                                                         - startingPosition) >= maxDistance;
                                             }
                                         },
-                                        new DriveArcade(drivetrain, MOVE_VALUE_TO_CUBE, () -> 0.0).withTimeout(0.3),
+                                        new DriveArcade(drivetrain, MOVE_VALUE_TO_CUBE, () -> 0.0).withTimeout(0.5),
                                         new CloseGripper(gripper)
                                 )
                         )
                 )
         );
-        eventMap.put("putGP2", new SequentialCommandGroup(
-                        new ParallelRaceGroup(
-                                new DriveArcade(drivetrain, DRIVE_TO_GRID_SPEED, () -> 0.0).withTimeout(0.5),
-                                new KeepFirstJointStable(firstJoint, secondJoint, compensation),
-                                new KeepSecondJointStable(firstJoint, secondJoint, compensation)
-                        ),
+        eventMap.put("putGP2", new ParallelCommandGroup(
+                        new RepeatCommand(new MoveSecondJoint(secondJoint, SWITCH_SIDES_2_SECOND_JOINT_TARGET_FINAL,
+                                MIN_WAIT_TIME, SWITCH_SIDES_GENERAL_MOVE_DURATION)),
+                        new KeepFirstJointStable(firstJoint, secondJoint, compensation),
+                        new DriveArcade(drivetrain, DRIVE_TO_GRID_SPEED, () -> 0.0).withTimeout(DRIVE_TO_GRID_TIMEOUT),
                         new OpenGripper(gripper)
                 )
         );
@@ -168,18 +168,14 @@ public class SmashAndDash extends BasePathAuto {
                         new MoveSecondJoint(secondJoint, () -> ArmState.FOLD_ABOVE_180.secondJointPosition,
                                 MIN_WAIT_TIME, SWITCH_SIDES_LOW_MOVE_DURATION),
                         new MoveFirstJoint(firstJoint, SWITCH_SIDES_2_FIRST_JOINT_TARGET, MIN_WAIT_TIME, SWITCH_SIDES_GENERAL_MOVE_DURATION),
-                        new ParallelRaceGroup(
+                        new ParallelCommandGroup(
                                 new SequentialCommandGroup(
                                         new MoveSecondJoint(secondJoint, SWITCH_SIDES_2_SECOND_JOINT_TARGET_MIDPOINT,
                                                 MIN_WAIT_TIME, SWITCH_SIDES_GENERAL_MOVE_DURATION),
-                                        new MoveSecondJoint(secondJoint, SWITCH_SIDES_2_SECOND_JOINT_TARGET_FINAL,
-                                                MIN_WAIT_TIME, SWITCH_SIDES_GENERAL_MOVE_DURATION)
+                                        new RepeatCommand(new MoveSecondJoint(secondJoint, SWITCH_SIDES_2_SECOND_JOINT_TARGET_FINAL,
+                                                MIN_WAIT_TIME, SWITCH_SIDES_GENERAL_MOVE_DURATION))
                                 ),
                                 new KeepFirstJointStable(firstJoint, secondJoint, compensation)
-                        ),
-                        new ParallelCommandGroup(
-                                new KeepFirstJointStable(firstJoint, secondJoint, compensation),
-                                new KeepSecondJointStable(firstJoint, secondJoint, compensation)
                         )
                 )
         );

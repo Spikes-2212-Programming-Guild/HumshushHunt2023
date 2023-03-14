@@ -111,6 +111,7 @@ public class Robot extends TimedRobot {
             secondJoint.setIdleMode(CANSparkMax.IdleMode.kBrake);
         });
         new CloseGripper(gripper);
+        new SmashAndDash(drivetrain).getCommand().schedule();
 //        autoChooser.schedule();
     }
 
