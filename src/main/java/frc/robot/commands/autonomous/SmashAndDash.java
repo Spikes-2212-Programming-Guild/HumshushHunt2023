@@ -24,8 +24,10 @@ public class SmashAndDash extends BasePathAuto {
 
     private static final RootNamespace ROOT = new RootNamespace("smash and dash testing");
 
-    private static final double MAX_VELOCITY = 1;
-    private static final double MAX_ACCELERATION = 1;
+    private static final double MAX_VELOCITY_TO_CUBE = 1;
+    private static final double MAX_ACCELERATION_TO_CUBE = 1;
+    private static final double MAX_VELOCITY_TO_GRID = 1.5;
+    private static final double MAX_ACCELERATION_TO_GRID = 1.5;
 
     private static final Supplier<Double> MIN_WAIT_TIME = () -> 0.005;
     private static final Supplier<Double> MOVE_VALUE_TO_CUBE = ROOT.addConstantDouble("move value to cube", 0.4);
@@ -62,7 +64,8 @@ public class SmashAndDash extends BasePathAuto {
 
     public CommandBase getCommand() {
         List<PathPlannerTrajectory> trajectory = PathPlanner.loadPathGroup("Smash And Dash",
-                new PathConstraints(MAX_VELOCITY, MAX_ACCELERATION), new PathConstraints(1.5, 1.5));
+                new PathConstraints(MAX_VELOCITY_TO_CUBE, MAX_ACCELERATION_TO_CUBE),
+                new PathConstraints(MAX_VELOCITY_TO_GRID, MAX_ACCELERATION_TO_GRID));
 //        System.out.println(trajectory.get(0).toString());
         return fullAuto(trajectory);
     }
