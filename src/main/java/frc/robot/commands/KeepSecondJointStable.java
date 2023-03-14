@@ -11,8 +11,8 @@ import frc.robot.subsystems.ArmSecondJoint;
 
 public class KeepSecondJointStable extends SequentialCommandGroup {
 
-    double firstJointAngle;
-    double secondJointAngle;
+    private double firstJointAngle;
+    private double secondJointAngle;
 
     public KeepSecondJointStable(ArmFirstJoint firstJoint, ArmSecondJoint secondJoint, ArmGravityCompensation compensation) {
         addCommands(

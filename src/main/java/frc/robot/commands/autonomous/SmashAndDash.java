@@ -42,9 +42,9 @@ public class SmashAndDash extends BasePathAuto {
     private static final Supplier<Double> SWITCH_SIDES_1_SECOND_JOINT_FOLD_POSITION = () -> 300.0;
     private static final Supplier<Double> SWITCH_SIDES_1_FIRST_JOINT_FLO0R_POSITION = () -> 79.0;
     private static final Supplier<Double> SWITCH_SIDES_1_SECOND_JOINT_FLO0R_POSITION = () -> 245.0;
-    private static final Supplier<Double> SWITCH_SIDES_2_FIRST_JOINT_TARGET = () -> 195.0;
+    private static final Supplier<Double> SWITCH_SIDES_2_FIRST_JOINT_TARGET = () -> 200.0;
     private static final Supplier<Double> SWITCH_SIDES_2_SECOND_JOINT_TARGET_MIDPOINT = () -> 160.0;
-    private static final Supplier<Double> SWITCH_SIDES_2_SECOND_JOINT_TARGET_FINAL = () -> 210.0;
+    private static final Supplier<Double> SWITCH_SIDES_2_SECOND_JOINT_TARGET_FINAL = () -> 215.0;
 
     public SmashAndDash(Drivetrain drivetrain) {
         super(drivetrain, getEventMap());
@@ -175,6 +175,8 @@ public class SmashAndDash extends BasePathAuto {
                         new ParallelCommandGroup(
                                 new SequentialCommandGroup(
                                         new MoveSecondJoint(secondJoint, SWITCH_SIDES_2_SECOND_JOINT_TARGET_MIDPOINT,
+                                                MIN_WAIT_TIME, SWITCH_SIDES_GENERAL_MOVE_DURATION),
+                                        new MoveSecondJoint(secondJoint, SWITCH_SIDES_2_SECOND_JOINT_TARGET_FINAL,
                                                 MIN_WAIT_TIME, SWITCH_SIDES_GENERAL_MOVE_DURATION),
                                         new KeepSecondJointStable(firstJoint, secondJoint, compensation)
                                 ),
