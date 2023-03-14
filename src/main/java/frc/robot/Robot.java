@@ -67,8 +67,6 @@ public class Robot extends TimedRobot {
             firstJoint.setIdleMode(CANSparkMax.IdleMode.kCoast);
             secondJoint.setIdleMode(CANSparkMax.IdleMode.kCoast);
         }).ignoringDisable(true);
-        DutyCycleEncoder encoder = new DutyCycleEncoder(0);
-        namespace.putBoolean("encoder connected", encoder::isConnected);
     }
 
     @Override

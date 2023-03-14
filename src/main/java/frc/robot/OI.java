@@ -125,6 +125,20 @@ public class OI /*GEVALD*/ {
         new JoystickButton(right, 4).onTrue(new CenterOnGamePiece(drivetrain, visionService, VisionService.PhotonVisionPipeline.CONE));
         new JoystickButton(left, 1).onTrue(new InstantCommand(() -> {
         }, drivetrain));
+
+        //shifts default commands for the first and second joints
+        ps.getPlaystationButton().onTrue(
+                new ConditionalCommand(
+                        new InstantCommand(() -> {
+                            firstJoint.setDefaultCommand(new KeepFirstJointStable(firstJoint, secondJoint, compensation));
+                            secondJoint.setDefaultCommand(new KeepSecondJointStable(firstJoint, secondJoint, compensation));
+                        }),
+                        new InstantCommand(() -> {
+                            firstJoint.removeDefaultCommand();
+                            secondJoint.removeDefaultCommand();
+                        }),
+                        () -> (firstJoint.getDefaultCommand() == null && secondJoint.getDefaultCommand() == null)));
+
 //        xbox.getLeftStickButton().onTrue(new InstantCommand(() -> drivetrain.setMode(CANSparkMax.IdleMode.kCoast)));
 //        xbox.getRightStickButton().onTrue(new InstantCommand(() -> drivetrain.setMode(CANSparkMax.IdleMode.kBrake)));
 //        xbox.getButtonStart().onTrue(new Climb(drivetrain));
