@@ -38,6 +38,7 @@ public class MoveSecondJoint extends CommandBase {
                 () -> startPosition + ((target.get() - startPosition) / duration.get())
                         * Math.min((Timer.getFPGATimestamp() - startTime), duration.get()));
         lastTimeNotOnTarget = startTime;
+        move.initialize();
     }
 
     @Override

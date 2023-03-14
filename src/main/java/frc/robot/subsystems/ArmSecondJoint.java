@@ -131,6 +131,10 @@ public class ArmSecondJoint extends SparkMaxGenericSubsystem {
         return getAbsolutePosition() - firstJoint.getAbsolutePosition();
     }
 
+    public CANSparkMax.IdleMode getIdleMode() {
+        return master.getIdleMode();
+    }
+
     public double getVelocity() {
         return sparkMaxEncoder.getVelocity();
     }
@@ -163,11 +167,11 @@ public class ArmSecondJoint extends SparkMaxGenericSubsystem {
         namespace.putNumber("current", master::getOutputCurrent);
         namespace.putBoolean("is back", this::isBack);
         namespace.putNumber("encoder ticks", absoluteEncoder::getAbsolutePosition);
-        namespace.putNumber("aribtrary ff", ()-> arbitraryFeedForward);
+        namespace.putNumber("aribtrary ff", () -> arbitraryFeedForward);
     }
 
     public void setArbitraryFeedForward(double arbitraryFeedForward) {
-//        this.arbitraryFeedForward = arbitraryFeedForward;
-        this.arbitraryFeedForward = 0;
+        this.arbitraryFeedForward = arbitraryFeedForward;
+//        this.arbitraryFeedForward = 0;
     }
 }

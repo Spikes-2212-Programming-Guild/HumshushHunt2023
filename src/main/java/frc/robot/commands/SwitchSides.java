@@ -1,9 +1,7 @@
 package frc.robot.commands;
 
 import com.revrobotics.CANSparkMax;
-import edu.wpi.first.wpilibj2.command.CommandBase;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
+import edu.wpi.first.wpilibj2.command.*;
 import frc.robot.services.ArmGravityCompensation;
 import frc.robot.subsystems.*;
 
@@ -18,29 +16,21 @@ public class SwitchSides extends SequentialCommandGroup {
     private final ArmSecondJoint secondJoint;
     private final Gripper gripper;
 
-//    @Override
-//    public void initialize() {
-//        CommandBase switchSides;
-//        if (secondJoint.isBack()) {
-//            switchSides = moveArmFromBack(firstJoint, secondJoint, gripper);
-//        } else {
-//            switchSides = moveArmFromFront(firstJoint, secondJoint, gripper);
-//        }
-//        switchSides.schedule();
-//    }
-
     public SwitchSides(ArmFirstJoint firstJoint, ArmSecondJoint secondJoint, Gripper gripper, boolean isBack) {
         this.firstJoint = firstJoint;
         this.secondJoint = secondJoint;
         this.gripper = gripper;
-        addRequirements(firstJoint, secondJoint, FakeArm.getInstance());
+        addRequirements(firstJoint, secondJoint);
         if (isBack) {
             addCommands(
 //                    new InstantCommand(() -> Drivetrain.getInstance().setMode(CANSparkMax.IdleMode.kBrake)),
                     new CloseGripper(gripper),
                     new MoveSecondJoint(secondJoint, () -> PlaceGamePiece.ArmState.FOLD_BELOW_180.secondJointPosition,
                             WAIT_TIME, MOVE_DURATION),
-                    new MoveFirstJoint(firstJoint, () -> 185.0, WAIT_TIME, MOVE_DURATION),
+                    new ParallelRaceGroup(
+                            new MoveFirstJoint(firstJoint, () -> 185.0, WAIT_TIME, MOVE_DURATION),
+                            new KeepSecondJointStable(firstJoint, secondJoint, ArmGravityCompensation.getInstance())
+                    ),
                     new MoveSecondJoint(secondJoint, () -> PlaceGamePiece.ArmState.FOLD_ABOVE_180.secondJointPosition,
                             WAIT_TIME, () -> 1.2),
 //                    new ParallelCommandGroup(
@@ -56,7 +46,10 @@ public class SwitchSides extends SequentialCommandGroup {
                     new CloseGripper(gripper),
                     new MoveSecondJoint(secondJoint, () -> PlaceGamePiece.ArmState.FOLD_ABOVE_180.secondJointPosition,
                             WAIT_TIME, MOVE_DURATION),
-                    new MoveFirstJoint(firstJoint, () -> 5.0, WAIT_TIME, MOVE_DURATION),
+                    new ParallelRaceGroup(
+                            new MoveFirstJoint(firstJoint, () -> 5.0, WAIT_TIME, MOVE_DURATION),
+                            new KeepSecondJointStable(firstJoint, secondJoint, ArmGravityCompensation.getInstance())
+                    ),
 //                    new MoveSecondJoint(secondJoint, () -> 180.0, WAIT_TIME, MOVE_DURATION),
 //                    new ParallelCommandGroup(
                     new MoveSecondJoint(secondJoint, () -> PlaceGamePiece.ArmState.FOLD_BELOW_180.secondJointPosition,

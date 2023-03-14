@@ -1,23 +1,48 @@
 package frc.robot.commands;
 
-import com.revrobotics.AnalogInput;
 import com.revrobotics.CANSparkMax;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.ParallelRaceGroup;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
-import edu.wpi.first.wpilibj2.command.WaitCommand;
 import frc.robot.services.ArmGravityCompensation;
-import frc.robot.subsystems.*;
+import frc.robot.subsystems.ArmFirstJoint;
+import frc.robot.subsystems.ArmSecondJoint;
+import frc.robot.subsystems.Drivetrain;
 
 import java.util.function.Supplier;
 
 public class PlaceGamePiece extends SequentialCommandGroup {
 
+    public enum ArmState {
+
+        FOLD_BELOW_180(90, 40, 0.5),
+        FOLD_ABOVE_180(90, 320, 0.5),
+        FLOOR_BACK(110, 120, 0.5),
+        FLOOR_FRONT(75, 233, 0.5),
+        BACK_MID(136, 76, 0.5),
+        BACK_TOP(176, 147, 0.7),
+        FRONT_MID(46, 285, 0.5),
+        FRONT_TOP(8, 220, 0.7),
+        BACK_LIFT(185, 270, 0.85),
+        FRONT_LIFT(5, 100, 0.85),
+        FRONT_DOUBLE_SUBSTATION(4, 188, 0.7),
+        BACK_DOUBLE_SUBSTATION(176, 164, 0.7);
+
+        public final double firstJointPosition;
+        public final double secondJointPosition;
+        public final double moveDuration;
+
+        ArmState(double firstJointPosition, double secondJointPosition, double moveDuration) {
+            this.firstJointPosition = firstJointPosition;
+            this.secondJointPosition = secondJointPosition;
+            this.moveDuration = moveDuration;
+        }
+    }
+
     private static final Supplier<Double> WAIT_TIME = () -> 0.1;
-    private static final double WAIT_PERIOD = 0.5;
 
     public PlaceGamePiece(ArmFirstJoint firstJoint, ArmSecondJoint secondJoint, ArmState state) {
-        addRequirements(firstJoint, secondJoint, FakeArm.getInstance());
+        addRequirements(firstJoint, secondJoint);
         addCommands(
                 new InstantCommand(() -> Drivetrain.getInstance().setMode(CANSparkMax.IdleMode.kBrake))
         );
@@ -42,32 +67,5 @@ public class PlaceGamePiece extends SequentialCommandGroup {
                 new InstantCommand(() -> Drivetrain.getInstance().setMode(CANSparkMax.IdleMode.kCoast))
 //                new KeepArmStable(firstJoint, secondJoint, ArmGravityCompensation.getInstance())
         );
-    }
-
-    public enum ArmState {
-
-        FOLD_BELOW_180(90, 35, 0.5),
-        FOLD_ABOVE_180(90, 325, 0.5),
-        REST(0, 0, 0),
-        FLOOR_BACK(110, 120, 0.5),
-        FLOOR_FRONT(75, 233, 0.5),
-        BACK_MID(136, 76, 0.5),
-        BACK_TOP(176, 147, 0.7),
-        FRONT_MID(50, 283, 0.5),
-        FRONT_TOP(12, 221, 0.7),
-        BACK_LIFT(185, 270, 0.85),
-        FRONT_LIFT(5, 100, 0.85),
-        FRONT_DOUBLE_SUBSTATION(155, 229, 0.7),
-        BACK_DOUBLE_SUBSTATION(30, 130, 0.7);
-
-        public final double firstJointPosition;
-        public final double secondJointPosition;
-        public final double moveDuration;
-
-        ArmState(double firstJointPosition, double secondJointPosition, double moveDuration) {
-            this.firstJointPosition = firstJointPosition;
-            this.secondJointPosition = secondJointPosition;
-            this.moveDuration = moveDuration;
-        }
     }
 }

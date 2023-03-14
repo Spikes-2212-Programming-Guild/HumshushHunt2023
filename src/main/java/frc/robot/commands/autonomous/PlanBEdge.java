@@ -2,6 +2,7 @@ package frc.robot.commands.autonomous;
 
 import com.pathplanner.lib.PathConstraints;
 import com.pathplanner.lib.PathPlanner;
+import com.spikes2212.command.drivetrains.commands.DriveArcade;
 import edu.wpi.first.wpilibj2.command.*;
 import frc.robot.commands.*;
 import frc.robot.subsystems.ArmFirstJoint;
@@ -14,8 +15,8 @@ import java.util.Map;
 
 public class PlanBEdge extends BasePathAuto {
 
-    private static final double MAX_VELOCITY = 1.5;
-    private static final double MAX_ACCELERATION = 2;
+    private static final double MAX_VELOCITY = 1;
+    private static final double MAX_ACCELERATION = 1;
 
     public PlanBEdge(Drivetrain drivetrain) {
         super(drivetrain, getEventMap());
@@ -30,9 +31,12 @@ public class PlanBEdge extends BasePathAuto {
         HashMap<String, Command> eventMap = new HashMap<>();
         eventMap.put("putGP", new SequentialCommandGroup(
                 new PrintCommand("put gp"),
-                new PlaceGamePiece(ArmFirstJoint.getInstance(), ArmSecondJoint.getInstance(),
-                        PlaceGamePiece.ArmState.FRONT_TOP),
+                new ParallelRaceGroup(
+                        new DriveArcade(Drivetrain.getInstance(), 0.25, 0),
+                        new PlaceGamePiece(ArmFirstJoint.getInstance(), ArmSecondJoint.getInstance(),
+                                PlaceGamePiece.ArmState.FRONT_TOP)),
                 new OpenGripper(Gripper.getInstance()),
+                new WaitCommand(1),
                 new MoveSecondJoint(ArmSecondJoint.getInstance(), () -> PlaceGamePiece.ArmState.FOLD_ABOVE_180.secondJointPosition, () -> 0.005,
                         () -> PlaceGamePiece.ArmState.FOLD_ABOVE_180.moveDuration + 0.2),
                 new CloseGripper(Gripper.getInstance()),
