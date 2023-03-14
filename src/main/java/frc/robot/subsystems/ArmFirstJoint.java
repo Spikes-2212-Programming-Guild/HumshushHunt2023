@@ -140,6 +140,10 @@ public class ArmFirstJoint extends SparkMaxGenericSubsystem {
         return getRelativePosition();
     }
 
+    public boolean encoderConnected() {
+        return absoluteEncoder.isConnected();
+    }
+
     public CANSparkMax.IdleMode getIdleMode() {
         return master.getIdleMode();
     }

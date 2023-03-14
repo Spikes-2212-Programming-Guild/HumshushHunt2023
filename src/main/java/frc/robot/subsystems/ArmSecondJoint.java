@@ -131,6 +131,10 @@ public class ArmSecondJoint extends SparkMaxGenericSubsystem {
         return getAbsolutePosition() - firstJoint.getAbsolutePosition();
     }
 
+    public boolean encoderConnected() {
+        return absoluteEncoder.isConnected();
+    }
+
     public CANSparkMax.IdleMode getIdleMode() {
         return master.getIdleMode();
     }
