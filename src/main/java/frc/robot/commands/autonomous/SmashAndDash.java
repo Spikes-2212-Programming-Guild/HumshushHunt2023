@@ -110,8 +110,7 @@ public class SmashAndDash extends BasePathAuto {
                                 }),
                                 () -> !secondJoint.isBack()
                         ),
-                        new ParallelRaceGroup(
-                                new KeepSecondJointStable(firstJoint, secondJoint, compensation),
+                        new ParallelDeadlineGroup(
                                 new SequentialCommandGroup(
                                         new OpenGripper(gripper),
                                         new WaitCommand(0.15),
@@ -144,7 +143,8 @@ public class SmashAndDash extends BasePathAuto {
                                         },
                                         new DriveArcade(drivetrain, MOVE_VALUE_TO_CUBE, () -> 0.0).withTimeout(0.5),
                                         new CloseGripper(gripper)
-                                )
+                                ),
+                                new KeepSecondJointStable(firstJoint, secondJoint, compensation)
                         )
                 )
         );
