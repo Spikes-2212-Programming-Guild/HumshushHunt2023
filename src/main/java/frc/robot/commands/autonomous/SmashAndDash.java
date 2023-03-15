@@ -60,6 +60,11 @@ public class SmashAndDash extends BasePathAuto {
         ROOT.putData("do something", new MoveSecondJoint(secondJoint,
                 () -> PlaceGamePiece.ArmState.FOLD_BELOW_180.secondJointPosition, MIN_WAIT_TIME,
                 SWITCH_SIDES_GENERAL_MOVE_DURATION));
+        //so it will register before the command starts and we can put it on the shuffleboard
+        ROOT.putNumber("distance", 0);
+        ROOT.putBoolean("passed max distance", false);
+        ROOT.putBoolean("has game piece in auto", false);
+
     }
 
     public CommandBase getCommand() {
@@ -80,9 +85,12 @@ public class SmashAndDash extends BasePathAuto {
         HashMap<String, Command> eventMap = new HashMap<>();
         eventMap.put("putGP", new SequentialCommandGroup(
                 new PrintCommand("put gp"),
-                new PlaceGamePiece(ArmFirstJoint.getInstance(), ArmSecondJoint.getInstance(),
-                        ArmState.BACK_TOP),
+                new ParallelRaceGroup(
+                        new DriveArcade(drivetrain, -0.25, 0),
+                        new PlaceGamePiece(ArmFirstJoint.getInstance(), ArmSecondJoint.getInstance(),
+                                PlaceGamePiece.ArmState.BACK_TOP)),
                 new OpenGripper(Gripper.getInstance()),
+                new WaitCommand(0.2),
                 new ParallelRaceGroup(
                         new KeepFirstJointStable(firstJoint, secondJoint, compensation),
                         new MoveSecondJoint(ArmSecondJoint.getInstance(),
@@ -109,9 +117,9 @@ public class SmashAndDash extends BasePathAuto {
                                         new WaitCommand(0.15),
 //                                        moveToCube(drivetrain, vision),
                                         new CenterOnGamePiece(drivetrain, vision, VisionService.PhotonVisionPipeline.CUBE) {
-                                            final double maxDistance = 1.5;
-                                            double startingPosition;
-                                            final Drivetrain drivetrain1 = ((Drivetrain) drivetrain);
+                                            private final double maxDistance = 1.5;
+                                            private double startingPosition;
+                                            private final Drivetrain drivetrain1 = ((Drivetrain) drivetrain);
 
                                             @Override
                                             public void initialize() {
@@ -122,7 +130,15 @@ public class SmashAndDash extends BasePathAuto {
 
                                             @Override
                                             public boolean isFinished() {
-                                                return gripper.hasGamePiece() || Math.abs(drivetrain1.getLeftPosition()
+                                                double leftPos = drivetrain1.getLeftPosition();
+                                                double distance = Math.abs(drivetrain1.getLeftPosition()
+                                                        - startingPosition);
+                                                ROOT.putNumber("distance", distance);
+                                                ROOT.putBoolean("passed max distance", Math.abs(drivetrain1.getLeftPosition()
+                                                        - startingPosition) >= maxDistance);
+                                                boolean hasGamePiece = gripper.hasGamePiece();
+                                                ROOT.putBoolean("has game piece in auto", hasGamePiece);
+                                                return hasGamePiece || Math.abs(leftPos
                                                         - startingPosition) >= maxDistance;
                                             }
                                         },
