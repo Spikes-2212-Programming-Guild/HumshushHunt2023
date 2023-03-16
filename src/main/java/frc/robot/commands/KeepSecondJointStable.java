@@ -27,8 +27,7 @@ public class KeepSecondJointStable extends SequentialCommandGroup {
                     public boolean isFinished() {
                         return false;
                     }
-                }
-                        .alongWith(new RunCommand(() -> compensation.configureSecondJointG(firstJointAngle, secondJointAngle)))
+                }.alongWith(new RunCommand(() -> compensation.configureSecondJointG(firstJointAngle, secondJointAngle)))
         );
         addRequirements(secondJoint);
     }
