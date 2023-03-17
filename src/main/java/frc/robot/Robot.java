@@ -43,7 +43,7 @@ public class Robot extends TimedRobot {
     private VisionService vision;
     private LedsService leds;
     private AutoChooser autoChooser;
-    private WrapperCommand coastCommand;
+    private WrapperCommand userCommand;
 
     @Override
     public void robotInit() {
@@ -62,10 +62,11 @@ public class Robot extends TimedRobot {
         secondJoint.configureEncoders();
         vision.setBackLimelightPipeline(VisionService.LimelightPipeline.HIGH_RRT);
         vision.setFrontLimelightPipeline(VisionService.LimelightPipeline.HIGH_RRT);
-        coastCommand = new InstantCommand(() -> {
+        userCommand = new InstantCommand(() -> {
             drivetrain.setMode(CANSparkMax.IdleMode.kCoast);
             firstJoint.setIdleMode(CANSparkMax.IdleMode.kCoast);
             secondJoint.setIdleMode(CANSparkMax.IdleMode.kCoast);
+            leds.switchMode();
         }).ignoringDisable(true);
     }
 
@@ -81,7 +82,7 @@ public class Robot extends TimedRobot {
         leds.periodic();
         SmashAndDash.update();
         if (RobotController.getUserButton()) {
-            coastCommand.schedule();
+            userCommand.schedule();
         }
     }
 

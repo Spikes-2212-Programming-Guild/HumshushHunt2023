@@ -32,6 +32,8 @@ public class VisionService {
         }
     }
 
+    public static final double TOLERANCE = 1;
+
     private static final String PHOTON_VISION_CAMERA_NAME = "photonvision";
     private static final String FRONT_LIMELIGHT_NAME = "limelight-front";
     private static final String BACK_LIMELIGHT_NAME = "limelight-back";
@@ -39,8 +41,6 @@ public class VisionService {
             = area -> -79.14 * Math.log(area) + 274.51;
     private static final Function<Double, Double> AREA_TO_DISTANCE_CUBE
             = area -> -76.91 * Math.log(area) + 240.96;
-
-    private static final double TOLERANCE = 1.5;
 
     private static VisionService instance;
 

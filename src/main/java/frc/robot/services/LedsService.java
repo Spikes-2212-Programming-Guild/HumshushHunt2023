@@ -3,6 +3,7 @@ package frc.robot.services;
 import com.spikes2212.dashboard.RootNamespace;
 import edu.wpi.first.wpilibj.AddressableLED;
 import edu.wpi.first.wpilibj.AddressableLEDBuffer;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import frc.robot.RobotMap;
 import frc.robot.subsystems.ArmFirstJoint;
@@ -13,8 +14,7 @@ public class LedsService {
 
     public enum Mode {
 
-        OFF(0, 0, 0), RED(255, 0, 0), START_CONFIGURATION(0, 0, 139), EMPTY_GRIPPER(254, 0, 0), ALLIGNED_TO_GAME_PIECE(204, 0, 254), HAS_GAME_PIECE(0, 0, 254),
-        HAS_GAME_PIECE_AND_ALLIGNED(0, 254, 0), CONE(255, 255, 0), CUBE(255, 0, 255);
+        OFF(0, 0, 0), RED(255, 0, 0), GREEN(0, 255, 0), START_CONFIGURATION(0, 0, 139), CONE(255, 255, 0), CUBE(255, 0, 255);
 
         public final int red;
         public final int green;
@@ -35,7 +35,6 @@ public class LedsService {
 
     private final ArmFirstJoint firstJoint;
     private final ArmSecondJoint secondJoint;
-    private final Gripper gripper;
 
     private final VisionService vision;
 
@@ -44,94 +43,120 @@ public class LedsService {
     private final AddressableLED led;
     private final AddressableLEDBuffer ledBuffer;
 
+    private int startLed;
+
     public static LedsService getInstance() {
         if (instance == null) {
             instance = new LedsService("leds", new AddressableLED(RobotMap.PWM.LED_PORT),
-                    new AddressableLEDBuffer(NUMBER_OF_LEDS), ArmSecondJoint.getInstance(), VisionService.getInstance(), Gripper.getInstance());
+                    new AddressableLEDBuffer(NUMBER_OF_LEDS), ArmFirstJoint.getInstance(), ArmSecondJoint.getInstance(), VisionService.getInstance());
         }
         return instance;
     }
 
-    private LedsService(String namespaceName, AddressableLED led, AddressableLEDBuffer ledBuffer, ArmSecondJoint secondJoint, VisionService vision, Gripper gripper) {
+    private LedsService(String namespaceName, AddressableLED led, AddressableLEDBuffer ledBuffer, ArmFirstJoint firstJoint, ArmSecondJoint secondJoint, VisionService vision) {
         namespace = new RootNamespace(namespaceName);
         this.led = led;
         this.ledBuffer = ledBuffer;
-        this.firstJoint = ArmFirstJoint.getInstance();
+        this.firstJoint = firstJoint;
         this.secondJoint = secondJoint;
         this.vision = vision;
-        this.gripper = gripper;
         this.mode = Mode.START_CONFIGURATION;
+        this.startLed = 0;
         led.setLength(ledBuffer.getLength());
         led.start();
         configureDashboard();
     }
 
     public void periodic() {
-        double absolutePosition = firstJoint.getAbsolutePosition();
-        if (absolutePosition > 175 || absolutePosition < 5) {
-            setMode(Mode.RED);
+        if (mode == Mode.START_CONFIGURATION) {
+            startingLed();
         } else {
-            setMode(mode);
-        }
-//        Mode mode;
-//        if (gripper.hasGamePiece()) {
-//            if(secondJoint.isBack()) {
-//                if (vision.backLimelightCentered()) {
-//                    mode = Mode.HAS_GAME_PIECE_AND_ALLIGNED;
-//                } else {
-//                    mode = Mode.HAS_GAME_PIECE;
-//                }
-//            }
-//            else{
-//                if (vision.frontLimelightCentered()) {
-//                    mode = Mode.HAS_GAME_PIECE_AND_ALLIGNED;
-//                } else {
-//                    mode = Mode.HAS_GAME_PIECE;
-//                }
-//            }
-//        } else {
-//            if (vision.photonVisionCentered()) {
-//                mode = Mode.ALLIGNED_TO_GAME_PIECE;
+            double firstJointAbsolutePosition = firstJoint.getAbsolutePosition();
+            double secondJointAbsolutePosition = secondJoint.getAbsolutePosition();
+            if (firstJointAbsolutePosition > 175) {
+                if (secondJointAbsolutePosition < 200) {
+                    visionLed();
+                } else {
+                    setMode(0, ledBuffer.getLength(), Mode.RED);
+                }
+            } else {
+                if (firstJointAbsolutePosition < 5) {
+                    if (secondJointAbsolutePosition > 160) {
+                        visionLed();
+                    } else {
+                        setMode(0, ledBuffer.getLength(), Mode.RED);
+                    }
+                } else {
+                    setMode(0, ledBuffer.getLength(), mode);
+                }
+            }
+//            if (firstJointAbsolutePosition > 175 || firstJointAbsolutePosition < 5) {
+//                setMode(0, ledBuffer.getLength(), Mode.RED);
 //            } else {
-//                mode = Mode.EMPTY_GRIPPER;
+//                setMode(0, ledBuffer.getLength(), mode);
 //            }
-//        }
-//        setMode(mode);
+        }
     }
 
     public void switchGamePieceMode() {
-        mode = mode == Mode.CUBE || mode == Mode.START_CONFIGURATION ? Mode.CONE : Mode.CUBE;
-    }
-
-    public void turnOff() {
-        setMode(Mode.OFF);
-    }
-
-    private void rainbow() {
-        // For every pixel
-        int rainbowFirstPixelHue = 0;
-        for (int i = 0; i < ledBuffer.getLength(); i++) {
-            // Calculate the hue - hue is easier for rainbows because the color
-            // shape is a circle so only one value needs to precess
-            int hue = (rainbowFirstPixelHue + (i * 180 / ledBuffer.getLength())) % 180;
-            // Set the value
-            ledBuffer.setHSV(i, hue, 255, 128);
+        mode = mode == Mode.CUBE || mode == Mode.START_CONFIGURATION || mode == Mode.OFF ? Mode.CONE : Mode.CUBE;
+        if (mode == Mode.CONE) {
+            vision.setPhotonVisionPipeline(VisionService.PhotonVisionPipeline.CONE);
+        } else {
+            vision.setPhotonVisionPipeline(VisionService.PhotonVisionPipeline.CUBE);
         }
-        // Increase by to make the rainbow "move"
-        rainbowFirstPixelHue += 3;
-        // Check bounds
-        rainbowFirstPixelHue %= 180;
     }
 
-    private void setMode(Mode mode) {
-        for (int i = 0; i < ledBuffer.getLength(); i++) {
+    public void switchMode() {
+        mode = mode == Mode.OFF ? Mode.START_CONFIGURATION : Mode.OFF;
+    }
+
+    private void startingLed() {
+        Mode alliance;
+        Mode otherMode;
+        if (DriverStation.getAlliance() == DriverStation.Alliance.Red) {
+            alliance = Mode.RED;
+            otherMode = Mode.START_CONFIGURATION;
+        } else {
+            alliance = Mode.START_CONFIGURATION;
+            otherMode = Mode.RED;
+        }
+        setMode(0, ledBuffer.getLength(), alliance);
+        for (int i = startLed; i < ledBuffer.getLength() || i < startLed + 5; i++) {
+            ledBuffer.setRGB(i, otherMode.red, otherMode.green, otherMode.blue);
+            led.setData(ledBuffer);
+        }
+        startLed += 1;
+        startLed %= ledBuffer.getLength();
+    }
+
+    private void visionLed() {
+        double yaw = vision.getPhotonVisionYaw();
+        if (yaw > VisionService.TOLERANCE) setRightMode(mode);
+        else {
+            if (yaw < VisionService.TOLERANCE) setLeftMode(mode);
+            else {
+                setMode(0, ledBuffer.getLength(), Mode.GREEN);
+            }
+        }
+    }
+
+    private void setLeftMode(Mode mode) {
+        setMode(ledBuffer.getLength() / 2, ledBuffer.getLength(), mode);
+    }
+
+    private void setRightMode(Mode mode) {
+        setMode(0, ledBuffer.getLength() / 2, mode);
+    }
+
+    private void setMode(int startingLed, int endLed, Mode mode) {
+        for (int i = startingLed; i < endLed; i++) {
             ledBuffer.setRGB(i, mode.red, mode.green, mode.blue);
         }
         led.setData(ledBuffer);
     }
 
     private void configureDashboard() {
-        namespace.putData("rainbow leds", new InstantCommand(this::rainbow).ignoringDisable(true));
-        namespace.putData("turn off", new InstantCommand(this::turnOff).ignoringDisable(true));
+        namespace.putData("switch leds mode", new InstantCommand(this::switchMode).ignoringDisable(true));
     }
 }
