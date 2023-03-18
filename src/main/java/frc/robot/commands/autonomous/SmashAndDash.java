@@ -30,7 +30,10 @@ public class SmashAndDash extends BasePathAuto {
     private static final double MAX_ACCELERATION_TO_GRID = 1.3;
 
     private static final Supplier<Double> MIN_WAIT_TIME = () -> 0.005;
-    private static final Supplier<Double> MOVE_VALUE_TO_CUBE = ROOT.addConstantDouble("move value to cube", 0.5);
+    private static final double MIN_WAIT_TIME_AFTER_PLACING_GP = 0.06;
+    private static final double ADDITIONAL_DURATION_TO_RETRACT_ARM = 0.2;
+    private static final double RETRACT_FIRST_JOINT_TIMEOUT = 1.3;
+    private static final Supplier<Double> MOVE_VALUE_TO_CUBE = ROOT.addConstantDouble("move value to cube", 0.2);
     private static final Supplier<Double> ADDITIONAL_DISTANCE_TO_CUBE
             = ROOT.addConstantDouble("additional distance to cube", 0.0);
     private static final Supplier<Double> POST_PUT_GP_FIRST_JOINT_TARGET = () -> 110.0;
@@ -38,7 +41,11 @@ public class SmashAndDash extends BasePathAuto {
     private static final Supplier<Double> SECOND_JOINT_TAKE_CUBE_MOVE_DURATION = () -> 0.2;
     private static final Supplier<Double> DRIVE_TO_GRID_SPEED = () -> -0.5;
     private static final double DRIVE_TO_GRID_TIMEOUT = 0.18;
+    private static final double DRIVE_TO_CUBE_TIMEOUT = 0.5;
     private static final Supplier<Double> SWITCH_SIDES_GENERAL_MOVE_DURATION = () -> 0.5;
+    private static final Supplier<Double> SWITCH_SIDES_FIRST_JOINT_SETPOINT = () -> -0.5;
+    private static final double SWITCH_SIDES_FIRST_JOINT_TARGET = 10;
+    private static final double SWITCH_SIDES_GENERAL_ADDITIONAL_MOVE_DURATION = 0.15;
     private static final Supplier<Double> SWITCH_SIDES_LOW_MOVE_DURATION = () -> 0.2;
     private static final Supplier<Double> SWITCH_SIDES_1_FIRST_JOINT_TOP_POSITION = () -> 0.0;
     private static final Supplier<Double> SWITCH_SIDES_1_SECOND_JOINT_FOLD_POSITION = () -> 300.0;
@@ -114,16 +121,18 @@ public class SmashAndDash extends BasePathAuto {
                 new PlaceGamePiece(ArmFirstJoint.getInstance(), ArmSecondJoint.getInstance(),
                         PlaceGamePiece.ArmState.BACK_TOP),
                 new OpenGripper(Gripper.getInstance()),
-                new WaitCommand(0.06),
+                new WaitCommand(MIN_WAIT_TIME_AFTER_PLACING_GP),
                 new ParallelRaceGroup(
                         new KeepFirstJointStable(firstJoint, secondJoint, compensation),
                         new MoveSecondJoint(ArmSecondJoint.getInstance(),
                                 () -> ArmState.FOLD_BELOW_180.secondJointPosition, MIN_WAIT_TIME,
-                                () -> ArmState.FOLD_BELOW_180.moveDuration - 0.2)
+                                () -> ArmState.FOLD_BELOW_180.moveDuration
+                                        - ADDITIONAL_DURATION_TO_RETRACT_ARM)
                 ),
                 new CloseGripper(Gripper.getInstance()),
                 new MoveFirstJoint(ArmFirstJoint.getInstance(), POST_PUT_GP_FIRST_JOINT_TARGET, MIN_WAIT_TIME,
-                        () -> ArmState.FOLD_BELOW_180.moveDuration + 0.2).withTimeout(1.3)
+                        () -> ArmState.FOLD_BELOW_180.moveDuration +
+                                ADDITIONAL_DURATION_TO_RETRACT_ARM).withTimeout(RETRACT_FIRST_JOINT_TIMEOUT)
         ));
         eventMap.put("takeGP",
                 new SequentialCommandGroup(
@@ -164,7 +173,8 @@ public class SmashAndDash extends BasePathAuto {
                                                         - startingPosition) >= maxDistance;
                                             }
                                         },
-                                        new DriveArcade(drivetrain, MOVE_VALUE_TO_CUBE, () -> 0.0).withTimeout(0.2),
+                                        new DriveArcade(drivetrain, MOVE_VALUE_TO_CUBE,
+                                                () -> 0.0).withTimeout(DRIVE_TO_CUBE_TIMEOUT),
                                         new CloseGripper(gripper)
                                 ),
                                 new KeepSecondJointStable(firstJoint, secondJoint, compensation)
@@ -189,19 +199,21 @@ public class SmashAndDash extends BasePathAuto {
                         new ParallelRaceGroup(
                                 new MoveSmartMotorControllerGenericSubsystem(firstJoint, firstJoint.getPIDSettings(),
                                         firstJoint.getFeedForwardSettings(), UnifiedControlMode.PERCENT_OUTPUT,
-                                        () -> -0.5) {
+                                        SWITCH_SIDES_FIRST_JOINT_SETPOINT) {
                                     @Override
                                     public boolean isFinished() {
-                                        return firstJoint.getAbsolutePosition() <= 10;
+                                        return firstJoint.getAbsolutePosition() <= SWITCH_SIDES_FIRST_JOINT_TARGET;
                                     }
                                 },
                                 new KeepSecondJointStable(firstJoint, secondJoint, compensation)
                         ),
                         new MoveSecondJoint(secondJoint, SWITCH_SIDES_1_SECOND_JOINT_FOLD_POSITION, MIN_WAIT_TIME,
-                                () -> SWITCH_SIDES_GENERAL_MOVE_DURATION.get() - 0.15),
+                                () -> SWITCH_SIDES_GENERAL_MOVE_DURATION.get() -
+                                        SWITCH_SIDES_GENERAL_ADDITIONAL_MOVE_DURATION),
                         new ParallelRaceGroup(
                                 new MoveFirstJoint(firstJoint, SWITCH_SIDES_1_FIRST_JOINT_FLO0R_POSITION,
-                                        MIN_WAIT_TIME, () -> SWITCH_SIDES_GENERAL_MOVE_DURATION.get() - 0.15),
+                                        MIN_WAIT_TIME, () -> SWITCH_SIDES_GENERAL_MOVE_DURATION.get() -
+                                        SWITCH_SIDES_GENERAL_ADDITIONAL_MOVE_DURATION),
                                 new KeepSecondJointStable(firstJoint, secondJoint, compensation)
                         ),
                         new MoveSecondJoint(secondJoint, SWITCH_SIDES_1_SECOND_JOINT_FLO0R_POSITION, MIN_WAIT_TIME,
