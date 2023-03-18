@@ -121,11 +121,12 @@ public class LedsService {
             alliance = Mode.START_CONFIGURATION;
             otherMode = Mode.RED;
         }
-        setMode(0, ledBuffer.getLength(), alliance);
-        for (int i = startLed; i < ledBuffer.getLength() || i < startLed + 5; i++) {
+        for (int i = 0; i < ledBuffer.getLength(); i++) {
+            ledBuffer.setRGB(i, alliance.red, alliance.green, alliance.blue);
+        }        for (int i = startLed; i < ledBuffer.getLength() && i < startLed + 5; i++) {
             ledBuffer.setRGB(i, otherMode.red, otherMode.green, otherMode.blue);
-            led.setData(ledBuffer);
         }
+        led.setData(ledBuffer);
         startLed += 1;
         startLed %= ledBuffer.getLength();
     }
@@ -142,10 +143,12 @@ public class LedsService {
     }
 
     private void setLeftMode(Mode mode) {
+        setMode(0, ledBuffer.getLength() / 2, Mode.OFF);
         setMode(ledBuffer.getLength() / 2, ledBuffer.getLength(), mode);
     }
 
     private void setRightMode(Mode mode) {
+        setMode(ledBuffer.getLength() / 2, ledBuffer.getLength(), Mode.OFF);
         setMode(0, ledBuffer.getLength() / 2, mode);
     }
 

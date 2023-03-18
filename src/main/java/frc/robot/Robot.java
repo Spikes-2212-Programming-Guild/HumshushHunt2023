@@ -66,7 +66,6 @@ public class Robot extends TimedRobot {
             drivetrain.setMode(CANSparkMax.IdleMode.kCoast);
             firstJoint.setIdleMode(CANSparkMax.IdleMode.kCoast);
             secondJoint.setIdleMode(CANSparkMax.IdleMode.kCoast);
-            leds.switchMode();
         }).ignoringDisable(true);
     }
 
