@@ -32,7 +32,7 @@ public class VisionService {
         }
     }
 
-    public static final double TOLERANCE = 1;
+    public static final double TOLERANCE = 1.3;
 
     private static final String PHOTON_VISION_CAMERA_NAME = "photonvision";
     private static final String FRONT_LIMELIGHT_NAME = "limelight-front";

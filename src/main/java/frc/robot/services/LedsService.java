@@ -8,7 +8,6 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import frc.robot.RobotMap;
 import frc.robot.subsystems.ArmFirstJoint;
 import frc.robot.subsystems.ArmSecondJoint;
-import frc.robot.subsystems.Gripper;
 
 public class LedsService {
 
@@ -44,6 +43,7 @@ public class LedsService {
     private final AddressableLEDBuffer ledBuffer;
 
     private int startLed;
+    private boolean flipSides;
 
     public static LedsService getInstance() {
         if (instance == null) {
@@ -62,6 +62,7 @@ public class LedsService {
         this.vision = vision;
         this.mode = Mode.START_CONFIGURATION;
         this.startLed = 0;
+        this.flipSides = false;
         led.setLength(ledBuffer.getLength());
         led.start();
         configureDashboard();
@@ -73,18 +74,14 @@ public class LedsService {
         } else {
             double firstJointAbsolutePosition = firstJoint.getAbsolutePosition();
             double secondJointAbsolutePosition = secondJoint.getAbsolutePosition();
-            if (firstJointAbsolutePosition > 175) {
+            if (firstJointAbsolutePosition > 165) {
                 if (secondJointAbsolutePosition < 200) {
                     visionLed();
-                } else {
-                    setMode(0, ledBuffer.getLength(), Mode.RED);
                 }
             } else {
-                if (firstJointAbsolutePosition < 5) {
+                if (firstJointAbsolutePosition < 15) {
                     if (secondJointAbsolutePosition > 160) {
                         visionLed();
-                    } else {
-                        setMode(0, ledBuffer.getLength(), Mode.RED);
                     }
                 } else {
                     setMode(0, ledBuffer.getLength(), mode);
@@ -121,21 +118,42 @@ public class LedsService {
             alliance = Mode.START_CONFIGURATION;
             otherMode = Mode.RED;
         }
-        for (int i = 0; i < ledBuffer.getLength(); i++) {
-            ledBuffer.setRGB(i, alliance.red, alliance.green, alliance.blue);
-        }        for (int i = startLed; i < ledBuffer.getLength() && i < startLed + 5; i++) {
-            ledBuffer.setRGB(i, otherMode.red, otherMode.green, otherMode.blue);
+        if (!flipSides) {
+            for (int i = 0; i < ledBuffer.getLength(); i++) {
+                ledBuffer.setRGB(i, alliance.red, alliance.green, alliance.blue);
+            }
+            for (int i = startLed; i < ledBuffer.getLength() && i < startLed + 5; i++) {
+                ledBuffer.setRGB(i, otherMode.red, otherMode.green, otherMode.blue);
+            }
+            led.setData(ledBuffer);
+            startLed += 1;
+            if (startLed + 5 >= 60) {
+                flipSides = true;
+                startLed = ledBuffer.getLength() - 1;
+            }
+            startLed %= ledBuffer.getLength();
+        } else {
+            for (int i = ledBuffer.getLength() - 1; i >= 0; i--) {
+                ledBuffer.setRGB(i, alliance.red, alliance.green, alliance.blue);
+            }
+            for (int i = startLed; i > 0 && i > startLed - 5; i--) {
+                ledBuffer.setRGB(i, otherMode.red, otherMode.green, otherMode.blue);
+            }
+            led.setData(ledBuffer);
+            startLed -= 1;
+            if (startLed - 5 <= 0) {
+                flipSides = false;
+                startLed = 0;
+            }
+            startLed %= ledBuffer.getLength();
         }
-        led.setData(ledBuffer);
-        startLed += 1;
-        startLed %= ledBuffer.getLength();
     }
 
     private void visionLed() {
         double yaw = vision.getPhotonVisionYaw();
         if (yaw > VisionService.TOLERANCE) setRightMode(mode);
         else {
-            if (yaw < VisionService.TOLERANCE) setLeftMode(mode);
+            if (yaw < -VisionService.TOLERANCE) setLeftMode(mode);
             else {
                 setMode(0, ledBuffer.getLength(), Mode.GREEN);
             }
