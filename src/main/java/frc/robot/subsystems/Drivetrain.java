@@ -83,7 +83,7 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
     private final Namespace feedForwardNamespace = namespace.addChild("feed forward");
     private final Supplier<Double> kS = feedForwardNamespace.addConstantDouble("kS", 0.14); //0.14
     private final Supplier<Double> kV = feedForwardNamespace.addConstantDouble("kV", 0.28); //0.28
-    private final Supplier<Double> kA = feedForwardNamespace.addConstantDouble("kA", 1/3.0);
+    private final Supplier<Double> kA = feedForwardNamespace.addConstantDouble("kA", 1 / 3.0);
     public final Supplier<Double> limelightkS = feedForwardNamespace.addConstantDouble("limelight kS", 0.14);
     private final FeedForwardSettings feedForwardSettings;
 
@@ -92,6 +92,15 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
     private final Supplier<Double> trapezoidAcceleration = trapezoidProfileNamespace.addConstantDouble
             ("acceleration", 0);
     private final TrapezoidProfileSettings trapezoidProfileSettings;
+
+    private final Namespace climbWithExitPIDNamespace = namespace.addChild("climb with exit pid");
+    private final Supplier<Double> kPExit = climbWithExitPIDNamespace.addConstantDouble("kP", 0);
+    private final Supplier<Double> kIExit = climbWithExitPIDNamespace.addConstantDouble("kI", 0);
+    private final Supplier<Double> kDExit = climbWithExitPIDNamespace.addConstantDouble("kD", 0);
+    private final Supplier<Double> toleranceExit = climbWithExitPIDNamespace.addConstantDouble("tolerance", 0);
+    private final Supplier<Double> waitTimeExit = climbWithExitPIDNamespace.addConstantDouble("wait time", 0);
+    public final PIDSettings climbWithExitPIDSettings =
+            new PIDSettings(kPExit, kIExit, kDExit, toleranceExit, waitTimeExit);
 
     private double prevLeftSetpoint = 0;
     private double prevRightSetpoint = 0;
@@ -271,7 +280,7 @@ public class Drivetrain extends SparkMaxTankDrivetrain {
         rightEncoder.setVelocityConversionFactor(DISTANCE_PER_ROTATION / SECONDS_IN_MINUTE);
     }
 
-    private void setCurrentLimits(){
+    private void setCurrentLimits() {
         leftMaster.setSmartCurrentLimit(CURRENT_LIMIT);
         rightMaster.setSmartCurrentLimit(CURRENT_LIMIT);
         leftSlaves.get(0).setSmartCurrentLimit(CURRENT_LIMIT);
