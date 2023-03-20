@@ -114,8 +114,7 @@ public class Robot extends TimedRobot {
         auto = new SmashAndDash(drivetrain).getCommand();
 //        auto = new ClimbPlanB(drivetrain);
 //        auto = new PlanBWindow(drivetrain).getCommand();
-//        auto = new PlanBEdge(dr69
-//        ivetrain).getCommand();
+//        auto = new PlanBEdge(drivetrain).getCommand();
         if (auto != null && firstJoint.encoderConnected() && secondJoint.encoderConnected()) auto.schedule();
         else new DriveArcade(drivetrain, 0.5, 0).withTimeout(2).schedule();
     }

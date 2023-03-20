@@ -49,13 +49,11 @@ public class SmashAndDash extends BasePathAuto {
 
     public SmashAndDash(Drivetrain drivetrain) {
         super(drivetrain, getEventMap());
-        ROOT.putData("move to cube", moveToCube(drivetrain, VisionService.getInstance()));
         configureDashboard(ArmFirstJoint.getInstance(), ArmSecondJoint.getInstance(), ArmGravityCompensation.getInstance());
 //        super(drivetrain, new HashMap<>());
     }
 
     private void configureDashboard(ArmFirstJoint firstJoint, ArmSecondJoint secondJoint, ArmGravityCompensation compensation) {
-        ROOT.putData("switchsides1", switchSides1(firstJoint, secondJoint, compensation));
         ROOT.putData("move with center", new CenterOnGamePiece(drivetrain, VisionService.getInstance(), VisionService.PhotonVisionPipeline.CUBE) {
             private final double maxDistance = 1.5;
             private double startingPosition;
@@ -109,8 +107,6 @@ public class SmashAndDash extends BasePathAuto {
         HashMap<String, Command> eventMap = new HashMap<>();
         eventMap.put("putGP", new SequentialCommandGroup(
                 new PrintCommand("put gp"),
-//                new ParallelRaceGroup(
-//                        new DriveArcade(drivetrain, -0.25, 0),
                 new PlaceGamePiece(ArmFirstJoint.getInstance(), ArmSecondJoint.getInstance(),
                         PlaceGamePiece.ArmState.BACK_TOP),
                 new OpenGripper(Gripper.getInstance()),
@@ -137,8 +133,6 @@ public class SmashAndDash extends BasePathAuto {
                         new ParallelDeadlineGroup(
                                 new SequentialCommandGroup(
                                         new OpenGripper(gripper),
-//                                        new WaitCommand(0.15),
-//                                        moveToCube(drivetrain, vision),
                                         new CenterOnGamePiece(drivetrain, vision, VisionService.PhotonVisionPipeline.CUBE) {
                                             private final double maxDistance = 1.5;
                                             private double startingPosition;
@@ -171,13 +165,18 @@ public class SmashAndDash extends BasePathAuto {
                         )
                 )
         );
-        eventMap.put("putGP2", new ParallelCommandGroup(
-                        new KeepSecondJointStable(firstJoint, secondJoint, compensation),
-                        new KeepFirstJointStable(firstJoint, secondJoint, compensation),
-                        new SequentialCommandGroup(
-                                new DriveArcade(drivetrain, DRIVE_TO_GRID_SPEED, () -> 0.0).withTimeout(DRIVE_TO_GRID_TIMEOUT),
-                                new OpenGripper(gripper)
-                        )
+        eventMap.put("putGP2", new SequentialCommandGroup(
+                        new OpenGripper(gripper),
+                        new WaitCommand(0.06),
+                        new MoveSecondJoint(ArmSecondJoint.getInstance(),
+                                () -> ArmState.FOLD_BELOW_180.secondJointPosition, MIN_WAIT_TIME,
+                                () -> ArmState.FOLD_BELOW_180.moveDuration - 0.2)
+//                        new KeepSecondJointStable(firstJoint, secondJoint, compensation),
+//                        new KeepFirstJointStable(firstJoint, secondJoint, compensation),
+//                        new SequentialCommandGroup(
+//                                new DriveArcade(drivetrain, DRIVE_TO_GRID_SPEED, () -> 0.0).withTimeout(DRIVE_TO_GRID_TIMEOUT),
+//                                new OpenGripper(gripper)
+//                        )
                 )
         );
         eventMap.put("switchSides1",
@@ -227,48 +226,7 @@ public class SmashAndDash extends BasePathAuto {
         return eventMap;
     }
 
-    private static CommandBase moveToCube(Drivetrain drivetrain, VisionService visionService) {
-        return new DriveArcade(drivetrain, () -> -MOVE_VALUE_TO_CUBE.get(), () -> 0.0) {
-            private double initialPos;
-            private double distanceFromCube;
-
-            @Override
-            public void initialize() {
-                initialPos = drivetrain.getLeftPosition();
-                distanceFromCube = 0.15;
-//                distanceFromCube = visionService.getPhotonVisionDistanceFromTarget();
-            }
-
-            @Override
-            public boolean isFinished() {
-                return Math.abs(drivetrain.getLeftPosition() - initialPos)
-                        >= distanceFromCube / 100 + ADDITIONAL_DISTANCE_TO_CUBE.get();
-            }
-        };
-    }
-
     public static void update() {
         ROOT.update();
-    }
-
-    private static CommandBase switchSides1(ArmFirstJoint firstJoint, ArmSecondJoint secondJoint,
-                                            ArmGravityCompensation compensation) {
-        return new SequentialCommandGroup(
-                new MoveSecondJoint(secondJoint,
-                        () -> PlaceGamePiece.ArmState.FOLD_BELOW_180.secondJointPosition, MIN_WAIT_TIME,
-                        SWITCH_SIDES_GENERAL_MOVE_DURATION),
-                new MoveFirstJoint(firstJoint, SWITCH_SIDES_1_FIRST_JOINT_TOP_POSITION, MIN_WAIT_TIME,
-                        SWITCH_SIDES_GENERAL_MOVE_DURATION),
-                new MoveSecondJoint(secondJoint, SWITCH_SIDES_1_SECOND_JOINT_FOLD_POSITION, MIN_WAIT_TIME,
-                        SWITCH_SIDES_GENERAL_MOVE_DURATION),
-                new ParallelRaceGroup(
-                        new MoveFirstJoint(firstJoint, SWITCH_SIDES_1_FIRST_JOINT_FLO0R_POSITION,
-                                MIN_WAIT_TIME, SWITCH_SIDES_GENERAL_MOVE_DURATION),
-                        new KeepSecondJointStable(firstJoint, secondJoint, compensation)
-                ),
-                new MoveSecondJoint(secondJoint, SWITCH_SIDES_1_SECOND_JOINT_FLO0R_POSITION, MIN_WAIT_TIME,
-                        SWITCH_SIDES_LOW_MOVE_DURATION),
-                new KeepSecondJointStable(firstJoint, secondJoint, compensation)
-        );
     }
 }

@@ -13,7 +13,7 @@ public class LedsService {
 
     public enum Mode {
 
-        OFF(0, 0, 0), RED(255, 0, 0), GREEN(0, 255, 0), START_CONFIGURATION(0, 0, 139), CONE(255, 255, 0), CUBE(255, 0, 255);
+        OFF(0, 0, 0), WHITE(255, 255, 255), RED(255, 0, 0), GREEN(0, 255, 0), START_CONFIGURATION(0, 0, 139), CONE(255, 255, 0), CUBE(255, 0, 255);
 
         public final int red;
         public final int green;
@@ -26,7 +26,7 @@ public class LedsService {
         }
     }
 
-    private static final int NUMBER_OF_LEDS = 60;
+    private static final int NUMBER_OF_LEDS = 48;
 
     private static LedsService instance;
 
@@ -54,7 +54,7 @@ public class LedsService {
     }
 
     private LedsService(String namespaceName, AddressableLED led, AddressableLEDBuffer ledBuffer, ArmFirstJoint firstJoint, ArmSecondJoint secondJoint, VisionService vision) {
-        namespace = new RootNamespace(namespaceName);
+        this.namespace = new RootNamespace(namespaceName);
         this.led = led;
         this.ledBuffer = ledBuffer;
         this.firstJoint = firstJoint;
@@ -72,26 +72,30 @@ public class LedsService {
         if (mode == Mode.START_CONFIGURATION) {
             startingLed();
         } else {
-            double firstJointAbsolutePosition = firstJoint.getAbsolutePosition();
-            double secondJointAbsolutePosition = secondJoint.getAbsolutePosition();
-            if (firstJointAbsolutePosition > 165) {
-                if (secondJointAbsolutePosition < 200) {
-                    visionLed();
-                }
+            if (mode == Mode.OFF) {
+                setMode(0, ledBuffer.getLength(), Mode.OFF);
             } else {
-                if (firstJointAbsolutePosition < 15) {
-                    if (secondJointAbsolutePosition > 160) {
+                double firstJointAbsolutePosition = firstJoint.getAbsolutePosition();
+                double secondJointAbsolutePosition = secondJoint.getAbsolutePosition();
+                if (firstJointAbsolutePosition > 165) {
+                    if (secondJointAbsolutePosition < 200) {
                         visionLed();
                     }
                 } else {
-                    setMode(0, ledBuffer.getLength(), mode);
+                    if (firstJointAbsolutePosition < 15) {
+                        if (secondJointAbsolutePosition > 160) {
+                            visionLed();
+                        }
+                    } else {
+                        setMode(0, ledBuffer.getLength(), mode);
+                    }
                 }
-            }
 //            if (firstJointAbsolutePosition > 175 || firstJointAbsolutePosition < 5) {
 //                setMode(0, ledBuffer.getLength(), Mode.RED);
 //            } else {
 //                setMode(0, ledBuffer.getLength(), mode);
 //            }
+            }
         }
     }
 
@@ -105,7 +109,7 @@ public class LedsService {
     }
 
     public void switchMode() {
-        mode = mode == Mode.OFF ? Mode.START_CONFIGURATION : Mode.OFF;
+        mode = mode != Mode.OFF ? Mode.OFF : Mode.START_CONFIGURATION;
     }
 
     private void startingLed() {
@@ -116,7 +120,7 @@ public class LedsService {
             otherMode = Mode.START_CONFIGURATION;
         } else {
             alliance = Mode.START_CONFIGURATION;
-            otherMode = Mode.RED;
+            otherMode = Mode.WHITE;
         }
         if (!flipSides) {
             for (int i = 0; i < ledBuffer.getLength(); i++) {
@@ -127,11 +131,10 @@ public class LedsService {
             }
             led.setData(ledBuffer);
             startLed += 1;
-            if (startLed + 5 >= 60) {
+            if (startLed + 5 >= NUMBER_OF_LEDS) {
                 flipSides = true;
                 startLed = ledBuffer.getLength() - 1;
             }
-            startLed %= ledBuffer.getLength();
         } else {
             for (int i = ledBuffer.getLength() - 1; i >= 0; i--) {
                 ledBuffer.setRGB(i, alliance.red, alliance.green, alliance.blue);
@@ -145,8 +148,8 @@ public class LedsService {
                 flipSides = false;
                 startLed = 0;
             }
-            startLed %= ledBuffer.getLength();
         }
+        startLed %= ledBuffer.getLength();
     }
 
     private void visionLed() {

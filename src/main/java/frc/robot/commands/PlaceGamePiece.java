@@ -25,8 +25,8 @@ public class PlaceGamePiece extends SequentialCommandGroup {
         FRONT_TOP(8, 220, 0.7),
         BACK_LIFT(185, 270, 0.85),
         FRONT_LIFT(5, 100, 0.85),
-        FRONT_DOUBLE_SUBSTATION(0, 188, 0.7),
-        BACK_DOUBLE_SUBSTATION(180, 172, 0.7);
+        FRONT_DOUBLE_SUBSTATION(0, 190, 0.7),
+        BACK_DOUBLE_SUBSTATION(184, 172, 0.7);
 
         public final double firstJointPosition;
         public final double secondJointPosition;
