@@ -18,8 +18,10 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
 import edu.wpi.first.wpilibj.*;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj2.command.*;
 import frc.robot.commands.*;
+import frc.robot.commands.athena.*;
 import frc.robot.commands.autonomous.*;
 import frc.robot.services.ArmGravityCompensation;
 import frc.robot.services.LedsService;
@@ -42,7 +44,7 @@ public class Robot extends TimedRobot {
     private ArmGravityCompensation compensation;
     private VisionService vision;
     private LedsService leds;
-    private AutoChooser autoChooser;
+    private SendableChooser<CommandBase> autoChooser;
     private WrapperCommand userCommand;
 
     @Override
@@ -51,13 +53,14 @@ public class Robot extends TimedRobot {
         setCompressor();
         setDefaultJointsCommands();
         setNamespaceTestingCommands();
-        autoChooser = new AutoChooser(
-                new RootNamespace("auto chooser"),
-                new PlanBWindow(drivetrain).getCommand(), "plan b window",
-                new PlanBEdge(drivetrain).getCommand(), "plan b edge",
-                new SplooshAndVamooseWindow(drivetrain).getCommand(), "sploosh and vamoose",
-                new SmashAndDash(drivetrain).getCommand(), "smash and dash"
-        );
+        autoChooser = new SendableChooser<>();
+        namespace.putData("auto chooser", autoChooser);
+        autoChooser.addOption("group 1", new Group1());
+        autoChooser.addOption("group 2", new Group2());
+        autoChooser.addOption("group 3", new Group3());
+        autoChooser.addOption("group 4", new Group4());
+        autoChooser.addOption("group 5", new Group5());
+        autoChooser.addOption("group 6", new Group6());
         firstJoint.configureEncoders();
         secondJoint.configureEncoders();
         vision.setBackLimelightPipeline(VisionService.LimelightPipeline.HIGH_RRT);
@@ -111,12 +114,13 @@ public class Robot extends TimedRobot {
         });
         new CloseGripper(gripper).schedule();
         CommandBase auto = null;
-        auto = new SmashAndDash(drivetrain).getCommand();
+        autoChooser.getSelected().schedule();
+//        auto = new SmashAndDash(drivetrain).getCommand();
 //        auto = new ClimbPlanB(drivetrain);
 //        auto = new PlanBWindow(drivetrain).getCommand();
 //        auto = new PlanBEdge(drivetrain).getCommand();
-        if (auto != null && firstJoint.encoderConnected() && secondJoint.encoderConnected()) auto.schedule();
-        else new DriveArcade(drivetrain, 0.5, 0).withTimeout(2).schedule();
+//        if (auto != null && firstJoint.encoderConnected() && secondJoint.encoderConnected()) auto.schedule();
+//        else new DriveArcade(drivetrain, 0.5, 0).withTimeout(2).schedule();
     }
 
     @Override
