@@ -1,4 +1,4 @@
-package frc.robot.utils;
+package frc.robot.commands.athena;
 
 import com.spikes2212.command.drivetrains.commands.DriveArcade;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
@@ -47,5 +47,5 @@ public abstract class ProgramBase extends SequentialCommandGroup {
                 PlaceGamePiece.ArmState.FRONT_MID));
     }
 
-    public abstract void writeProgram();
+    protected abstract void writeProgram();
 }
