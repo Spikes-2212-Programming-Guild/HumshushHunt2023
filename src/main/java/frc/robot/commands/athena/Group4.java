@@ -4,8 +4,8 @@ public class Group4 extends ProgramBase {
 
     @Override
     public void writeProgram() {
-        moveForwardInSeconds(5);
         moveArm();
+        moveForwardInSeconds(3.5);
         releaseCube();
     }
 }
